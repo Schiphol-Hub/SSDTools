@@ -1051,7 +1051,7 @@ class TrafficAggregate(object):
         
         return DAISYtraffic,output
     
-     def get_HG(self,HGdbase,ac_cat=None):
+    def get_HG(self,HGdbase,ac_cat=None):
         
         
         try: 

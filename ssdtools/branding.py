@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 
-baangebruik = {'MER': {'markerwidth': [0.5, 0.4, 0.08],  # voor 1, 2 en >2 traffics
-                       'markerheight': [0.2, 0.2, 0.08],  # voor 1, 2 en >2
-                       'barwidth': [0.15, 0.15, 0.04],
+baangebruik = {'MER': {'markerwidth': [0.7, 0.4, 0.08],  # voor 1, 2 en >2 traffics     #old: [0.5, 0.4, 0.08]
+                       'markerheight': [0.3, 0.2, 0.08],  # voor 1, 2 en >2             #old: [0.2, 0.2, 0.08]
+                       'barwidth': [0.35, 0.15, 0.04],                                  #old:[0.15, 0.15, 0.04]
                        'bargap': [0, 0, 0.05],  # voor 1, 2 en >2
                        'refbar': {'facecolor': '#ecce5f',
                                   'edgecolor': ['#4d4d4d'] * 10,  # bug in Matplotlib
@@ -95,7 +95,7 @@ default = {
         'schemerblauw': '#25D7F4',
         'avondlila': '#D285D6',
         'wolkengrijs_1': '#9491AA',
-        'wolekengrijs_2': '#BFBDCC'
+        'wolkengrijs_2': '#BFBDCC'
     },
     'fontname': {
         'grafiek': 'Arial',

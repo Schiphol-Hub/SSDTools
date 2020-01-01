@@ -22,13 +22,15 @@ dependencies:
   - proj4=5.*
   - pyshp=2.1.*
   - pytables=3.5.*
-  - geopandas=0.5.*
+  - geopandas=0.4.*
   - descartes=1.1.*
   - pytest=4.4.*
   - nose=1.3.*
-  - Pillow=6.0.*
+  - pillow=6.0.*
   - pip=19.1.*
   - python-docx=0.8.*
+  - spyder=3.*
+  - imageio=2.6.*
 
 ```
 Create environment using the following command in a conda command prompt.

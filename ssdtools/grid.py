@@ -69,7 +69,7 @@ class Grid(object):
     Multi-contour grids are use to indicate the certainty ranges of the noise levels for a given traffic scenario.
     """
 
-    def __init__(self, data=None, info=None, shape=None, years=None, unit=None):
+    def __init__(self, data=None, info=None, shape=None, years=None, unit=None, unequal_grids=None):
         """
 
         :param list(np.ndarray)|np.ndarray data: grid data, is two-dimensional for single contour grids and
@@ -92,7 +92,9 @@ class Grid(object):
         if unit is not None:
             self.unit = unit
 
-        self.validate(exclude=['datum', 'tijd', 'nvlb'])
+        # This is to prevent the validation to throw an error if unequal grids are read on purpose
+        if unequal_grids is None:
+            self.validate(exclude=['datum', 'tijd', 'nvlb'])
 
     @classmethod
     def read_envira(cls, path):
@@ -113,7 +115,7 @@ class Grid(object):
         return cls(data=data, info=info, unit=unit)
 
     @classmethod
-    def read_enviras(cls, path, pattern='*.dat', year_extractor=extract_year_from_file_name):
+    def read_enviras(cls, path, pattern='*.dat', year_extractor=extract_year_from_file_name,unequal_grids=None):
         """
         Create a Grid object from multiple envira files.
 
@@ -148,7 +150,7 @@ class Grid(object):
         unit = cls_info[0]['eenheid']
 
         # Add the data to a Grid object
-        return cls(data=cls_data, info=cls_info, unit=unit, years=cls_years)
+        return cls(data=cls_data, info=cls_info, unit=unit, years=cls_years, unequal_grids=unequal_grids)
 
     def validate(self, exclude=None):
         """
@@ -362,7 +364,7 @@ class Grid(object):
 
         # Return the object
         return Grid(data=self.data[index], info=self.info[index], unit=self.unit)
-
+    
     def interpolation_function(self):
         """
         Determine the bi-cubic spline interpolation function.
@@ -496,26 +498,49 @@ class Grid(object):
        
         return total_area
    
-    def add(self,grid2):
-        
-        if self.unit!=grid2.unit:
-            raise ValueError("Grids do not have the same unit!")
-         
-        if self.shape!=grid2.shape:
-            #raise ValueError("Grids do not have the same size")
-            print("Grids do not have the same size. The new grid has been resized.")
+    def add(self,grid2=None):
+        """
+        add grids by tranforming to hindersommmen.
+        N.B. now support multigrids, by adding them into a single grid
+
+        :grid2 = grid to add to self, only for single grids
+
+        """
+        if isinstance(self.data, list):
+            # init grid_out:
+            grid_out = Grid(data=self.data[0] ,info=self.info[0],unit=self.unit)
+
+            # now loop over grids and add
+            for d in self.data:
+
+                data_1=10**(grid_out.data/10)
+                data_2=10**(d/10)
+                
+                data_out=data_1 + data_2
+                
+                data=10*np.log10(data_out)
+                grid_out.data = data
+            return grid_out
             
-            grid2=grid2.resize(self.shape)
+        else:
+            if self.unit!=grid2.unit:
+                raise ValueError("Grids do not have the same unit!")
+             
+            if self.shape!=grid2.shape:
+                #raise ValueError("Grids do not have the same size")
+                print("Grids do not have the same size. The new grid has been resized.")
+                
+                grid2=grid2.resize(self.shape)
+            
+            data_1=10**(self.data/10)
+            data_2=10**(grid2.data/10)
+            
+            data_out=data_1 + data_2
+            
+            data=10*np.log10(data_out)
+            self.data = data
         
-        data_1=10**(self.data/10)
-        data_2=10**(grid2.data/10)
-        
-        data_out=data_1 + data_2
-        
-        data=10*np.log10(data_out)
-        self.data = data
-        
-        return self
+            return self
     
     def subtract(self,grid2):  
         
@@ -539,7 +564,158 @@ class Grid(object):
         
         self.data = data
         return self
+    
+    @classmethod
+    def read_enviras_NAxx(cls, grid_path, pattern='*.dat', conditions_path=None):
+        """
+        Create a Grid object from multiple LAmax envira grids.
 
+        :param str grid_path: The path to the envira files.
+        :param str pattern: The pattern used to match the envira files.
+        :param str conditions_path: The path used to select only the relevant noise contour conditions.
+        :rtype Grid
+        """
+
+        # Get the envira files
+        file_paths = [os.path.join(grid_path, f) for f in os.listdir(grid_path) if re.search(pattern, f)]
+
+        # Create info and data lists
+        cls_info = []
+        cls_data = []
+        cls_years = []
+        
+        # Check if a conditions file is given to only load the relevant contours
+        if conditions_path:
+            conditions=pd.read_csv(conditions_path)
+           
+        # Read the envira files
+        for file_path in file_paths:
+            
+            # These are the names of the noise contours for the scaling factors. 
+            #Only called years to not alter the rest of the object too much
+            year = file_path.strip(grid_path).strip('.dat').strip('\\')
+            
+            if conditions_path:
+                # If the name of thefile is in the conditions file, then process that file. Else do not use it
+                if conditions.isin([year]).any(axis=None)==True:
+            
+                    # Extract the data and header from the file
+                    info, data = read_envira(file_path)
+    
+                    # Put the extracted data in the lists
+                    cls_info.append(info)
+                    cls_data.append(data)
+                    cls_years.append(year)
+                
+            # If no conditions file is given, just load all files in the path    
+            else:
+                 # Extract the data and header from the file
+                info, data = read_envira(file_path)
+
+                # Put the extracted data in the lists
+                cls_info.append(info)
+                cls_data.append(data)
+                cls_years.append(year)         
+       
+        # Unit assigned to satisfy object structure; not actually used for anything
+        unit = 'NAxx'
+
+        # Add the data to a Grid object
+        # unequal_grids=True as each envira file has a different shape. Issue with DAISY
+        return cls(data=cls_data, info=cls_info, unit=unit, years=cls_years, unequal_grids=True)
+
+  
+    def create_NAxx(self, number_above_dB, path, reshape_data=None, refinement_factor=1):
+        """
+        Creates the actual NAxx grid. First it resizes every individual grid to the same 
+        
+        # NOTE: using the standard self.refine will lead to artifacts in the plots
+        # That funcion uses a bivariate cubic spline to interpolate the data. 
+        # This does not work well with discrete steps, thus interpolation issus will arise
+        # Never use the refine attribute for NAxx data; not in here or in any plot!
+        # Use the refinement_factor here, or give a better reshape_data grid for 
+        # better results. 
+        # For any plotting, always set the refinement_factor in the plotting(!) 
+        # calls to 1 to prevent erroneous plots.
+
+        :number_above_dB: The lower cut-off limit in dB for the NAxx grid.
+        :path: The file path for the conditions file.
+        :reshape_data: Dictionary that specifies the extent and resolution of the resized grids
+        :refinement_factor: If no specific reshaoe data is given, then the default size of the basic grid is 
+                            used to reshape the data. For a higher resolution, the amount of steps can be refined 
+                            with this parameter. From experience, this factor should not be set higher than 10-12
+                            to prevent memory problems.
+        :rtype: single Grid object
+
+        """
+ 
+        # Conditions file containing flight profile names and scaling factors 
+        # is read and converted to numpy array
+        self.flights_scale=pd.read_csv(path).to_numpy(dtype=str)
+        
+        # Resizing the grids to make them all have an equal size
+        # If no desired shape dict is given, then use these default values for the reshaping
+        # Refinement factor can be used to improve quality of resulting grids
+        data={'x_start' : 84000,
+              'x_stop' : 155000,
+              'x_step' : 500/refinement_factor,
+              'x_number' : 143*refinement_factor,
+              'y_start' : 455000,
+              'y_stop' : 526000,
+              'y_step' : 500/refinement_factor,
+              'y_number' : 143*refinement_factor}
+        
+        if reshape_data is not None:
+            data=reshape_data
+
+        # Doing the actual reshaping using the Shape class and the resize attribute of Grid
+        gridshape=Shape(data)
+        self.resize(gridshape)
+
+        # Creating an empty array of zeros in preparation of the scaling factors assignment
+        # The multigrid will be multiplied by this, so every layer gets the respective scaling
+        # factor from the flights_scale. 
+        scale=np.zeros(np.shape(self.data))
+        self.scale=scale
+        
+        # Looping through all individual grids to filter for NAxx and assign scaling
+        for i in range(len(self.scale)):
+            
+            # Filter of the datapoints are above the threshold.
+            # If yes, assign a 1, if not, a 0.
+            self.data[i][self.data[i]<number_above_dB]=0        
+            self.data[i][self.data[i]>=number_above_dB]=1
+            
+            # Check if the current grid is in the list of conditions
+            # If yes, assign scaling factors, if not, assign a 0 scaling to
+            # remove the grid completely from the count
+            if self.years[i] in self.flights_scale:
+                # Find the correct scaling factor to assign to the respective grid
+                position=np.where(self.flights_scale==self.years[i])[0][0]
+                scale[i,:,:]=float(self.flights_scale[position,1])
+                
+            # if grid name is not in conditions file, remove grid from count    
+            else:
+                scale[i,:,:]=0
+                
+        # Apply the scaling factor matrix to the 0/1 multigrid
+        new_grids=self.data*scale
+        
+        # Sum all values along the 3rd axis to create sum grid
+        self.data=new_grids.sum(axis=0)
+        
+        # Two verification checkt to compare which grids are present, 
+        # and which values are assigned to them. TO enable checking that the correct
+        # ones were set to 0
+        self.years_check=self.years
+        self.scale_check=self.scale[:,0,0]
+        
+        
+        #These are just here to make the object work. Not actually used for anything
+        self.info=self.info[0]
+        self.years=self.years[-1]
+        
+        return self
 
 def relative_den_norm_performance(scale, norm, wbs, den_grid, night_grid=None, scale_de=None, scale_n=None,
                                   apply_lnight_time_correction=True):
