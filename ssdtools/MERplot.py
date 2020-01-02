@@ -1257,3 +1257,214 @@ def plot_hhp(eppmy,
         plt.close(fig)
     else:
         return fig, ax1, ax2
+
+
+# -----------------------------------------------------------------------------
+# Baangebruik, kopie van doc29lib aangepast voor MER2020-opmaak
+# -----------------------------------------------------------------------------
+def plot_baangebruik(trf_files,
+                     labels,
+                     den=['D', 'E', 'N'],
+                     fname=None,
+                     n=7,
+                     runways=None,
+                     ylabel='vliegtuigbewegingen',
+                     ylim=[0,110000],
+                     dy=10000,
+                     reftraffic=1,
+                     style='MER',
+                     dpi=300):
+    '''Plot het baangebruik'''
+
+    def NumberFormatter(x, pos):
+        'The two args are the value and tick position'
+        return '{:,.0f}'.format(x).replace(',', '.')
+    def GetVal(var, i):
+        'Scalar of een list'
+        if isinstance(var, list):
+            i = min(i, len(var)-1) # hergebruik van de laatste waarde 
+            return var[i]
+        else:
+            return var
+
+    # kopie van plotformat
+    # '#141251', '#25D7F4'
+    # '#9491AA'
+    baangebruik = {'MER2020': {'markerwidth': [0.3, 0.3, 0.08],   # voor 1, 2 en >2 traffics
+                           'markerheight': [0.1, 0.1, 0.08],  # voor 1, 2 en >2
+                           'barwidth': [0.1, 0.08, 0.04],
+                           'bargap': [0, 0, 0.05],            # voor 1, 2 en >2
+                           'refbar': {'facecolor': '#25D7F4',
+                                    'edgecolor': ['white']*10, # bug in Matplotlib
+                                    'linewidth': 0.5},                             
+                           'bar': {'facecolor': '#141251',
+                                    'edgecolor': ['white']*10, # bug in Matplotlib
+                                    'linewidth': 0.5},
+                           'refmarker': {'facecolor': '#25D7F4',
+                                       'edgecolor': ['white']*10, # bug in Matplotlib
+                                       'linewidth': 0.5},
+                           'marker': {'facecolor': '#141251',
+                                       'edgecolor': ['white']*10, # bug in Matplotlib
+                                       'linewidth': 0.5}
+                           }}
+
+ 
+    if ':' in style:
+        style, reeks = style.split(':')
+        
+    # check of trf_files een string of list is   
+    if not isinstance(trf_files, list):
+        trf_files = [trf_files]
+        
+    # N = trf_stats['d_lt'].count()
+    
+    # X-positie van de bars
+    x = np.arange(n)
+
+    ntrf = len(trf_files)
+    i = ntrf - 1
+    w = (GetVal(baangebruik[style]['barwidth'], i) # of /ntrf
+         * n/7) # normaliseer voor de aslengte
+    g = GetVal(baangebruik[style]['bargap'], i) # of /ntrf?
+    
+    dx = [(w+g)*(i - 0.5*(ntrf-1)) for i in range(ntrf)]
+    
+    # markers en staafjes
+    marker_height = (GetVal(baangebruik[style]['markerheight'], i)
+                     * (ylim[-1] - ylim[0]) / 10) 
+    mw = (GetVal(baangebruik[style]['markerwidth'], i)
+          * n/7)
+    dxm = list(dx)
+    
+    # clip marker
+    if ntrf == 2:
+        mw = (mw + w)/2
+        dxm[0] = dx[0] - (mw-w)/2
+        dxm[1] = dx[1] + (mw-w)/2
+    elif ntrf > 2:
+        mw = [min(mw, w+g)]
+    
+    # twee aansluitende subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    fig.set_size_inches(21/2.54, 10/2.54)
+    
+    # margins
+    fig.subplots_adjust(bottom=0.18)    
+    fig.subplots_adjust(wspace=0)
+    
+    # legenda
+    ax0 = fig.add_axes([0.785, 0.89, 0.05, 0.1]) 
+    
+    # geen assen
+    ax0.axis('off')
+    
+    # genormaliseerde asses
+    ax0.set_xlim(-0.5*n/7, 0.5*n/7)
+    ax0.set_ylim(0, 1)
+    
+    # staafjes
+    if ntrf == 2:
+        #TODO: 1 of >2 staafjes
+        # gemiddelde
+        for i, yi, bottom, xt, yt, alignment in [(0, 0.4, 0.1, 0.2, 0.4, 'right'),
+                                                 (1, 0.5, 0.3, 0.8, 0.4, 'left')]:
+            if i == reftraffic:
+                ref = 'ref'
+            else:
+                ref = ''
+            ax0.bar(dx[i], height=0.6, bottom=bottom,
+                    width=w,
+                    **baangebruik[style][ref+'bar'],
+                    zorder=4)
+            ax0.bar(dxm[i], height=0.05, bottom=yi,
+                    width=mw,
+                    **baangebruik[style][ref+'marker'],
+                    zorder=6)
+            ax0.text(xt, yt, labels[i],
+               transform=ax0.transAxes,
+               horizontalalignment=alignment)
+#            ,
+#               **baangebruik[style]['legendtext'])
+    
+    
+    # verwerken traffics
+    for i, trf_file in enumerate(trf_files):
+        
+        # lees csv
+        trf = pd.read_csv(trf_file, delimiter='\t')
+        trf = trf.loc[trf['d_den'].isin(den)]
+        
+        # aggregeer etmaalperiode en bereken stats
+        trf = trf.groupby(['d_lt', 'd_runway', 'd_myear'])['total'].sum().reset_index()
+        trf_stats = trf.groupby(['d_lt', 'd_runway'])['total'].agg(['min','max','mean']).reset_index()
+        
+        # sorteer
+        if 'key' not in trf_stats.columns:
+            trf_stats['key'] = trf_stats['d_lt'] + trf_stats['d_runway']
+
+        if runways is not None:
+            # tweede traffic in dezelfde volgorde
+            keys = [k + r for k in runways for r in runways[k]]    # keys: combinatie van lt en runway
+            sorterIndex = dict(zip(keys, range(len(keys))))        # plak een volgnummer aan de keys     
+            trf_stats['order'] = trf_stats['key'].map(sorterIndex) # soteerindex toevoegen
+            trf_stats = trf_stats.sort_values(by=['order'])        # sorteer dataframe
+        else:
+            trf_stats = trf_stats.sort_values(by=['d_lt', 'mean'], ascending=False)
+            runways = {'L': trf_stats['d_runway'].loc[trf_stats['d_lt'] == 'L'],
+                       'T': trf_stats['d_runway'].loc[trf_stats['d_lt'] == 'T']}
+        
+        # maak de plot
+        for lt, xlabel, spine, ax in zip(['T', 'L'],
+                                             ['starts', 'landingen'],
+                                             ['right', 'left'],
+                                             [ax1, ax2]):
+            
+            # selecteer L of T
+            trf2 = trf_stats.loc[trf_stats['d_lt'] == lt]
+            trf2 = trf2.head(n) # gaat alleen goed als er ook echt n-runways zijn
+            
+            # staafjes
+            bar_height = trf2['max'] - trf2['min']
+            if i == reftraffic:
+                ref = 'ref'
+            else:
+                ref = ''
+                
+            ax.bar(x+dx[i], height=bar_height, bottom=trf2['min'],
+                   width=w,
+                   **baangebruik[style][ref+'bar'],
+                   zorder=4)
+            
+            # gemiddelde
+            ax.bar(x+dxm[i], height=marker_height, bottom=trf2['mean']-marker_height/2,
+                   width=mw,
+                   **baangebruik[style][ref+'marker'],
+                   zorder=4)
+
+    for xlabel, spine, ax in zip(['starts', 'landingen'],
+                                 ['right', 'left'],
+                                 [ax1, ax2]):          
+        # scheidingslijntje tussen subplots
+        ax.spines[spine].set_color('none')
+        
+                 
+        # gridlines
+        ax.grid(which='major', axis='x', b=False)            
+                                
+        # X-as
+        ax.set_xticks(x)
+        ax.set_xticklabels(trf2['d_runway'])
+        set_xlabels(xlabel, gap=0.02, ax=ax)
+        
+        # Y-as
+        ax.set_ylim(ylim)
+        ax.yaxis.set_major_locator(ticker.MultipleLocator(base=dy))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
+        if ax==ax1:
+            set_ylabels(ylabel, ax=ax)
+            
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
+        plt.show()
