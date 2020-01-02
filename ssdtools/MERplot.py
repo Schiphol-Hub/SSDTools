@@ -1132,7 +1132,13 @@ def plot_hhp(eppmy,
              alpha=0.2,
              dpi=600,
              **kwargs):
-    '''Plot geluidbelasting in handhavingspunten'''
+    '''Plot geluidbelasting in handhavingspunten. 
+       bij een deltaplot wordt de eerste eppmy geplot en
+       wordt de tweede gebruikt voor het berekenen van het verschil.'''
+
+    def dbaFormatter(x, pos):
+        'The two args are the value and tick position'
+        return '{:1.0f} dB(A)'.format(x)
 
     # converteer naar list
     if isinstance(eppmy, str): eppmy =[eppmy]
@@ -1171,8 +1177,11 @@ def plot_hhp(eppmy,
                 
         # verschilplot
         if i==1 and deltaplot:
-            df[i] = df[i] - df[0]
-            
+            df[i] = df[0] - df[i]
+        
+        # 0-as
+        ax.axhline(marker='None', lw=plt.rcParams['axes.linewidth'])
+        
         # plot
         df[i].plot(style='o',
                   alpha=alpha,
@@ -1204,6 +1213,8 @@ def plot_hhp(eppmy,
         ax.set_ylim(ylim[i])
         if ystep is not None:    
             ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep[i]))
+        # ax.yaxis.set_major_formatter(ticker.FuncFormatter(dbaFormatter))
+
         if ylabel is not None:
             set_ylabels(ylabel[i], ax=ax)
 
