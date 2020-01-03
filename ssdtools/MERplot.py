@@ -98,7 +98,7 @@ def plot_style(style='MER2019', plottype='lijnplot'):
     
         # patches, o.a. voor een barplot
         plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.5,
+                        linewidth=0.2,
                         edgecolor = 'white')
         # heatmap
         xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
@@ -1284,10 +1284,10 @@ def plot_baangebruik(trf_files,
             return var
 
     # kopie van plotformat
-    MarkerWidth =  [0.3, 0.3, 0.08]  # voor 1, 2 en >2 traffics
-    MarkerHeight = [0.1, 0.1, 0.08]
-    BarWidth = [0.1, 0.08, 0.04]
-    BarGap = [0, 0, 0.05]
+    MarkerWidth =  [0.3, 0.3, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
+    MarkerHeight = [0.1, 0.1, 0.1, 0.1, 0.08]
+    BarWidth = [0.1, 0.08, 0.06, 0.06, 0.04]
+    BarGap = [0, 0, 0.05, 0.05, 0.03]
 
     # algemene plotstyle voor de mer
     plot_style(style)
@@ -1384,7 +1384,7 @@ def plot_baangebruik(trf_files,
                        'T': trf_stats['d_runway'].loc[trf_stats['d_lt'] == 'T']}
         
         # maak de plot
-        for lt, ax in zip(['T', 'L'], [ax1, ax2]):
+        for lt, xlabel, ax in zip(['T', 'L'], ['starts', 'landingen'], [ax1, ax2]):
             
             # selecteer L of T
             trf2 = trf_stats.loc[trf_stats['d_lt'] == lt]
@@ -1394,10 +1394,8 @@ def plot_baangebruik(trf_files,
             bar_height = trf2['max'] - trf2['min']
             if i == reftraffic:
                 c = 1
-                # ref = 'ref'
             else:
                 c = 0
-                # ref = ''
                 
             ax.bar(x+dx[i], 
                    height=bar_height.values,
@@ -1412,26 +1410,22 @@ def plot_baangebruik(trf_files,
                     width=mw,
                     color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
 
-    for xlabel, spine, ax in zip(['starts', 'landingen'],
-                                 ['right', 'left'],
-                                 [ax1, ax2]):          
-        # geen scheidingslijntje tussen subplots
-        # ax.spines[spine].set_color('none')
-                 
-        # geen vertikale gridlines
-        ax.grid(which='major', axis='x', b=False)            
-                                
-        # X-as
-        ax.set_xticks(x)
-        ax.set_xticklabels(trf2['d_runway'])
-        set_xlabels(xlabel, gap=0.01, ax=ax)
-        
-        # Y-as
-        ax.set_ylim(ylim)
-        ax.yaxis.set_major_locator(ticker.MultipleLocator(base=dy))
-        ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
-        if ax==ax1:
-            set_ylabels(ylabel, ax=ax)
+            # opmaak, alleen de eerste keer
+            if i == 0:   
+                # geen vertikale gridlines
+                ax.grid(which='major', axis='x', b=False)            
+                                        
+                # X-as
+                ax.set_xticks(x)
+                ax.set_xticklabels(trf2['d_runway'])
+                set_xlabels(xlabel, gap=0.01, ax=ax)
+                
+                # Y-as
+                ax.set_ylim(ylim)
+                ax.yaxis.set_major_locator(ticker.MultipleLocator(base=dy))
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
+                if ax==ax1:
+                    set_ylabels(ylabel, ax=ax)
             
     if fname:
         fig.savefig(fname, dpi=dpi)
