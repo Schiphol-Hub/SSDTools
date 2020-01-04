@@ -1268,6 +1268,7 @@ def plot_baangebruik(trf_files,
                      ylim=[0,110000],
                      dy=10000,
                      reftraffic=1,
+                     numbers=False,
                      style='MER2020',
                      dpi=300):
     '''Plot het baangebruik'''
@@ -1287,7 +1288,7 @@ def plot_baangebruik(trf_files,
     MarkerWidth =  [0.3, 0.3, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
     MarkerHeight = [0.1, 0.1, 0.1, 0.1, 0.08]
     BarWidth = [0.1, 0.08, 0.06, 0.06, 0.04]
-    BarGap = [0, 0, 0.05, 0.05, 0.03]
+    BarGap = [0, 0, 0.05, 0.05, 0.04]
 
     # algemene plotstyle voor de mer
     plot_style(style)
@@ -1427,6 +1428,17 @@ def plot_baangebruik(trf_files,
                 if ax==ax1:
                     set_ylabels(ylabel, ax=ax)
             
+    # nummertjes
+    if numbers:
+        xp = []
+        yp = []                
+        for i, p in enumerate(ax1.patches):
+            if not i%(n*2):
+                xp.append(p.get_x() + p.get_width()/2)
+                yp.append(ax1.patches[0].get_y()* .9)
+        for i, x in enumerate(xp):
+            ax1.text(x, min(yp), str(i), ha='center', fontsize=3)
+                
     if fname:
         fig.savefig(fname, dpi=dpi)
         plt.close(fig)
