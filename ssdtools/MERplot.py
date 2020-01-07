@@ -590,7 +590,9 @@ def plot_concentraties(inpFile,
 
     # legend
     if ncol is None: ncol = len(y)
-    leg = ax.legend(ncol=ncol,
+    handles, labels = ax.get_legend_handles_labels()
+    leg = ax.legend(handles[::-1], labels[::-1],
+                    ncol=ncol,
                     handletextpad=-0.5,
                     **xParams['legend'])
     
@@ -642,9 +644,7 @@ def plot_groepsrisico(inpFile,
         df = df.rename(columns=dict(zip(y, labels)))
         y = labels
 
-    # plot  
-    # TODO colors opslaan in MERplot
-    # colors = ['#3a96b2', '#da9100'] 
+    # plot
     ax = df.plot(x=x,
                  y=y,
                  figsize=(21/2.54, 7/2.54), # figsize is in inches
@@ -652,9 +652,7 @@ def plot_groepsrisico(inpFile,
                  logy=True,
                  xlim=[10,1000],
                  ylim=[10**-8, 10**-3],
-                 marker='None') #,
-#                 clip_on=False,
-                 #color=colors)
+                 marker='None')
     
     # margins
     plt.subplots_adjust(bottom=0.2)
@@ -1230,23 +1228,23 @@ def plot_hhp(eppmy,
 
     # reeks 1: dots
     np.random.seed(0)
-    y = np.random.normal(0.2,0.1,15)
+    y = np.random.normal(0.11,0.1,15)
     x = [0] * len(y)    
     ax0.plot(x, y, 'o',
              markersize=plt.rcParams['lines.markersize']*0.8,
              alpha=alpha,
              clip_on=False)
-    ax0.text(0.09, 0.2, 'geluidbelasting',
+    ax0.text(0.09, 0.1, 'geluidbelasting',
              transform=ax0.transAxes,
              horizontalalignment='left')
 
     # reeks 2: dash
-    ax0.plot(1, 0.25, '_',
+    ax0.plot(1, 0.15, '_',
              markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][1],
              markersize=8*0.8,
              markeredgewidth=1.5*0.8,
              clip_on=False)
-    ax0.text(1.12, 0.2, 'grenswaarde',
+    ax0.text(1.12, 0.1, 'grenswaarde',
              transform=ax0.transAxes,
              horizontalalignment='left')
     
