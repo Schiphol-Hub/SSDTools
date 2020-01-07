@@ -63,6 +63,7 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         
         # spines en background
         plt.rc('axes', edgecolor='#9491AA', linewidth=0.2, facecolor='#EAE9EE')
+
 #        xParams['hidespines'] = ['left', 'right']
         xParams['hidespines'] = []
         
@@ -1301,14 +1302,14 @@ def plot_baangebruik(trf_files,
 
     ntrf = len(trf_files)
     i = ntrf - 1
-    w = (GetVal(BarWidth, i) * n/7) # normaliseer voor de aslengte
-    g = GetVal(BarGap, i)           # of /ntrf?
+    w = GetVal(BarWidth, i) * n/7  # normaliseer voor de aslengte
+    g = GetVal(BarGap, i)          # of /ntrf?
     
-    dx = [(w+g)*(i - 0.5*(ntrf-1)) for i in range(ntrf)]
+    dx = [(w+g)*(x - 0.5*(ntrf-1)) for x in range(ntrf)]
     
     # markers en staafjes
     marker_height = (GetVal(MarkerHeight, i) * (ylim[-1] - ylim[0]) / 10) 
-    mw = (GetVal(MarkerWidth, i) * n/7)
+    mw = GetVal(MarkerWidth, i) * n/7
     dxm = list(dx)
     
     # clip marker
@@ -1317,46 +1318,14 @@ def plot_baangebruik(trf_files,
         dxm[0] = dx[0] - (mw-w)/2
         dxm[1] = dx[1] + (mw-w)/2
     elif ntrf > 2:
-        mw = [min(mw, w+g)]
+        mw = min(mw, w+g)
     
     # twee aansluitende subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
     fig.set_size_inches(21/2.54, 10/2.54)
     
     # margins
-    fig.subplots_adjust(bottom=0.18)    
-    fig.subplots_adjust(wspace=0.02)
-    
-    # legenda
-    ax0 = fig.add_axes([0.79, 0.89, 0.05, 0.1]) 
-    
-    # geen assen
-    ax0.axis('off')
-    
-    # genormaliseerde asses
-    ax0.set_xlim(-0.5*n/7, 0.5*n/7)
-    ax0.set_ylim(0, 1)
-    
-    # staafjes
-    if ntrf == 2:
-        #TODO: 1 of >2 staafjes
-        # gemiddelde
-        for i, yi, bottom, xt, yt, alignment in [(0, 0.4, 0.1, 0.2, 0.3, 'right'),
-                                                 (1, 0.5, 0.3, 0.8, 0.3, 'left')]:
-            if i == reftraffic:
-                c = 1
-            else:
-                c = 0
-            ax0.bar(dx[i], height=0.6, bottom=bottom,
-                    width=w,
-                    color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
-            ax0.bar(dxm[i], height=0.05, bottom=yi,
-                    width=mw,
-                    color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
-            ax0.text(xt, yt, labels[i],
-                     transform=ax0.transAxes,
-                     horizontalalignment=alignment)
-    
+    fig.subplots_adjust(bottom=0.18, wspace=0.02)
     
     # verwerken traffics
     for i, trf_file in enumerate(trf_files):
@@ -1427,6 +1396,7 @@ def plot_baangebruik(trf_files,
                 ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
                 if ax==ax1:
                     set_ylabels(ylabel, ax=ax)
+                    
             
     # nummertjes
     if numbers:
@@ -1435,10 +1405,57 @@ def plot_baangebruik(trf_files,
         for i, p in enumerate(ax1.patches):
             if not i%(n*2):
                 xp.append(p.get_x() + p.get_width()/2)
-                yp.append(ax1.patches[0].get_y()* .9)
+                yp.append(ax1.patches[0].get_y())
         for i, x in enumerate(xp):
-            ax1.text(x, min(yp), str(i), ha='center', fontsize=3)
-                
+            ax1.text(x, 0.9 * min(yp), str(i), ha='center', fontsize=3)
+
+    # legenda
+    w *= 0.8                    # legenda op 80%
+    mw *= 0.8
+    
+    if ntrf == 2:
+        x0 = 0.79               # x-positie legenda
+        dx = [-w/2, w/2]        # x voor de staafjes
+        dxm = [-mw/2, mw/2]     # x voor de markers
+        plot_matrix = [(0, 0.3, 0.05, -0.2, 'right'),
+                       (1, 0.4, 0.15, 0.2, 'left')]
+    else:
+        x0 = 0.71
+        dx[3] += 1.6
+        dxm[3] += 1.6
+        reftraffic=3
+        plot_matrix = [(0, 0.30, 0.05, 0.15, None),
+                       (1, 0.25, 0.00, 0.15, None),
+                       (2, 0.35, 0.10, 0.15, 'left'),
+                       (3, 0.30, 0.05, 0.15, 'left')]
+        
+    # plotgebied
+    ax0 = fig.add_axes([x0, 0.89, 0.125, 0.1]) 
+    
+    # geen assen
+    ax0.axis('off')
+    
+    # genormaliseerde asses
+    ax0.set_xlim(-0.5*n/7, 2*n/7)
+    ax0.set_ylim(0, 1)
+
+    for i, yi, bottom, xt, ha in plot_matrix:
+        if i == reftraffic:
+            c = 1
+        else:
+            c = 0
+        ax0.bar(dx[i], height=0.5, bottom=bottom,
+                width=w,
+                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+        ax0.bar(dxm[i], height=0.05, bottom=yi,
+                width=mw,
+                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+        if ha:
+            ax0.text(dx[i]+xt , 0.5, labels[c],
+                      horizontalalignment=ha,
+                      verticalalignment='top')
+
+    # save figure               
     if fname:
         fig.savefig(fname, dpi=dpi)
         plt.close(fig)
