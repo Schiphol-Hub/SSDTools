@@ -581,9 +581,12 @@ def plot_concentraties(inpFile,
     # Y-as
     set_ylabels(ylabel, ax=ax) 
     
-    # hide spines
-    for side in xParams['hidespines']:
-        ax.spines[side].set_color('none')
+    # scheidingslijntje tussen subplots
+    ax.axvline(sum(ax.get_xlim())/2,
+               marker='',
+               color='white',
+               linewidth=2,
+               zorder=0)      
 
     # legend
     if ncol is None: ncol = len(y)
@@ -1325,7 +1328,7 @@ def plot_baangebruik(trf_files,
     fig.set_size_inches(21/2.54, 10/2.54)
     
     # margins
-    fig.subplots_adjust(bottom=0.18, wspace=0.02)
+    fig.subplots_adjust(bottom=0.18, wspace=0)
     
     # verwerken traffics
     for i, trf_file in enumerate(trf_files):
@@ -1388,7 +1391,7 @@ def plot_baangebruik(trf_files,
                 # X-as
                 ax.set_xticks(x)
                 ax.set_xticklabels(trf2['d_runway'])
-                set_xlabels(xlabel, gap=0.01, ax=ax)
+                set_xlabels(xlabel, gap=0.02, ax=ax)
                 
                 # Y-as
                 ax.set_ylim(ylim)
@@ -1396,7 +1399,16 @@ def plot_baangebruik(trf_files,
                 ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
                 if ax==ax1:
                     set_ylabels(ylabel, ax=ax)
-                    
+
+
+    # scheidingslijntje tussen subplots
+    for ax, side, i in [[ax1, 'right', 1], [ax2, 'left', 0]]:
+        ax.spines[side].set_color('none')
+        ax.axvline(ax.get_xlim()[i],
+                   marker='',
+                   color='white',
+                   linewidth=2,
+                   zorder=0)              
             
     # nummertjes
     if numbers:
