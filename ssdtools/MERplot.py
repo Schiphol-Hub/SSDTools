@@ -1114,8 +1114,9 @@ def plot_hhp(eppmy,
              eppmyDict = {'delimiter':' ', 'header':None, 'index_col':0},
              mtg=None,
              mtgDict = {},
+             mtgcolor = 4,
              deltaplot=False,
-             xlabel=None,
+             xlabel='handhavingspunten',
              ylabel=None,
              xlim=None,
              ylim1=[45,65],
@@ -1155,7 +1156,6 @@ def plot_hhp(eppmy,
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
     
-
     # lees MTG in een dataframe
     gw = read_file(mtg, **mtgDict)
     gw.index += 1 # index vanaf 1 ipv 0
@@ -1177,9 +1177,6 @@ def plot_hhp(eppmy,
         if i==1 and deltaplot:
             df[i] = df[0] - df[i]
         
-        # 0-as
-        ax.axhline(marker='None', lw=plt.rcParams['axes.linewidth'])
-        
         # plot
         df[i].plot(style='o',
                   alpha=alpha,
@@ -1187,10 +1184,11 @@ def plot_hhp(eppmy,
                   clip_on=clip_on,
                   ax=ax,
                   **kwargs)
-    
+        
+        # grenswaarden (MTG)
         if i==0 or not deltaplot:
             gw.plot(style='_',
-                    markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][1],
+                    markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][mtgcolor],
                     markersize=8,
                     markeredgewidth=1.5,
                     legend=False,
@@ -1199,19 +1197,26 @@ def plot_hhp(eppmy,
                     **kwargs)
     
         # X-as
-        ax.set_xlim(xlim)
+        if xlim is not None:
+            ax.set_xlim(xlim)
+        else:
+            z = ax.get_xlim()
+            ax.set_xlim(z[0]-0.99, z[1]+0.99)
         if xstep is not None:    
             ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
         if i==1 and xlabel is not None:
             set_xlabels(xlabel, ax=ax)
         else:
             ax.set_xlabel('') # verberg as-label
+        if i==0 or deltaplot:
+            # 0-as
+            ax.axhline(marker='None', lw=plt.rcParams['axes.linewidth'])
         
         # Y-as
         ax.set_ylim(ylim[i])
         if ystep is not None:    
             ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep[i]))
-        # ax.yaxis.set_major_formatter(ticker.FuncFormatter(dbaFormatter))
+        ax.yaxis.set_major_formatter(ticker.FuncFormatter(dbaFormatter))
 
         if ylabel is not None:
             set_ylabels(ylabel[i], ax=ax)
@@ -1240,7 +1245,7 @@ def plot_hhp(eppmy,
 
     # reeks 2: dash
     ax0.plot(1, 0.15, '_',
-             markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][1],
+             markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][mtgcolor],
              markersize=8*0.8,
              markeredgewidth=1.5*0.8,
              clip_on=False)
