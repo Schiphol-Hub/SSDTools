@@ -1420,9 +1420,9 @@ def plot_baangebruik(trf_files,
         for i, p in enumerate(ax1.patches):
             if not i%(n*2):
                 xp.append(p.get_x() + p.get_width()/2)
-                yp.append(ax1.patches[0].get_y())
+                yp.append(p.get_y())
         for i, x in enumerate(xp):
-            ax1.text(x, 0.9 * min(yp), str(i), ha='center', fontsize=3)
+            ax1.text(x, 0.95 * min(yp), str(i), ha='center', fontsize=3)
 
     # legenda
     w *= 0.8                    # legenda op 80%
