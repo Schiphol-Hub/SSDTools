@@ -215,7 +215,24 @@ def plot_style(style='MER2019', plottype='lijnplot'):
                                          '#ff7f0e', '#2ca02c', '#d62728',
                                          '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
                                          '#bcbd22', '#17becf']))
+
+# -----------------------------------------------------------------------------
+# legenda
+# -----------------------------------------------------------------------------
+def check_bbox_target(ax, target, fig=None):
+    '''Check bounding box target, default o.b.v. x1
+    ''' 
+    if fig is None: 
+        fig = plt.gcf()
+    transf = fig.transFigure.inverted()
+    renderer = fig.canvas.get_renderer()
+    bbox = ax.get_tightbbox(renderer).transformed(transf)
     
+    diff = target-bbox.x1
+    if abs(diff) >= 0.01:
+        print('xlegend: {:1.3f}'.format(diff))
+
+    return diff        
 # -----------------------------------------------------------------------------
 # as-labels
 # -----------------------------------------------------------------------------
@@ -282,6 +299,7 @@ def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
             ax.add_line(line)
     
     return ylijn, ylabel
+
 
 
 def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
@@ -1276,6 +1294,7 @@ def plot_baangebruik(trf_files,
                      dy=10000,
                      reftraffic=1,
                      numbers=False,
+                     xlegend=0,
                      style='MER2020',
                      dpi=300):
     '''Plot het baangebruik'''
@@ -1445,8 +1464,8 @@ def plot_baangebruik(trf_files,
                        (3, 0.30, 0.05, 0.15, 'left')]
         
     # plotgebied
-    ax0 = fig.add_axes([x0, 0.89, 0.125, 0.1]) 
-    
+    ax0 = fig.add_axes([xlegend, 0.89, 0.125, 0.1]) 
+
     # geen assen
     ax0.axis('off')
     
@@ -1466,9 +1485,12 @@ def plot_baangebruik(trf_files,
                 width=mw,
                 color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
         if ha:
-            ax0.text(dx[i]+xt , 0.5, labels[c],
+            t = ax0.text(dx[i]+xt , 0.5, labels[c],
                       horizontalalignment=ha,
                       verticalalignment='top')
+
+    # Check uitlijning van de legend
+    check_bbox_target(ax0, target=0.9-0.01)
 
     # save figure               
     if fname:
