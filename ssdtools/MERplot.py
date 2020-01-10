@@ -511,11 +511,10 @@ def plot_kansverdeling(inpFile,
         ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
     ax.yaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
     set_ylabels(ylabel, ax=ax)
-    
-    # hide spines
-    for side in xParams['hidespines']:
-        ax.spines[side].set_color('none')
-    
+ 
+    # geen verticale  gridlines
+    ax.xaxis.grid(which='major', color='None')
+      
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -565,7 +564,7 @@ def plot_concentraties(inpFile,
     # margins
     plt.subplots_adjust(bottom=0.2)
         
-    # gridlines
+    # geen verticale  gridlines
     ax.xaxis.grid(which='major', color='None')
         
     # assen
@@ -1451,7 +1450,8 @@ def plot_baangebruik(trf_files,
     ax0.axis('off')
     
     # genormaliseerde asses
-    ax0.set_xlim(-0.5*n/7, 2*n/7)
+#    ax0.set_xlim(-0.5*n/7, 2*n/7)
+    ax0.set_xlim(-0.5, 2)
     ax0.set_ylim(0, 1)
 
     for i, yi, bottom, xt, ha in plot_matrix:
