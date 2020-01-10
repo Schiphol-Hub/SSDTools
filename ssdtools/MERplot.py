@@ -233,6 +233,16 @@ def update_legend_position(ax, target, fig=None):
     l, b, w, h = ax.get_position().bounds
     # corrigeer x-positie
     ax.set_position([l+diff, b, w, h])
+
+def get_text_bbox(handle, ax=None, fig=None):
+    '''Bounding box of text
+    ''' 
+    if fig is None: fig = plt.gcf()
+    if ax is None: ax = plt.gca()
+    
+    fig.canvas.draw()
+    return handle.get_window_extent().inverse_transformed(ax.transData)
+
 # -----------------------------------------------------------------------------
 # as-labels
 # -----------------------------------------------------------------------------
@@ -1238,8 +1248,8 @@ def plot_hhp(eppmy,
         if ylabel is not None:
             set_ylabels(ylabel[i], ax=ax)
 
-    # legend
-    ax0 = fig.add_axes([0.72, 0.89, 0.1, 0.1]) 
+    # legenda
+    ax0 = fig.add_axes([0.0, 0.89, 0.1, 0.1]) 
     
     # geen assen
     ax0.axis('off')
@@ -1269,6 +1279,9 @@ def plot_hhp(eppmy,
     ax0.text(1.12, 0.1, 'grenswaarde',
              transform=ax0.transAxes,
              horizontalalignment='left')
+    
+    # Check uitlijning van de legend
+    update_legend_position(ax0, target=0.9-0.01)
     
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
@@ -1442,8 +1455,7 @@ def plot_baangebruik(trf_files,
             ax1.text(x, 0.95 * min(yp), str(i), 
                      ha='center', va='top', fontsize=3)
 
-    # legenda
-    
+    # legenda    
     if ntrf == 2:
         w *= 0.8                # legenda op 80%
         g *= 0.8
@@ -1490,8 +1502,7 @@ def plot_baangebruik(trf_files,
                          verticalalignment='top')
         if i == 2:
             # maak ruimte voor text label
-            plt.gcf().canvas.draw()
-            bbox = t.get_window_extent().inverse_transformed(ax0.transData)
+            bbox = get_text_bbox(t)
             dx[3] += bbox.x1
             
 
