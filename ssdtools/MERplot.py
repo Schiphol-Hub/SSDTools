@@ -219,20 +219,20 @@ def plot_style(style='MER2019', plottype='lijnplot'):
 # -----------------------------------------------------------------------------
 # legenda
 # -----------------------------------------------------------------------------
-def check_bbox_target(ax, target, fig=None):
-    '''Check bounding box target, default o.b.v. x1
+def update_legend_position(ax, target, fig=None):
+    '''Update legend position, target, o.b.v. bbox.x1
     ''' 
     if fig is None: 
         fig = plt.gcf()
     transf = fig.transFigure.inverted()
     renderer = fig.canvas.get_renderer()
-    bbox = ax.get_tightbbox(renderer).transformed(transf)
     
+    bbox = ax.get_tightbbox(renderer).transformed(transf)
     diff = target-bbox.x1
-    if abs(diff) >= 0.01:
-        print('xlegend: {:1.3f}'.format(diff))
-
-    return diff        
+      
+    l, b, w, h = ax.get_position().bounds
+    # corrigeer x-positie
+    ax.set_position([l+diff, b, w, h])
 # -----------------------------------------------------------------------------
 # as-labels
 # -----------------------------------------------------------------------------
@@ -1293,9 +1293,8 @@ def plot_baangebruik(trf_files,
                      dy=10000,
                      reftraffic=1,
                      numbers=False,
-                     xlegend=0,
                      style='MER2020',
-                     dpi=300):
+                     dpi=600):
     '''Plot het baangebruik'''
 
     def NumberFormatter(x, pos):
@@ -1440,22 +1439,22 @@ def plot_baangebruik(trf_files,
                 xp.append(p.get_x() + p.get_width()/2)
                 yp.append(p.get_y())
         for i, x in enumerate(xp):
-            ax1.text(x, 0.95 * min(yp), str(i), ha='center', fontsize=3)
+            ax1.text(x, 0.95 * min(yp), str(i), 
+                     ha='center', va='top', fontsize=3)
 
     # legenda
-    w *= 0.8                    # legenda op 80%
-    mw *= 0.8
     
     if ntrf == 2:
-        x0 = 0.79               # x-positie legenda
+        w *= 0.8                # legenda op 80%
+        g *= 0.8
+        mw *= 0.8
         dx = [-w/2, w/2]        # x voor de staafjes
         dxm = [-mw/2, mw/2]     # x voor de markers
         plot_matrix = [(0, 0.3, 0.05, -0.2, 'right'),
                        (1, 0.4, 0.15, 0.2, 'left')]
     else:
-        x0 = 0.71
-        dx[3] += 1.6
-        dxm[3] += 1.6
+        dx = [(w+g)* x for x in range(4)]
+        dxm = dx
         reftraffic=3
         plot_matrix = [(0, 0.30, 0.05, 0.15, None),
                        (1, 0.25, 0.00, 0.15, None),
@@ -1463,14 +1462,13 @@ def plot_baangebruik(trf_files,
                        (3, 0.30, 0.05, 0.15, 'left')]
         
     # plotgebied
-    ax0 = fig.add_axes([xlegend, 0.89, 0.125, 0.1]) 
+    ax0 = fig.add_axes([0, 0.89, 0.025, 0.1]) 
 
     # geen assen
     ax0.axis('off')
     
     # genormaliseerde asses
-#    ax0.set_xlim(-0.5*n/7, 2*n/7)
-    ax0.set_xlim(-0.5, 2)
+    ax0.set_xlim(0, 0.5*n/7)
     ax0.set_ylim(0, 1)
 
     for i, yi, bottom, xt, ha in plot_matrix:
@@ -1480,17 +1478,25 @@ def plot_baangebruik(trf_files,
             c = 0
         ax0.bar(dx[i], height=0.5, bottom=bottom,
                 width=w,
-                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c],
+                clip_on=False)
         ax0.bar(dxm[i], height=0.05, bottom=yi,
                 width=mw,
-                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c],
+                clip_on=False)
         if ha:
             t = ax0.text(dx[i]+xt , 0.5, labels[c],
-                      horizontalalignment=ha,
-                      verticalalignment='top')
+                         horizontalalignment=ha,
+                         verticalalignment='top')
+        if i == 2:
+            # maak ruimte voor text label
+            plt.gcf().canvas.draw()
+            bbox = t.get_window_extent().inverse_transformed(ax0.transData)
+            dx[3] += bbox.x1
+            
 
     # Check uitlijning van de legend
-    check_bbox_target(ax0, target=0.9-0.01)
+    update_legend_position(ax0, target=0.9-0.01)
 
     # save figure               
     if fname:
