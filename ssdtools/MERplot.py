@@ -58,11 +58,14 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Frutiger for Schiphol Book', 'size':6})   
 
         # grid
+        # wolkengrijs 1: #9491AA
+        # wolkengrijs 2: #BFBDCC
+        # wolkengrijs 3: #EAE9EE
         plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='#9491AA', linewidth=0.2, linestyle='solid')
+        plt.rc('grid', color='#BFBDCC', linewidth=0.2, linestyle='solid')
         
         # spines en background
-        plt.rc('axes', edgecolor='#9491AA', linewidth=0.2, facecolor='#EAE9EE')
+        plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE')
 
 #        xParams['hidespines'] = ['left', 'right']
         xParams['hidespines'] = []
@@ -102,7 +105,8 @@ def plot_style(style='MER2019', plottype='lijnplot'):
                         linewidth=0.2,
                         edgecolor = 'white')
         # heatmap
-        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
+#        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
+        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])                 
         
         if reeks == '1':
             plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
@@ -215,6 +219,14 @@ def plot_style(style='MER2019', plottype='lijnplot'):
                                          '#ff7f0e', '#2ca02c', '#d62728',
                                          '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
                                          '#bcbd22', '#17becf']))
+
+# -----------------------------------------------------------------------------
+# Get colors
+# -----------------------------------------------------------------------------
+def get_cycler_color(index=0):
+    ''' Cycler color o.b.v. de index
+    ''' 
+    return plt.rcParams['axes.prop_cycle'].by_key()['color'][index]
 
 # -----------------------------------------------------------------------------
 # legenda
@@ -424,7 +436,7 @@ def plot_baansimulaties(inpFile,
                interpolation='nearest', 
                origin='low',
                extent=[xmin, xmax, ymin, ymax],
-               cmap= xParams['cmap'], #'Blues',  #'YlOrBr',
+               cmap= xParams['cmap'],
                norm=colors.LogNorm(vmin=1, vmax=p.max()), # 0,2 om witte datapunten te voorkomen
                aspect='auto',
                zorder=4)
@@ -446,9 +458,7 @@ def plot_baansimulaties(inpFile,
         ybins = np.arange(ymin, ymax+histbin, histbin)
         df[y].hist(bins=ybins, 
                    weights=np.ones_like(df[y]) * 100. / len(df),
-                   #color='#e4af00',
-                   #linewidth=0.25,
-                   #edgecolor='#4d4d4d',
+                   color=get_cycler_color(2),
                    rwidth=0.7,
                    orientation='horizontal', 
                    ax=ax2)
@@ -576,7 +586,7 @@ def plot_concentraties(inpFile,
     ax = df.plot.bar(y=y,
                      stacked=True,
                      figsize=(21/2.54, 7/2.54), # figsize is in inches        
-                     width=0.2,
+                     width=0.4,
                      ylim=ylim)
 
     # margins
@@ -896,15 +906,12 @@ def plot_verkeersverdeling(trafficFile,
     PerTijdsblok.loc[arr, 'total'] *= -1
     
     # plot departures / arrivals
-#    colors = plt.rcParams['axes.prop_cycle'].by_key()['color'][0:1]
-    for dest, c in zip([arr, dep], ['#fdbb4b', '#4a8ab7']):
+    for dest, c in [[arr, 0], [dep, 0]]:  #, ['#fdbb4b', '#4a8ab7']:
         PerTijdsblok[dest].plot.bar(x='tijdsblok',
                                     y='total',
                                     legend=None,
                                     width=0.5,
-                                    facecolor=c,
-                                    edgecolor='#757575',
-                                    lw=0.25,
+                                    facecolor=get_cycler_color(c),
                                     ax=ax)
     
     # gridlines
@@ -1196,6 +1203,7 @@ def plot_hhp(eppmy,
         
         # plot
         df[i].plot(style='o',
+                  markeredgecolor=get_cycler_color(2),
                   alpha=alpha,
                   legend=False,
                   clip_on=clip_on,
@@ -1205,7 +1213,7 @@ def plot_hhp(eppmy,
         # grenswaarden (MTG)
         if i==0 or not deltaplot:
             gw.plot(style='_',
-                    markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][mtgcolor],
+                    markeredgecolor=get_cycler_color(mtgcolor),
                     markersize=8,
                     markeredgewidth=1.5,
                     legend=False,
@@ -1253,6 +1261,7 @@ def plot_hhp(eppmy,
     y = np.random.normal(0.11,0.1,15)
     x = [0] * len(y)    
     ax0.plot(x, y, 'o',
+             markeredgecolor=get_cycler_color(2),
              markersize=plt.rcParams['lines.markersize']*0.8,
              alpha=alpha,
              clip_on=False)
@@ -1262,7 +1271,7 @@ def plot_hhp(eppmy,
 
     # reeks 2: dash
     ax0.plot(1, 0.15, '_',
-             markeredgecolor=plt.rcParams['axes.prop_cycle'].by_key()['color'][mtgcolor],
+             markeredgecolor=get_cycler_color(mtgcolor),
              markersize=8*0.8,
              markeredgewidth=1.5*0.8,
              clip_on=False)
@@ -1309,9 +1318,9 @@ def plot_baangebruik(trf_files,
             return var
 
     # kopie van plotformat
-    MarkerWidth =  [0.3, 0.3, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
-    MarkerHeight = [0.1, 0.1, 0.1, 0.1, 0.08]
-    BarWidth = [0.1, 0.08, 0.06, 0.06, 0.04]
+    MarkerWidth =  [0.3, 0.3*1.2, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
+    MarkerHeight = [0.1, 0.1*1.2, 0.1, 0.1, 0.08]
+    BarWidth = [0.1, 0.08*2, 0.06, 0.06, 0.04]
     BarGap = [0, 0, 0.05, 0.05, 0.04]
 
     # algemene plotstyle voor de mer
@@ -1394,14 +1403,14 @@ def plot_baangebruik(trf_files,
                    height=bar_height.values,
                    bottom=trf2['min'].values,
                    width=w,
-                   color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+                   color=get_cycler_color(c))
             
             # gemiddelde
             ax.bar(x+dxm[i],
                     height=marker_height,
                     bottom=trf2['mean'].values-marker_height/2,
                     width=mw,
-                    color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c])
+                    color=get_cycler_color(c))
 
             # opmaak, alleen de eerste keer
             if i == 0:   
@@ -1478,11 +1487,11 @@ def plot_baangebruik(trf_files,
             c = 0
         ax0.bar(dx[i], height=0.5, bottom=bottom,
                 width=w,
-                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c],
+                color=get_cycler_color(c),
                 clip_on=False)
         ax0.bar(dxm[i], height=0.05, bottom=yi,
                 width=mw,
-                color=plt.rcParams['axes.prop_cycle'].by_key()['color'][c],
+                color=get_cycler_color(c),
                 clip_on=False)
         if ha:
             t = ax0.text(dx[i]+xt , 0.5, labels[c],
