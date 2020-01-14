@@ -990,7 +990,8 @@ def plot_verkeersverdeling(trafficFile,
     w = .5/72
     y = 1.07
     h1, h2 = [6*w, 2*w, 3*w], [-2*w, -4*w, -7*w]
-    colors = ['#4a8ab7', '#fdbb4b']
+#    colors = ['#4a8ab7', '#fdbb4b']
+    colors = [get_cycler_color(0)] * 2 # tijdelijke oplossing
     for c, heights in zip(colors, [h1, h2]):
         x = 0.92
         for h in heights:
@@ -998,8 +999,8 @@ def plot_verkeersverdeling(trafficFile,
                              width=w,
                              height=h,
                              facecolor=c,
-                             edgecolor='#757575',
-                             linewidth=0.25,
+#                             edgecolor='#757575',
+#                             linewidth=0.25,
                              clip_on=False,
                              transform=ax.transAxes)
             ax.add_patch(rect)    
@@ -1188,13 +1189,16 @@ def plot_hhp(eppmy,
     for i, ax in enumerate([ax1, ax2]):     
         # lees data in een dataframe
         df.append(read_file(eppmy[i], **eppmyDict))
+        
+        # drop nul-waarden
+        df[i] = df[i].replace(0,np.nan).dropna(axis=0, how='all')
     
         # hindersom naar dB
         nhhp = len(df[i].index)
         if nhhp == 35:
             t = 24
         else:
-            t = 8 
+            t = 8
         df[i] = df[i].apply(hs_to_db, t=t)
                 
         # verschilplot
