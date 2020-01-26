@@ -22,7 +22,7 @@ from cycler import cycler
 # -----------------------------------------------------------------------------
 def read_file (filename, delimiter='\t', **kwargs):
     '''Importeer xls-, xlsx- of tekstbestand in een dataframe,
-       als filename geen sting is dan is het waarschijnlijk al een dataframe'''    
+       als filename geen sting is dan is het waarschijnlijk al een dataframe'''
     if isinstance(filename, str):
         _, ext = splitext(filename)
         if ext in ['.xls', '.xlsx']:
@@ -31,7 +31,7 @@ def read_file (filename, delimiter='\t', **kwargs):
             print(delimiter)
             return pd.read_csv(filename, delimiter=delimiter, **kwargs)
     else:
-         return filename   
+         return filename
 
 
 # -----------------------------------------------------------------------------
@@ -39,23 +39,23 @@ def read_file (filename, delimiter='\t', **kwargs):
 # -----------------------------------------------------------------------------
 def plot_style(style='MER2019', plottype='lijnplot'):
     ''' Algemene opmaak van een plot'''
-    
+
     global xParams  # extra parameters t.o.v. rcParams
     xParams = dict()
 
     #Python_default = plt.rcParams.copy()
-    
+
     # https://matplotlib.org/users/customizing.html
     # [(k,v) for k,v in plt.rcParams.items() if 'color' in k]
-    
+
     if ':' in style:
         style, reeks = style.split(':')
     else:
         reeks = 1
 
-    if style == 'MER2020':      
+    if style == 'MER2020':
         # fonts
-        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Frutiger for Schiphol Book', 'size':6})   
+        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Frutiger for Schiphol Book', 'size':6})
 
         # grid
         # wolkengrijs 1: #9491AA
@@ -63,158 +63,159 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         # wolkengrijs 3: #EAE9EE
         plt.rc('axes', axisbelow=True, grid=True)
         plt.rc('grid', color='#BFBDCC', linewidth=0.2, linestyle='solid')
-        
+
         # spines en background
-        plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE')
+        # plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE') # achtergrond wolkengrijs 3
+        plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='white')   # achtergrond wit
 
 #        xParams['hidespines'] = ['left', 'right']
         xParams['hidespines'] = []
-        
+
         # labels
         plt.rc('axes', labelcolor='black', labelsize=10, labelpad=4)
 
-        # label lines        
+        # label lines
         xParams['labellineprop'] = {'linewidth':1, 'color':'black', 'marker':'None'}
         xParams['labellinemin'] = 1
-        
+
         # tick marks en labels
         plt.rc('xtick', labelsize=6, color='black')
-        plt.rc('ytick', labelsize=6, color='black')       
-        
+        plt.rc('ytick', labelsize=6, color='black')
+
         # ticks
         plt.rc('xtick.major', size=0, width=0.5, pad=4)
         plt.rc('ytick.major', size=0, width=0.5, pad=4)
         plt.rc('xtick.minor', size=0, width=0.5, pad=4)
         plt.rc('ytick.minor', size=0, width=0.5, pad=4)
-        
+
         # legend
         plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
         plt.rc('text', color='Black')
         xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
-    
+
         # lines en marker
         plt.rc('lines', linewidth=1,
-                        markersize=4, 
+                        markersize=4,
                         marker='o',
                         markerfacecolor='None',
                         markeredgecolor='#141251',
                         markeredgewidth=0.5)
-    
+
         # patches, o.a. voor een barplot
         plt.rc('patch', force_edgecolor=True,
                         linewidth=0.2,
                         edgecolor = 'white')
         # heatmap
 #        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
-        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])                 
-        
+        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
+
         if reeks == '1':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
-                                        ['#141251', '#25D7F4', '#027E9B', '#94B0EA', '#AA3191', '#FF8FB2', 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
+                                        ['#141251', '#25D7F4', '#027E9B', '#94B0EA', '#AA3191', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '1a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
-                                        ['#141251', '#027E9B', '#94B0EA', '#25D7F4', '#AA3191', '#FF8FB2', 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
+                                        ['#141251', '#027E9B', '#94B0EA', '#25D7F4', '#AA3191', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '2':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
                                         ['#141251', '#D285D6', '#6552A8', '#94B0EA', '#1B60DB', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '2a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
                                         ['#141251', '#6552A8', '#94B0EA', '#D285D6', '#1B60DB', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '3':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
                                         ['#141251', '#94B0EA', '#1B60DB', '#25D7F4', '#027E9B', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '3a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
                                         ['#141251', '#1B60DB', '#94B0EA', '#25D7F4', '#027E9B', '#FF8FB2',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
         elif reeks == '4':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
                                         ['#141251', '#FF8FB2', '#AA3191', '#D285D6', '#6552A8', '#94B0EA',
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
 
-    else:          
+    else:
         # fonts
         # Let op Myriad gaat niet goed bij aanmaken pdf-figuren
         plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Myriad Pro', 'size':6})
-           
+
         # grid
         plt.rc('axes', axisbelow=True, grid=True)
         plt.rc('grid', color='white', linewidth=0.5, linestyle='solid')
-        
+
         # spines  en background
-        plt.rc('axes', edgecolor='#757575', linewidth=0.5, facecolor='#e3e1d3')                 
+        plt.rc('axes', edgecolor='#757575', linewidth=0.5, facecolor='#e3e1d3')
         xParams['hidespines'] = []
-        
+
         # labels
         plt.rc('axes', labelcolor='#757575', labelsize=10, labelpad=4)
 
-        # label lines        
+        # label lines
         xParams['labellineprop'] = {'linewidth':0.5, 'color':'#757575', 'marker':'None'}
         xParams['labellinemin'] = 1
-        
+
         # tick marks en labels
         plt.rc('xtick', labelsize=6, color='#757575')
-        plt.rc('ytick', labelsize=6, color='#757575')       
-        
+        plt.rc('ytick', labelsize=6, color='#757575')
+
         # ticks
         plt.rc('xtick.major', size=0, width=0.5, pad=4)
         plt.rc('ytick.major', size=0, width=0.5, pad=4)
         plt.rc('xtick.minor', size=0, width=0.5, pad=4)
         plt.rc('ytick.minor', size=0, width=0.5, pad=4)
-        
+
         # legend
         plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
         plt.rc('text', color='#757575')
         xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
-    
+
         # lines en marker
         plt.rc('lines', linewidth=1,
-                        markersize=4, 
+                        markersize=4,
                         marker='o',
                         markerfacecolor='none',
                         markeredgecolor='#666666',
                         markeredgewidth=0.5)
-    
+
         # patches, o.a. voor een barplot
         plt.rc('patch', force_edgecolor=True,
                         linewidth=0.5,
                         edgecolor = '#4d4d4d')
-        
+
         # heatmap
         xParams['cmap'] = 'YlOrBr'
-        
+
         # specifiek voor een lijnplot
         if plottype == 'lijnplot':
             # colors
             plt.rc('axes', prop_cycle=cycler(color=
-                                        ['#e4af00', '#4a8ab7',  # MER en hieronder de 
+                                        ['#e4af00', '#4a8ab7',  # MER en hieronder de
                                                                 # de standaardkleuren
                                          '#ff7f0e', '#2ca02c', '#d62728',
                                          '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
                                          '#bcbd22', '#17becf']))
         elif plottype == 'bar':
             # colors
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de 
-                                        ['#da9100', '#e4af00', '#f0d373', '#fcf7e6',  
+            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
+                                        ['#da9100', '#e4af00', '#f0d373', '#fcf7e6',
                                                                 # de standaardkleuren
                                          '#ff7f0e', '#2ca02c', '#d62728',
                                          '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
@@ -225,7 +226,7 @@ def plot_style(style='MER2019', plottype='lijnplot'):
 # -----------------------------------------------------------------------------
 def get_cycler_color(index=0):
     ''' Cycler color o.b.v. de index
-    ''' 
+    '''
     return plt.rcParams['axes.prop_cycle'].by_key()['color'][index]
 
 # -----------------------------------------------------------------------------
@@ -233,25 +234,25 @@ def get_cycler_color(index=0):
 # -----------------------------------------------------------------------------
 def update_legend_position(ax, target, fig=None):
     '''Update legend position, target, o.b.v. bbox.x1
-    ''' 
-    if fig is None: 
+    '''
+    if fig is None:
         fig = plt.gcf()
     transf = fig.transFigure.inverted()
     renderer = fig.canvas.get_renderer()
-    
+
     bbox = ax.get_tightbbox(renderer).transformed(transf)
     diff = target-bbox.x1
-      
+
     l, b, w, h = ax.get_position().bounds
     # corrigeer x-positie
     ax.set_position([l+diff, b, w, h])
 
 def get_text_bbox(handle, ax=None, fig=None):
     '''Bounding box of text
-    ''' 
+    '''
     if fig is None: fig = plt.gcf()
     if ax is None: ax = plt.gca()
-    
+
     fig.canvas.draw()
     return handle.get_window_extent().inverse_transformed(ax.transData)
 
@@ -260,16 +261,16 @@ def get_text_bbox(handle, ax=None, fig=None):
 # -----------------------------------------------------------------------------
 def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
     '''Twee labels met lijntjes
-     
+
        gap bepaalt hoe lang de lijntjes zijn (transAxes)
        mid (optioneel) als het midden niet exact in het midden ligt (transData)
        y (optioneel) list met ylijn en ylabel
-    ''' 
+    '''
 
 
     # negeer automatisch label
     ax.set_xlabel('')
-    
+
     if y is not None:
         ylijn, ylabel = y
     else:
@@ -277,16 +278,16 @@ def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
         fig = plt.gcf()
         renderer = fig.canvas.get_renderer()
         bbox = ax.get_tightbbox(renderer)
-    
+
         # gebruik zelfde padding als voor de tick-labels en as-labels
-        bbox.y0 -= plt.rcParams['xtick.major.pad']        # lijntjes  
+        bbox.y0 -= plt.rcParams['xtick.major.pad']        # lijntjes
         bbox.y1 = bbox.y0 - plt.rcParams['axes.labelpad'] # labels
-        
+
         # transform naar axis-coordinaten
         bbox = bbox.transformed(ax.transAxes.inverted())
         ylijn = bbox.y0
         ylabel = bbox.y1
-    
+
     # bepaal het midden van de as
     if mid is not None:
         xlim = ax.get_xlim()
@@ -295,10 +296,10 @@ def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
         xmid = 0.5
 
     # slechts één label?
-    if isinstance(labels, str): 
+    if isinstance(labels, str):
         labels = [labels]
         xmid *= 2 # trucje voor de loop
-    
+
     # labels centreren relatief t.o.v. het mid-punt
     for i, label in enumerate(labels):
         xlabel = (i + xmid) / 2
@@ -319,22 +320,22 @@ def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
                                 transform=ax.transAxes,
                                 **xParams['labellineprop'])
             ax.add_line(line)
-    
+
     return ylijn, ylabel
 
 
 
 def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
     '''Twee labels met lijntjes
-     
+
        gap bepaalt hoe lang de lijntjes zijn (transAxes)
        mid (optioneel) als het midden niet exact in het midden ligt (transData)
        x (optioneel) list met xlijn en xlabel
-    ''' 
+    '''
 
     # negeer automatisch label
     ax.set_ylabel('')
-    
+
     if x is not None:
         xlijn, xlabel = x
     else:
@@ -342,16 +343,16 @@ def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
         fig = plt.gcf()
         renderer = fig.canvas.get_renderer()
         bbox = ax.get_tightbbox(renderer)
-    
+
         # gebruik zelfde padding als voor de tick-labels en as-labels
-        bbox.x0 -= plt.rcParams['xtick.major.pad']        # lijntjes  
+        bbox.x0 -= plt.rcParams['xtick.major.pad']        # lijntjes
         bbox.x1 = bbox.x0 - plt.rcParams['axes.labelpad'] # labels
-        
+
         # transform naar axis-coordinaten
         bbox = bbox.transformed(ax.transAxes.inverted())
         xlijn = bbox.x0
         xlabel = bbox.x1
-    
+
     # bepaal het midden van de as
     if mid is not None:
         ylim = ax.get_ylim()
@@ -360,10 +361,10 @@ def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
         ymid = 0.5
 
     # slechts één label?
-    if isinstance(labels, str): 
+    if isinstance(labels, str):
         labels = [labels]
         ymid *= 2 # trucje voor de loop
-    
+
     # labels centreren relatief t.o.v. het mid-punt
     for i, label in enumerate(labels):
         ylabel = (i + ymid) / 2
@@ -393,7 +394,7 @@ def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
 def plot_baansimulaties(inpFile,
                         inpFileDict = {},
                         x='dagvolume',
-                        y='D4', 
+                        y='D4',
                         fname='',
                         xlabel='verkeersbewegingen per dag',
                         ylabel='gebruik vierde baan',
@@ -416,7 +417,7 @@ def plot_baansimulaties(inpFile,
 
     # inlezen data
     df = read_file(inpFile, **inpFileDict)
-        
+
     # init plot
     if histogram:
         fig = plt.figure()
@@ -426,65 +427,66 @@ def plot_baansimulaties(inpFile,
         ax1 = fig.add_subplot(gs[0, :-1])
     else:
         fig, ax1 = plt.subplots()
-    
+
     fig.set_size_inches(21/2.54, 7/2.54)
 
     # margins
     plt.subplots_adjust(bottom=0.2)
-            
+
     # linker plot (2D histogram)
     xmin, xmax = xlim
     xbins = np.arange(xmin, xmax+bin, bin)
     ymin, ymax = ylim
     ybins = np.arange(ymin, ymax+bin, bin)
-    
+
     p, _, _ = np.histogram2d(df[x], df[y], bins=[xbins, ybins])
     p = np.ma.masked_equal(p, 0) # maskeer nul-waarden
     p = p.T                      # x- en y-as zijn verwisseld
-    
-    ax1.imshow(p, 
-               interpolation='nearest', 
+
+    ax1.imshow(p,
+               interpolation='nearest',
                origin='low',
                extent=[xmin, xmax, ymin, ymax],
                cmap= xParams['cmap'],
                norm=colors.LogNorm(vmin=1, vmax=p.max()), # 0,2 om witte datapunten te voorkomen
                aspect='auto',
                zorder=4)
-    
+
     # X-as
     yloc = set_xlabels(xlabel, ax=ax1)
-    if xstep is not None:    
+    if xstep is not None:
         ax1.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
-    
+
     # Y-as
     set_ylabels(ylabel, ax=ax1)
     ax1.set_ylim(0, ymax)
-    if ystep is not None:    
+    if ystep is not None:
         ax1.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
-    
+
     # histogram
     if histogram:
         ax2 = fig.add_subplot(gs[0, -1], sharey=ax1)
         ybins = np.arange(ymin, ymax+histbin, histbin)
-        df[y].hist(bins=ybins, 
+        df[y].hist(bins=ybins,
                    weights=np.ones_like(df[y]) * 100. / len(df),
-                   color=get_cycler_color(2),
+                   # color=get_cycler_color(3),
+                   color='#1B60DB',
                    rwidth=0.7,
-                   orientation='horizontal', 
+                   orientation='horizontal',
                    ax=ax2)
-        
+
         # X-as
         set_xlabels(histxlabel, ax=ax2, y=yloc)
         ax2.set_xlim(histxlim)
 #        ax2.tick_params(labelbottom=False, labeltop=True)
-        
-        if histxstep is not None:    
+
+        if histxstep is not None:
             ax2.xaxis.set_major_locator(ticker.MultipleLocator(histxstep))
         ax2.xaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
-        
+
         # Y-as
         ax2.tick_params(labelleft=False)
-                  
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     fig.savefig(fname, dpi=dpi)
@@ -516,7 +518,7 @@ def plot_kansverdeling(inpFile,
     df = read_file(inpFile, **inpFileDict)
     p = df[y].values
     print('en gaan')
-    
+
     # n simulaties
     n = np.zeros(simulaties)
     for i in range(simulaties):
@@ -529,8 +531,8 @@ def plot_kansverdeling(inpFile,
 
     # margins
     plt.subplots_adjust(bottom=0.2)
-    
-    # plot  
+
+    # plot
     plt.hist(n,
              bins=bins,
              weights=np.ones_like(n) * 100. / simulaties,
@@ -545,14 +547,14 @@ def plot_kansverdeling(inpFile,
 
     # Y-as
     ax.set_ylim(ylim)
-    if ystep is not None:    
+    if ystep is not None:
         ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
     ax.yaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
     set_ylabels(ylabel, ax=ax)
- 
+
     # geen verticale  gridlines
     ax.xaxis.grid(which='major', color='None')
-      
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -560,9 +562,9 @@ def plot_kansverdeling(inpFile,
         plt.close(fig)
     else:
         return fig, ax
-    
-    
-    
+
+
+
 # -----------------------------------------------------------------------------
 # Concentraties (Luchtkwaliteit)
 # -----------------------------------------------------------------------------
@@ -591,39 +593,40 @@ def plot_concentraties(inpFile,
     if labels is not None:
         df = df.rename(columns=dict(zip(y, labels)))
         y = labels
-        
-    # plot  
+
+    # plot
     ax = df.plot.bar(y=y,
                      stacked=True,
-                     figsize=(21/2.54, 7/2.54), # figsize is in inches        
+                     figsize=(21/2.54, 7/2.54), # figsize is in inches
                      width=0.4,
+                     edgecolor='none',
                      ylim=ylim)
 
     # margins
     plt.subplots_adjust(bottom=0.2)
-        
+
     # geen verticale  gridlines
     ax.xaxis.grid(which='major', color='None')
-        
+
     # assen
-    ax.axes.tick_params(axis='both', which='both', labelrotation=0)    
+    ax.axes.tick_params(axis='both', which='both', labelrotation=0)
 
     # X-as
     if xticklabels is not None:
         ax.set_xticklabels(xticklabels)
     else:
         ax.set_xticklabels(df['zichtjaar'].map(str) + '\n' + df['stelsel'])
-    set_xlabels(xlabels, ax=ax)    
-    
+    set_xlabels(xlabels, ax=ax)
+
     # Y-as
-    set_ylabels(ylabel, ax=ax) 
-    
+    set_ylabels(ylabel, ax=ax)
+
     # scheidingslijntje tussen subplots
     ax.axvline(sum(ax.get_xlim())/2,
                marker='',
                color='white',
                linewidth=2,
-               zorder=0)      
+               zorder=0)
 
     # legend
     if ncol is None: ncol = len(y)
@@ -632,12 +635,12 @@ def plot_concentraties(inpFile,
                     ncol=ncol,
                     handletextpad=-0.5,
                     **xParams['legend'])
-    
+
     for patch in leg.get_patches():  # Maak de patches vierkant
         patch.set_height(5)
         patch.set_width(5)
-        patch.set_y(-1)              # Vertikaal uitlijnen      
-        
+        patch.set_y(-1)              # Vertikaal uitlijnen
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -645,7 +648,7 @@ def plot_concentraties(inpFile,
         plt.close(fig)
     else:
         return fig, ax
-    
+
 
 # -----------------------------------------------------------------------------
 # Groepsrisico (externe veiligheid)
@@ -671,7 +674,7 @@ def plot_groepsrisico(inpFile,
     # converteer naar list
     if isinstance(y, str): y =[y]
     if isinstance(labels, str): labels =[labels]
-    
+
     # lees data in een dataframe
     cols = [x] + y
     df = read_file(inpFile, **inpFileDict)[cols]
@@ -690,30 +693,30 @@ def plot_groepsrisico(inpFile,
                  xlim=[10,1000],
                  ylim=[10**-8, 10**-3],
                  marker='None')
-    
+
     # margins
     plt.subplots_adjust(bottom=0.2)
-    
+
     # X-as
     set_xlabels(xlabel, ax=ax)
     ax.xaxis.set_tick_params(which='minor', labelsize=4, pad=5)
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.xaxis.set_minor_formatter(ticker.ScalarFormatter())
-    
+
     # toon ook minor gridlines
     ax.xaxis.grid(which='minor')
-    
+
     # Y-as
     set_ylabels(ylabel, ax=ax)
-    
+
     # hide spines
     for side in xParams['hidespines']:
         ax.spines[side].set_color('none')
-    
+
     # legend
     if ncol is None: ncol = len(y)
     ax.legend(ncol=ncol, **xParams['legend'])
-             
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -729,7 +732,7 @@ def plot_groepsrisico(inpFile,
 def plot_verkeer(inpFile,
                  inpFileDict = {'sheet_name': 'realisatie'},
                  x='jaar',
-                 y='verkeer', 
+                 y='verkeer',
                  labels=None,
                  xlabel=None,
                  ylabel=None,
@@ -749,11 +752,11 @@ def plot_verkeer(inpFile,
 
     # algemene plotstyle voor de mer
     plot_style(style)
- 
+
     # converteer naar list
     if isinstance(y, str): y =[y]
     if isinstance(labels, str): labels =[labels]
-    
+
     # lees data in een dataframe
     cols = [x] + y
     df = read_file(inpFile, **inpFileDict)[cols]
@@ -762,37 +765,37 @@ def plot_verkeer(inpFile,
     if labels is not None:
         df = df.rename(columns=dict(zip(y, labels)))
         y = labels
-        
+
     # plot
     ax = df.plot(x=x,
                  y=y,
                  figsize=(21/2.54, 7/2.54), # figsize is in inches
                  clip_on=clip_on,
                  **kwargs)
-            
+
     # margins
     plt.subplots_adjust(bottom=0.2)
-    
+
     # X-as
     if xlabel is not None:
         set_xlabels(xlabel, ax=ax)
     else:
         ax.set_xlabel('') # verberg as-label
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
-    if xstep is not None:    
+    if xstep is not None:
         ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
-    
+
     # Y-as
     if xlabel is not None:
         set_ylabels(ylabel, ax=ax)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
-    if ystep is not None:    
+    if ystep is not None:
         ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
 
     # legend
     if ncol is None: ncol = len(y)
     ax.legend(ncol=ncol, **xParams['legend'])
-    
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -813,7 +816,7 @@ def plot_verkeersverdeling(trafficFile,
                            capacityFileDict = {},
                            capFactor = 1,
                            percentiel = None,
-                           taxitime = {'L':0, 'T':0}, 
+                           taxitime = {'L':0, 'T':0},
                            fname=None,
                            ylim=[-30, 30],
                            reftraffic=1,
@@ -824,7 +827,7 @@ def plot_verkeersverdeling(trafficFile,
     def AbsFormatter(x, pos):
         'The two args are the value and tick position'
         return '{:1.0f}'.format(abs(x))
-    
+
     def BlokuurFormatter(x, pos):
         'The two args are the value and tick position'
         return '{:d}:00'.format(x//3)
@@ -837,35 +840,78 @@ def plot_verkeersverdeling(trafficFile,
     fig.set_size_inches(21/2.54, 9/2.54)
 
     # SLOND-colors
-    colorTab = {'S': '#cdbbce',
-                'L': '#cdbbce',
-                'O': '#8fbbd6',
-                'N': '#d1e6bd',
-                'D': '#f1b7b1',
-                'DS': '#f1b7b1',
-                'DL': '#f1b7b1'}
-                
+    # colorTab = {'S': '#cdbbce',
+    #             'L': '#cdbbce',
+    #             'O': '#8fbbd6',
+    #             'N': '#d1e6bd',
+    #             'D': '#f1b7b1',
+    #             'DS': '#f1b7b1',
+    #             'DL': '#f1b7b1'}
+    colorTab = {'S': '#a393bd',
+                'L': '#a393bd',
+                'O': '#91b5de',
+                'N': '#c0c1cf',
+                'D': '#f8a3a8',
+                'DS': '#f8a3a8',
+                'DL': '#f8a3a8'}
+# ik
+    colorTab = {'S': '#ffb9cf',
+                'L': '#ffb9cf',
+                'O': '#91b5de',
+                'N': '#a093cb',
+                'D': '#db83c9',
+                'DS': '#db83c9',
+                'DL': '#db83c9'}
+# Jan blz 2, fig 1 - andere kleurvolgorde
+    colorTab = {'S': '#91DCE8',
+                'L': '#91DCE8',
+                'O': '#E39A96',
+                'N': '#F6CECC',
+                'D': '#63A5BA',
+                'DS': '#63A5BA',
+                'DL': '#63A5BA'}
+    alpha=1.0# Jan blz 2, fig 1 - nacht gewijzigd
+    colorTab = {'S': '#91DCE8',
+                'L': '#91DCE8',
+                'O': '#E39A96',
+                'N': '#D9D7E2',
+                'D': '#63A5BA',
+                'DS': '#63A5BA',
+                'DL': '#63A5BA'}
+    alpha=1
+# # Jan blz 3, fig 1
+#     colorTab = {'S': '#AD8CB9',
+#                 'L': '#AD8CB9',
+#                 'O': '#E39A96',
+#                 'N': '#F6CECC',
+#                 'D': '#8D076B',
+#                 'DS': '#8D076B',
+#                 'DL': '#8D076B'}
+#     alpha=0.6   
+    
+    
+    
     # plot bracketlist/periodstable (optioneel)
     if bracketFile is not None:
         bracketList = read_file(bracketFile, **bracketFileDict)
-    
+
         if capacityFile is not None:
             capacity = read_file(capacityFile, **capacityFileDict)
-    
+
             # merge capacity met bracketlist
             bracketList['period'] = bracketList['period'].str.split(',', 1).str[0]
             bracketList = bracketList.merge(capacity, on='period', how='left')
-    
+
         # arrivals onder de as
         bracketList['Lcap'] *= -1 * capFactor
         bracketList['Tcap'] *= 1 * capFactor
-        
-        # SLOND-color      
+
+        # SLOND-color
         if 'period' in bracketList:
             color = bracketList['period'].map(colorTab)
         else:
             color = '#cdbbce'
-            
+
         for cap in ['Lcap', 'Tcap']:
             bracketList.plot.bar(y=cap,
                                  legend=None,
@@ -873,48 +919,49 @@ def plot_verkeersverdeling(trafficFile,
                                  width=1, # barwidth
                                  color=color,
                                  edgecolor='none',
+                                 alpha=alpha,
                                  zorder=-1,
-                                 ax=ax)    
-        
-    # read traffic/sirFile                          
+                                 ax=ax)
+
+    # read traffic/sirFile
     print('Read\n', trafficFile)
     df = read_file(trafficFile, **trafficFileDict)
-    
+
     # Add keys
     if not 'total' in df.columns:
-        df['total'] = 1    
-    
+        df['total'] = 1
+
     # baantijd
     tijd = pd.to_datetime(df['d_schedule'])
-    
+
     arr = df['d_lt'].isin(['A', 'L'])
     dep = ~arr # df['d_lt'].isin(['D', 'T'])
-    
+
     tijd[arr] -= pd.Timedelta(taxitime['L'], unit='minute')
     tijd[dep] += pd.Timedelta(taxitime['T'], unit='minute')
-    
+
     hour = tijd.dt.hour
     minute = tijd.dt.minute
-    
+
     # tijdblok
     df['tijdsblok'] = pd.Categorical(1 + hour*3 + minute//20, categories=range(1, 73))
-    
+
     # verdeling over het etmaal - eerst per dag, daarna mean of percentiel
     PerDag = df.groupby(['d_lt', 'tijdsblok', 'd_date']).sum().fillna(0)
-    
+
     if percentiel is not None:
         PerTijdsblok = PerDag.groupby(['d_lt', 'tijdsblok']).quantile(percentiel).reset_index()
     else:
         PerTijdsblok = PerDag.groupby(['d_lt', 'tijdsblok']).mean().reset_index()
-    
+
     # debug: export naar Excel
     # PerTijdsblok.to_excel('test.xlsx')
-    
+
     # dep boven en arr onder
     arr = PerTijdsblok['d_lt'].isin(['A', 'L'])
     dep = ~arr
     PerTijdsblok.loc[arr, 'total'] *= -1
-    
+
     # plot departures / arrivals
     for dest, c in [[arr, 0], [dep, 0]]:  #, ['#fdbb4b', '#4a8ab7']:
         PerTijdsblok[dest].plot.bar(x='tijdsblok',
@@ -922,8 +969,9 @@ def plot_verkeersverdeling(trafficFile,
                                     legend=None,
                                     width=0.5,
                                     facecolor=get_cycler_color(c),
+                                    edgecolor='none',
                                     ax=ax)
-    
+
     # gridlines
 #    ax.xaxis.grid(which='minor')
 #    ax.xaxis.set_major_locator(ticker.FixedLocator(np.arange(0.5,72,1)))
@@ -931,37 +979,40 @@ def plot_verkeersverdeling(trafficFile,
 
     # X-as
     ax.xaxis.set_tick_params(labelrotation=0)
-    ax.set_xlabel('')             # verberg as-label 
+    ax.set_xlabel('')             # verberg as-label
     ax.xaxis.set_ticklabels([])   # verberg major tick labels
 
-    ax.xaxis.set_minor_locator(ticker.FixedLocator(np.arange(1,71,3)))  
+    ax.xaxis.set_minor_locator(ticker.FixedLocator(np.arange(1,71,3)))
     ax.xaxis.set_minor_formatter(ticker.FuncFormatter(BlokuurFormatter))
-    
+
+    # 0-as
+    ax.axhline(marker='None', lw=plt.rcParams['axes.linewidth'])
+
     # maak een tweede x-as voor de lijntjes
-    # https://stackoverflow.com/questions/45404686/how-to-add-third-level-of-ticks-in-python-matplotlib 
+    # https://stackoverflow.com/questions/45404686/how-to-add-third-level-of-ticks-in-python-matplotlib
 #    ax2 = ax.twiny()
 #    ax2.set_xlim(ax.get_xlim())
 #    ax2.spines["bottom"].set_position(('outward', 3))
-#    # alleen tickmarks, dus verberg de assen zelf 
+#    # alleen tickmarks, dus verberg de assen zelf
 #    for side in ax2.spines:
 #        ax2.spines[side].set_color('none')
-#        
+#
 #    ax2.xaxis.set_major_locator(ticker.FixedLocator(np.arange(-0.5,72.5,3)))
 #    ax2.xaxis.set_ticks_position("bottom")
-#    ax2.xaxis.set_tick_params(which='major', length=7, grid_color='none') 
+#    ax2.xaxis.set_tick_params(which='major', length=7, grid_color='none')
 #    ax2.xaxis.set_ticklabels([])
-     
+
     # Y-as
-    ax.set_ylim(*ylim)        
+    ax.set_ylim(*ylim)
     ax.yaxis.set_major_locator(ticker.MultipleLocator(5))
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(AbsFormatter))
 
     # labels met lijntjes
     set_xlabels('tijd', ax=ax)
     set_ylabels(['landingen', 'starts'], mid=0, ax=ax)
-    
+
     # legend - capaciteit
-    if bracketFile is not None:       
+    if bracketFile is not None:
         w = 1/72
         x = 0.72
         ys = [1.0492, 1.0353, 1.0492, 1.0561, 1.0457]
@@ -977,25 +1028,26 @@ def plot_verkeersverdeling(trafficFile,
                     transform=ax.transAxes)
             else:
                 c = '#cdbbce'
-                
-            rect = Rectangle(xy=(x, y), 
+
+            rect = Rectangle(xy=(x, y),
                              width=w,
                              height=h,
                              facecolor=c,
                              edgecolor='white',
                              linewidth=0.5,
+                             alpha=alpha,
                              clip_on=False,
                              transform=ax.transAxes)
             ax.add_patch(rect)
             x += w
-        
+
         ax.text(x+w/2, 1.07,
                 'baancapaciteit',
                 fontsize=plt.rcParams['legend.fontsize'],
                 ha='left',
                 va='center',
                 transform=ax.transAxes)
-    
+
     # legend - verkeer
     w = .5/72
     y = 1.07
@@ -1005,34 +1057,35 @@ def plot_verkeersverdeling(trafficFile,
     for c, heights in zip(colors, [h1, h2]):
         x = 0.92
         for h in heights:
-            rect = Rectangle(xy=(x, y), 
+            rect = Rectangle(xy=(x, y),
                              width=w,
                              height=h,
                              facecolor=c,
+                             edgecolor='none',
 #                             edgecolor='#757575',
 #                             linewidth=0.25,
                              clip_on=False,
                              transform=ax.transAxes)
-            ax.add_patch(rect)    
-            x += w
-    
+            ax.add_patch(rect)
+            x += w*1.2
+
     ax.text(x+w/2, 1.07,
             'verkeer',
             fontsize=plt.rcParams['legend.fontsize'],
             ha='left',
             va='center',
             transform=ax.transAxes)
-        
+
     # save figure
     if fname:
         fig.savefig(fname, dpi=dpi)
         plt.close(fig)
     else:
         return fig, ax
-    
-# -----------------------------------------------------------------------------        
+
+# -----------------------------------------------------------------------------
 # Plot vlootmix
-# -----------------------------------------------------------------------------    
+# -----------------------------------------------------------------------------
 def plot_vlootmix(inpFile,
                  inpFileDict = {},
                  x='d_mtow',
@@ -1057,13 +1110,13 @@ def plot_vlootmix(inpFile,
 
     # algemene plotstyle voor de mer
     plot_style(style, plottype='bar')
-        
+
     # init plot
     fig, ax = plt.subplots()
     fig.set_size_inches(21/2.54, 7/2.54)
     zorder = len(inpFile)
 
-    # auto bins, nbins logaritmisch tussen 10 en 600 
+    # auto bins, nbins logaritmisch tussen 10 en 600
     if bins is None:
         # afronden naar int strikt genomen niet noodzakelijk
         bins = np.rint(np.logspace(np.log10(10),np.log10(600), nbins)).astype(int)
@@ -1071,14 +1124,14 @@ def plot_vlootmix(inpFile,
     # auto widths
     if widths is None:
         widths = [0.7**(len(inpFile)-i-1) for i in range(len(inpFile))]
-    
+
     # ter info: gemiddeld MTOW
     print('situatie         jaarvolume  avg.MTOW')
     print('-------------------------------------')
-    
+
     for inp, label, width in zip(inpFile, labels, widths):
-    
-        df = read_file(inp)      
+
+        df = read_file(inp)
         print('{:20s} {:6.0f}  {:8.0f}'.format(label, df[y].sum(), (df[x]*df[y]).sum()/df[y].sum()))
 
         df[x].hist(label=label,
@@ -1089,46 +1142,46 @@ def plot_vlootmix(inpFile,
                    ax=ax,
                    **kwargs)
         zorder += -1 # reverse plot order
-        
+
         # add bin en save als xls
         df['bin'] = pd.cut(df[x], bins)
         out = splitext(inp)[0] + f'_{nbins}bins.xls'
         df.to_excel(out)
-        
+
     print('-------------------------------------\n')
-        
+
     # margins
     plt.subplots_adjust(bottom=0.2)
-    
+
     # X-as
     ax.set_xscale("log")
     ax.set_xlim(bins[0], bins[-1])
-    
+
     ax.xaxis.set_major_formatter(ticker.ScalarFormatter())
     ax.xaxis.set_minor_formatter(ticker.ScalarFormatter())
-    
+
     set_xlabels(xlabel, ax=ax)
-    
+
     # toon ook minor gridlines
     ax.xaxis.grid(which='minor')
-        
+
     # Y-as
     ax.set_ylim(ylim)
     ax.yaxis.set_major_formatter(ticker.PercentFormatter(decimals=0))
-    
+
     set_ylabels(ylabel, ax=ax)
-    
+
     # legend
     if ncol is None: ncol = len(inpFile)
-    leg = ax.legend(ncol=ncol, 
+    leg = ax.legend(ncol=ncol,
                     handletextpad=-0.5,
                     **xParams['legend'])
-    
+
     for patch in leg.get_patches():  # Maak de patches vierkant
         patch.set_height(5)
         patch.set_width(5)
-        patch.set_y(-1)              # Vertikaal uitlijnen      
-             
+        patch.set_y(-1)              # Vertikaal uitlijnen
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -1144,7 +1197,7 @@ def plot_vlootmix(inpFile,
 def hs_to_db(hs, t):
     '''Converteer hindersommen naar dB'''
     return 10*np.log10(hs) - 10*np.log10(365*t*60*60)
-    
+
 def plot_hhp(eppmy,
              eppmyDict = {'delimiter':' ', 'header':None, 'index_col':0},
              mtg=None,
@@ -1165,7 +1218,7 @@ def plot_hhp(eppmy,
              alpha=0.2,
              dpi=600,
              **kwargs):
-    '''Plot geluidbelasting in handhavingspunten. 
+    '''Plot geluidbelasting in handhavingspunten.
        bij een deltaplot wordt de eerste eppmy geplot en
        wordt de tweede gebruikt voor het berekenen van het verschil.'''
 
@@ -1180,7 +1233,7 @@ def plot_hhp(eppmy,
 
     # algemene plotstyle voor de mer
     plot_style(style)
-    
+
     # init plot
     fig = plt.figure()
     fig.set_size_inches(21/2.54, 14/2.54)
@@ -1190,19 +1243,19 @@ def plot_hhp(eppmy,
                   hspace=0.1, figure=fig)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
-    
+
     # lees MTG in een dataframe
     gw = read_file(mtg, **mtgDict)
     gw.index += 1 # index vanaf 1 ipv 0
 
     df = []
-    for i, ax in enumerate([ax1, ax2]):     
+    for i, ax in enumerate([ax1, ax2]):
         # lees data in een dataframe
         df.append(read_file(eppmy[i], **eppmyDict))
-        
+
         # drop nul-waarden
         df[i] = df[i].replace(0,np.nan).dropna(axis=0, how='all')
-    
+
         # hindersom naar dB
         nhhp = len(df[i].index)
         if nhhp == 35:
@@ -1210,11 +1263,11 @@ def plot_hhp(eppmy,
         else:
             t = 8
         df[i] = df[i].apply(hs_to_db, t=t)
-                
+
         # verschilplot
         if i==1 and deltaplot:
             df[i] = df[0] - df[i]
-        
+
         # plot
         df[i].plot(style='o',
                   markeredgecolor=get_cycler_color(2),
@@ -1223,7 +1276,7 @@ def plot_hhp(eppmy,
                   clip_on=clip_on,
                   ax=ax,
                   **kwargs)
-        
+
         # grenswaarden (MTG)
         if i==0 or not deltaplot:
             gw.plot(style='_',
@@ -1234,14 +1287,14 @@ def plot_hhp(eppmy,
                     clip_on=clip_on,
                     ax=ax,
                     **kwargs)
-    
+
         # X-as
         if xlim is not None:
             ax.set_xlim(xlim)
         else:
             z = ax.get_xlim()
             ax.set_xlim(z[0]-0.99, z[1]+0.99)
-        if xstep is not None:    
+        if xstep is not None:
             ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
         if i==1 and xlabel is not None:
             set_xlabels(xlabel, ax=ax)
@@ -1250,10 +1303,10 @@ def plot_hhp(eppmy,
         if i==0 or deltaplot:
             # 0-as
             ax.axhline(marker='None', lw=plt.rcParams['axes.linewidth'])
-        
+
         # Y-as
         ax.set_ylim(ylim[i])
-        if ystep is not None:    
+        if ystep is not None:
             ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep[i]))
         ax.yaxis.set_major_formatter(ticker.FuncFormatter(dbaFormatter))
 
@@ -1261,11 +1314,11 @@ def plot_hhp(eppmy,
             set_ylabels(ylabel[i], ax=ax)
 
     # legenda
-    ax0 = fig.add_axes([0.0, 0.89, 0.1, 0.1]) 
-    
+    ax0 = fig.add_axes([0.0, 0.89, 0.1, 0.1])
+
     # geen assen
     ax0.axis('off')
-    
+
     # genormaliseerde asses
     ax0.set_xlim(0, 1)
     ax0.set_ylim(0, 1)
@@ -1273,7 +1326,7 @@ def plot_hhp(eppmy,
     # reeks 1: dots
     np.random.seed(0)
     y = np.random.normal(0.11,0.1,15)
-    x = [0] * len(y)    
+    x = [0] * len(y)
     ax0.plot(x, y, 'o',
              markeredgecolor=get_cycler_color(2),
              markersize=plt.rcParams['lines.markersize']*0.8,
@@ -1292,10 +1345,10 @@ def plot_hhp(eppmy,
     ax0.text(1.12, 0.1, 'grenswaarde',
              transform=ax0.transAxes,
              horizontalalignment='left')
-    
+
     # Check uitlijning van de legend
     update_legend_position(ax0, target=0.9-0.01)
-    
+
     # save figure
     fig = plt.gcf()  # alternatief fig = ax.get_figure()
     if fname:
@@ -1329,7 +1382,7 @@ def plot_baangebruik(trf_files,
     def GetVal(var, i):
         'Scalar of een list'
         if isinstance(var, list):
-            i = min(i, len(var)-1) # hergebruik van de laatste waarde 
+            i = min(i, len(var)-1) # hergebruik van de laatste waarde
             return var[i]
         else:
             return var
@@ -1342,10 +1395,10 @@ def plot_baangebruik(trf_files,
 
     # algemene plotstyle voor de mer
     plot_style(style)
-    
+
     # converteer naar list
     if isinstance(trf_files, str): trf_files =[trf_files]
-            
+
     # X-positie van de bars
     x = np.arange(n)
 
@@ -1353,14 +1406,14 @@ def plot_baangebruik(trf_files,
     i = ntrf - 1
     w = GetVal(BarWidth, i) * n/7  # normaliseer voor de aslengte
     g = GetVal(BarGap, i)          # of /ntrf?
-    
+
     dx = [(w+g)*(x - 0.5*(ntrf-1)) for x in range(ntrf)]
-    
+
     # markers en staafjes
-    marker_height = (GetVal(MarkerHeight, i) * (ylim[-1] - ylim[0]) / 10) 
+    marker_height = (GetVal(MarkerHeight, i) * (ylim[-1] - ylim[0]) / 10)
     mw = GetVal(MarkerWidth, i) * n/7
     dxm = list(dx)
-    
+
     # clip marker
     if ntrf == 2:
         mw = (mw + w)/2
@@ -1368,25 +1421,25 @@ def plot_baangebruik(trf_files,
         dxm[1] = dx[1] + (mw-w)/2
     elif ntrf > 2:
         mw = min(mw, w+g)
-    
+
     # twee aansluitende subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
     fig.set_size_inches(21/2.54, 10/2.54)
-    
+
     # margins
     fig.subplots_adjust(bottom=0.18, wspace=0)
-    
+
     # verwerken traffics
     for i, trf_file in enumerate(trf_files):
-        
+
         # lees csv
         trf = pd.read_csv(trf_file, delimiter='\t')
         trf = trf.loc[trf['d_den'].isin(den)]
-        
+
         # aggregeer etmaalperiode en bereken stats
         trf = trf.groupby(['d_lt', 'd_runway', 'd_myear'])['total'].sum().reset_index()
         trf_stats = trf.groupby(['d_lt', 'd_runway'])['total'].agg(['min','max','mean']).reset_index()
-        
+
         # sorteer
         if 'key' not in trf_stats.columns:
             trf_stats['key'] = trf_stats['d_lt'] + trf_stats['d_runway']
@@ -1394,34 +1447,34 @@ def plot_baangebruik(trf_files,
         if runways is not None:
             # tweede traffic in dezelfde volgorde
             keys = [k + r for k in runways for r in runways[k]]    # keys: combinatie van lt en runway
-            sorterIndex = dict(zip(keys, range(len(keys))))        # plak een volgnummer aan de keys     
+            sorterIndex = dict(zip(keys, range(len(keys))))        # plak een volgnummer aan de keys
             trf_stats['order'] = trf_stats['key'].map(sorterIndex) # soteerindex toevoegen
             trf_stats = trf_stats.sort_values(by=['order'])        # sorteer dataframe
         else:
             trf_stats = trf_stats.sort_values(by=['d_lt', 'mean'], ascending=False)
             runways = {'L': trf_stats['d_runway'].loc[trf_stats['d_lt'] == 'L'],
                        'T': trf_stats['d_runway'].loc[trf_stats['d_lt'] == 'T']}
-        
+
         # maak de plot
         for lt, xlabel, ax in zip(['T', 'L'], ['starts', 'landingen'], [ax1, ax2]):
-            
+
             # selecteer L of T
             trf2 = trf_stats.loc[trf_stats['d_lt'] == lt]
             trf2 = trf2.head(n) # gaat alleen goed als er ook echt n-runways zijn
-            
+
             # staafjes
             bar_height = trf2['max'] - trf2['min']
             if i == reftraffic:
                 c = 1
             else:
                 c = 0
-                
-            ax.bar(x+dx[i], 
+
+            ax.bar(x+dx[i],
                    height=bar_height.values,
                    bottom=trf2['min'].values,
                    width=w,
                    color=get_cycler_color(c))
-            
+
             # gemiddelde
             ax.bar(x+dxm[i],
                     height=marker_height,
@@ -1430,15 +1483,15 @@ def plot_baangebruik(trf_files,
                     color=get_cycler_color(c))
 
             # opmaak, alleen de eerste keer
-            if i == 0:   
+            if i == 0:
                 # geen vertikale gridlines
-                ax.grid(which='major', axis='x', b=False)            
-                                        
+                ax.grid(which='major', axis='x', b=False)
+
                 # X-as
                 ax.set_xticks(x)
                 ax.set_xticklabels(trf2['d_runway'])
                 set_xlabels(xlabel, gap=0.02, ax=ax)
-                
+
                 # Y-as
                 ax.set_ylim(ylim)
                 ax.yaxis.set_major_locator(ticker.MultipleLocator(base=dy))
@@ -1454,21 +1507,21 @@ def plot_baangebruik(trf_files,
                    marker='',
                    color='white',
                    linewidth=2,
-                   zorder=0)              
-            
+                   zorder=0)
+
     # nummertjes
     if numbers:
         xp = []
-        yp = []                
+        yp = []
         for i, p in enumerate(ax1.patches):
             if not i%(n*2):
                 xp.append(p.get_x() + p.get_width()/2)
                 yp.append(p.get_y())
         for i, x in enumerate(xp):
-            ax1.text(x, 0.95 * min(yp), str(i), 
+            ax1.text(x, 0.95 * min(yp), str(i),
                      ha='center', va='top', fontsize=3)
 
-    # legenda    
+    # legenda
     if ntrf == 2:
         w *= 0.8                # legenda op 80%
         g *= 0.8
@@ -1485,13 +1538,13 @@ def plot_baangebruik(trf_files,
                        (1, 0.25, 0.00, 0.15, None),
                        (2, 0.35, 0.10, 0.15, 'left'),
                        (3, 0.30, 0.05, 0.15, 'left')]
-        
+
     # plotgebied
-    ax0 = fig.add_axes([0, 0.89, 0.025, 0.1]) 
+    ax0 = fig.add_axes([0, 0.89, 0.025, 0.1])
 
     # geen assen
     ax0.axis('off')
-    
+
     # genormaliseerde asses
     ax0.set_xlim(0, 0.5*n/7)
     ax0.set_ylim(0, 1)
@@ -1517,12 +1570,12 @@ def plot_baangebruik(trf_files,
             # maak ruimte voor text label
             bbox = get_text_bbox(t)
             dx[3] += bbox.x1
-            
+
 
     # Check uitlijning van de legend
     update_legend_position(ax0, target=0.9-0.01)
 
-    # save figure               
+    # save figure
     if fname:
         fig.savefig(fname, dpi=dpi)
         plt.close(fig)
