@@ -48,6 +48,7 @@ def plot_style(style='MER2019', plottype='lijnplot'):
     # https://matplotlib.org/users/customizing.html
     # [(k,v) for k,v in plt.rcParams.items() if 'color' in k]
 
+    
     if ':' in style:
         style, reeks = style.split(':')
     else:
@@ -62,7 +63,7 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         # wolkengrijs 2: #BFBDCC
         # wolkengrijs 3: #EAE9EE
         plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='#BFBDCC', linewidth=0.2, linestyle='solid')
+        plt.rc('grid', color='#BFBDCC', linewidth=0.3, linestyle='solid')
 
         # spines en background
         # plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE') # achtergrond wolkengrijs 3
@@ -88,6 +89,9 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         plt.rc('xtick.minor', size=0, width=0.5, pad=4)
         plt.rc('ytick.minor', size=0, width=0.5, pad=4)
 
+        # x- en Y-as
+        plt.rc('axes', xmargin=0, ymargin=0)
+        
         # legend
         plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
         plt.rc('text', color='Black')
@@ -781,7 +785,7 @@ def plot_verkeer(inpFile,
         set_xlabels(xlabel, ax=ax)
     else:
         ax.set_xlabel('') # verberg as-label
-    ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
+    ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
     if xstep is not None:
         ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
 
