@@ -1351,7 +1351,7 @@ def read_file (filename, delimiter='\t', **kwargs):
 def plot_history(inp,
                  inp_kwargs = {'sheet_name': 'realisatie'},
                  x='jaar',
-                 y='data',
+                 y='verkeer',
                  labels=None,
                  xlabel=None,
                  ylabel=None,
@@ -1435,8 +1435,26 @@ def plot_history(inp,
     else:
         return fig, ax
 
-def plot_prediction(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
-                    prediction_fill_between_kwargs=None, history_plot_kwargs=None):
+def plot_prediction(history, 
+                    prediction,
+                    history_kwargs={},
+                    prediction_errorbar_kwargs=None,
+                    prediction_fill_between_kwargs=None,
+                    x='jaar',
+                    y='verkeer',
+                    labels=None,
+                    xlabel=None,
+                    ylabel=None,
+                    xstep=1,
+                    ystep=None,
+                    ncol=None, ###Todo: via xParams
+                    clip_on=False,
+                    style='MER2020:1', ###Todo: via global setting?
+                    dpi=600,
+                    fname='',                 
+                    figsize=(8.27, 2.76),
+                    **kwargs
+                    ):
     """
 
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
@@ -1451,12 +1469,8 @@ def plot_prediction(history, prediction, column_name='data', prediction_errorbar
     of the prediction.
     :return: a Matplotlib figure and axes.
     """
-    # Apply the custom history plot style if provided
-    history_style = {'marker': 'o', 'markeredgewidth': 2, 'fillstyle': 'none', 'label': 'history',
-                     'color': '#141251'}
-    if history_plot_kwargs is not None:
-        history_style.update(history_plot_kwargs)
 
+    ###TODO Vincent: opnemen in general plot_style
     # Apply the custom prediction errobar style if provided
     prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
                         'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
@@ -1468,37 +1482,54 @@ def plot_prediction(history, prediction, column_name='data', prediction_errorbar
     if prediction_fill_between_kwargs is not None:
         prediction_fill_between_style.update(prediction_fill_between_kwargs)
 
-    # Create a figure
-    fig, ax = plt.subplots(figsize=(12, 4))
+    # Import history data in dataframe
+    hist = read_file(history, **history_kwargs)
 
     # Plot the history
-    plt.plot(history['years'], history[column_name], **history_style)
+    fig, ax = plot_history(inp=hist,
+                           inp_kwargs=history_kwargs,
+                           x=x,
+                           y=y,
+                           labels=labels[0], ###TODO: check invoer
+                           xlabel=xlabel,
+                           ylabel=ylabel,
+                           xstep=xstep,
+                           ystep=ystep,
+                           ncol=ncol, ###Todo: via xParams
+                           clip_on=clip_on,
+                           style=style, ###Todo: via global setting?
+                           fname='',                 
+                           figsize=figsize,
+                           **history_kwargs)
 
     # Describe the prediction for each year
-    statistics = prediction.groupby('years')[column_name].describe()
+    statistics = prediction.groupby(x)[y].describe()
 
     # Plot the prediction
-    plt.errorbar(history['years'].tail(1).tolist() + statistics.index.tolist(),
-                 history[column_name].tail(1).tolist() + statistics['mean'].tolist(),
-                 yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
-                       [0] + (statistics['max'] - statistics['mean']).tolist()], **prediction_style)
+    ax.errorbar(hist[x].tail(1).tolist() + statistics.index.tolist(),
+                hist[y].tail(1).tolist() + statistics['mean'].tolist(),
+                yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
+                      [0] + (statistics['max'] - statistics['mean']).tolist()], **prediction_style)
 
     # Color the background of the prediction
-    plt.fill_between(history['years'].tail(1).tolist() + statistics.index.tolist(),
-                     history[column_name].tail(1).tolist() + statistics['min'].tolist(),
-                     history[column_name].tail(1).tolist() + statistics['max'].tolist(),
-                     **prediction_fill_between_style)
+    ax.fill_between(hist[x].tail(1).tolist() + statistics.index.tolist(),
+                    hist[y].tail(1).tolist() + statistics['min'].tolist(),
+                    hist[y].tail(1).tolist() + statistics['max'].tolist(),
+                    label=labels[1], ###TODO Check inbouwen
+                    **prediction_fill_between_style)
 
-    # Set the xticks
-    ax.set_xticks(np.arange(history['years'].min(), prediction['years'].max() + 1, 1))
+    # legend
+    if ncol is None: ncol = len(y)
+    ###TODO: Ed
+    ax.legend(ncol=ncol, **xParams['legend'])
 
-    # Add horizontal grid lines
-    ax.grid(axis='y')
-
-    # Add a legend
-    plt.legend(ncol=2, bbox_to_anchor=(0.9, 1.15))
-
-    return fig, ax
+    # save figure
+    fig = plt.gcf()
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
+        return fig, ax
 
 def plot_prediction2(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
                     prediction_fill_between_kwargs=None, history_plot_kwargs=None,doc29_factor=None):
@@ -1547,7 +1578,8 @@ def plot_prediction2(history, prediction, column_name='data', prediction_errorba
     plt.errorbar(history['years'].tail(1).tolist() + [prediction['years'].max()],
                  history[column_name].tail(1).tolist() + [statistics[1]],
                  yerr=[[0] + [(statistics[1]- statistics[0])],
-                       [0] + [(statistics[2] - statistics[1])]], **prediction_style)
+                       [0] + [(statistics[2] - statistics[1])]],
+                 **prediction_style)
     
     # Color the background of the prediction
     plt.fill_between(history['years'].tail(1).tolist() + [prediction['years'].max()],
