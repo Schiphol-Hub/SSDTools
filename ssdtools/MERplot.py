@@ -28,7 +28,6 @@ def read_file (filename, delimiter='\t', **kwargs):
         if ext in ['.xls', '.xlsx']:
             return pd.read_excel(filename, **kwargs)
         else:
-            print(delimiter)
             return pd.read_csv(filename, delimiter=delimiter, **kwargs)
     else:
          return filename
