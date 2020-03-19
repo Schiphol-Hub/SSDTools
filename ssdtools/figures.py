@@ -1348,13 +1348,13 @@ def read_file (filename, delimiter='\t', **kwargs):
     else:
          return filename
      
-def plot_history(inp,
-                 inp_kwargs = {'sheet_name': 'realisatie'},
+def plot_history(history,
+                 history_kwargs = {'sheet_name': 'realisatie'},
                  x='jaar',
                  y='verkeer',
-                 labels=None,
-                 xlabel=None,
-                 ylabel=None,
+                 labels='handelsverkeer',
+                 xlabel='jaar',
+                 ylabel='vliegtuigbewegingen',
                  xstep=1,
                  ystep=None,
                  ncol=None, ###Todo: via xParams
@@ -1367,9 +1367,9 @@ def plot_history(inp,
     ###TODO Vincent: corrigeer beschrijving parameters
     """
 
-    :param pd.DataFrame|str inp: the historic dataset to visualise, should contain the specified x and y as columns.
+    :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
     If it is a string then the file will be inported in a pd.DataFrame.
-    :param dict inp_kwargs: optional arguments for read_file
+    :param dict history_kwargs: optional arguments for read_file
     :param int|str x: the column name of the data to visualise, defaults to 'jaar'.
     :param int|str y: the column name of the data to visualise, defaults to 'verkeer'.
     :param str label: label for the legend
@@ -1388,7 +1388,7 @@ def plot_history(inp,
         return '{:,.0f}'.format(x).replace(',', '.')
     
     # Import history data in dataframe
-    df = read_file(inp, **inp_kwargs)
+    df = read_file(history, **history_kwargs)
     
     # Set plot style
     plot_style(style)
@@ -1442,9 +1442,9 @@ def plot_prediction(history,
                     prediction_fill_between_kwargs=None,
                     x='jaar',
                     y='verkeer',
-                    labels=None,
-                    xlabel=None,
-                    ylabel=None,
+                    labels=['realisaie', 'prognose'],
+                    xlabel='jaar',
+                    ylabel='vliegtuigbewegingen',
                     xstep=1,
                     ystep=None,
                     ncol=None, ###Todo: via xParams
@@ -1486,11 +1486,11 @@ def plot_prediction(history,
     hist = read_file(history, **history_kwargs)
 
     # Plot the history
-    fig, ax = plot_history(inp=hist,
-                           inp_kwargs=history_kwargs,
+    fig, ax = plot_history(history=hist,
+                           history_kwargs=history_kwargs,
                            x=x,
                            y=y,
-                           labels=labels[0], ###TODO: check invoer
+                           label=labels[0],
                            xlabel=xlabel,
                            ylabel=ylabel,
                            xstep=xstep,
@@ -1500,7 +1500,7 @@ def plot_prediction(history,
                            style=style, ###Todo: via global setting?
                            fname='',                 
                            figsize=figsize,
-                           **history_kwargs)
+                           **kwargs)
 
     # Describe the prediction for each year
     statistics = prediction.groupby(x)[y].describe()
@@ -1520,7 +1520,6 @@ def plot_prediction(history,
 
     # legend
     if ncol is None: ncol = len(y)
-    ###TODO: Ed
     ax.legend(ncol=ncol, **xParams['legend'])
 
     # save figure
