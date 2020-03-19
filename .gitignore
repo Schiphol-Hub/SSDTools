@@ -1,1 +1,7 @@
+# Figures         #
+###################
 examples/figures
+
+# Compiled source #
+###################
+*.pyc
