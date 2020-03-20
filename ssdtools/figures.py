@@ -13,365 +13,7 @@ from matplotlib import colors, colorbar, lines
 from descartes import PolygonPatch
 from geopandas import GeoDataFrame
 from ssdtools.branding import default
-
-###TODO Ed/Vincent: onderstaande functies netjes in de code-style van SSDtools zetten
-# -----------------------------------------------------------------------------
-# Pas de algemene plot style aan
-# -----------------------------------------------------------------------------
-def plot_style(style='MER2019', plottype='lijnplot'):
-    ''' Algemene opmaak van een plot'''
-
-    global xParams  # extra parameters t.o.v. rcParams
-    xParams = dict()
-
-    #Python_default = plt.rcParams.copy()
-
-    # https://matplotlib.org/users/customizing.html
-    # [(k,v) for k,v in plt.rcParams.items() if 'color' in k]
-
-    
-    if ':' in style:
-        style, reeks = style.split(':')
-    else:
-        reeks = 1
-
-    if style == 'MER2020':
-        # fonts
-        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Frutiger for Schiphol Book', 'size':6})
-
-        # grid
-        # wolkengrijs 1: #9491AA
-        # wolkengrijs 2: #BFBDCC
-        # wolkengrijs 3: #EAE9EE
-        plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='#BFBDCC', linewidth=0.3, linestyle='solid')
-
-        # spines en background
-        # plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE') # achtergrond wolkengrijs 3
-        plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='white')   # achtergrond wit
-
-#        xParams['hidespines'] = ['left', 'right']
-        xParams['hidespines'] = []
-
-        # labels
-        plt.rc('axes', labelcolor='black', labelsize=10, labelpad=4)
-
-        # label lines
-        xParams['labellineprop'] = {'linewidth':1, 'color':'black', 'marker':'None'}
-        xParams['labellinemin'] = 1
-
-        # tick marks en labels
-        plt.rc('xtick', labelsize=6, color='black')
-        plt.rc('ytick', labelsize=6, color='black')
-
-        # ticks
-        plt.rc('xtick.major', size=0, width=0.5, pad=4)
-        plt.rc('ytick.major', size=0, width=0.5, pad=4)
-        plt.rc('xtick.minor', size=0, width=0.5, pad=4)
-        plt.rc('ytick.minor', size=0, width=0.5, pad=4)
-
-        # x- en Y-as
-        plt.rc('axes', xmargin=0, ymargin=0)
-        
-        # legend
-        plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
-        plt.rc('text', color='Black')
-        xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
-
-        # lines en marker
-        plt.rc('lines', linewidth=1,
-                        markersize=4,
-                        marker='o',
-                        markerfacecolor='None',
-                        markeredgecolor='#141251',
-                        markeredgewidth=0.5)
-
-        # patches, o.a. voor een barplot
-        plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.2,
-                        edgecolor = 'white')
-        # heatmap
-#        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
-        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
-
-        if reeks == '1':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#25D7F4', '#027E9B', '#94B0EA', '#AA3191', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '1a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#027E9B', '#94B0EA', '#25D7F4', '#AA3191', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '2':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#D285D6', '#6552A8', '#94B0EA', '#1B60DB', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '2a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#6552A8', '#94B0EA', '#D285D6', '#1B60DB', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '3':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#94B0EA', '#1B60DB', '#25D7F4', '#027E9B', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '3a':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#1B60DB', '#94B0EA', '#25D7F4', '#027E9B', '#FF8FB2',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-        elif reeks == '4':
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#141251', '#FF8FB2', '#AA3191', '#D285D6', '#6552A8', '#94B0EA',
-                                                                # de standaardkleuren
-                                         '#d62728', '#9467bd', '#8c564b', '#e377c2',
-                                         '#7f7f7f', '#bcbd22', '#17becf']))
-
-    else:
-        # fonts
-        # Let op Myriad gaat niet goed bij aanmaken pdf-figuren
-        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Myriad Pro', 'size':6})
-
-        # grid
-        plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='white', linewidth=0.5, linestyle='solid')
-
-        # spines  en background
-        plt.rc('axes', edgecolor='#757575', linewidth=0.5, facecolor='#e3e1d3')
-        xParams['hidespines'] = []
-
-        # labels
-        plt.rc('axes', labelcolor='#757575', labelsize=10, labelpad=4)
-
-        # label lines
-        xParams['labellineprop'] = {'linewidth':0.5, 'color':'#757575', 'marker':'None'}
-        xParams['labellinemin'] = 1
-
-        # tick marks en labels
-        plt.rc('xtick', labelsize=6, color='#757575')
-        plt.rc('ytick', labelsize=6, color='#757575')
-
-        # ticks
-        plt.rc('xtick.major', size=0, width=0.5, pad=4)
-        plt.rc('ytick.major', size=0, width=0.5, pad=4)
-        plt.rc('xtick.minor', size=0, width=0.5, pad=4)
-        plt.rc('ytick.minor', size=0, width=0.5, pad=4)
-
-        # legend
-        plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
-        plt.rc('text', color='#757575')
-        xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
-
-        # lines en marker
-        plt.rc('lines', linewidth=1,
-                        markersize=4,
-                        marker='o',
-                        markerfacecolor='none',
-                        markeredgecolor='#666666',
-                        markeredgewidth=0.5)
-
-        # patches, o.a. voor een barplot
-        plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.5,
-                        edgecolor = '#4d4d4d')
-
-        # heatmap
-        xParams['cmap'] = 'YlOrBr'
-
-        # specifiek voor een lijnplot
-        if plottype == 'lijnplot':
-            # colors
-            plt.rc('axes', prop_cycle=cycler(color=
-                                        ['#e4af00', '#4a8ab7',  # MER en hieronder de
-                                                                # de standaardkleuren
-                                         '#ff7f0e', '#2ca02c', '#d62728',
-                                         '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-                                         '#bcbd22', '#17becf']))
-        elif plottype == 'bar':
-            # colors
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#da9100', '#e4af00', '#f0d373', '#fcf7e6',
-                                                                # de standaardkleuren
-                                         '#ff7f0e', '#2ca02c', '#d62728',
-                                         '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-                                         '#bcbd22', '#17becf']))
-
-# -----------------------------------------------------------------------------
-# Get colors
-# -----------------------------------------------------------------------------
-def get_cycler_color(index=0):
-    ''' Cycler color o.b.v. de index
-    '''
-    return plt.rcParams['axes.prop_cycle'].by_key()['color'][index]
-
-# -----------------------------------------------------------------------------
-# legenda
-# -----------------------------------------------------------------------------
-def update_legend_position(ax, target, fig=None):
-    '''Update legend position, target, o.b.v. bbox.x1
-    '''
-    if fig is None:
-        fig = plt.gcf()
-    transf = fig.transFigure.inverted()
-    renderer = fig.canvas.get_renderer()
-
-    bbox = ax.get_tightbbox(renderer).transformed(transf)
-    diff = target-bbox.x1
-
-    l, b, w, h = ax.get_position().bounds
-    # corrigeer x-positie
-    ax.set_position([l+diff, b, w, h])
-
-def get_text_bbox(handle, ax=None, fig=None):
-    '''Bounding box of text
-    '''
-    if fig is None: fig = plt.gcf()
-    if ax is None: ax = plt.gca()
-
-    fig.canvas.draw()
-    return handle.get_window_extent().inverse_transformed(ax.transData)
-
-# -----------------------------------------------------------------------------
-# as-labels
-# -----------------------------------------------------------------------------
-def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
-    '''Twee labels met lijntjes
-
-       gap bepaalt hoe lang de lijntjes zijn (transAxes)
-       mid (optioneel) als het midden niet exact in het midden ligt (transData)
-       y (optioneel) list met ylijn en ylabel
-    '''
-
-
-    # negeer automatisch label
-    ax.set_xlabel('')
-
-    if y is not None:
-        ylijn, ylabel = y
-    else:
-        # bepaal bbox van de as-labels
-        fig = plt.gcf()
-        renderer = fig.canvas.get_renderer()
-        bbox = ax.get_tightbbox(renderer)
-
-        # gebruik zelfde padding als voor de tick-labels en as-labels
-        bbox.y0 -= plt.rcParams['xtick.major.pad']        # lijntjes
-        bbox.y1 = bbox.y0 - plt.rcParams['axes.labelpad'] # labels
-
-        # transform naar axis-coordinaten
-        bbox = bbox.transformed(ax.transAxes.inverted())
-        ylijn = bbox.y0
-        ylabel = bbox.y1
-
-    # bepaal het midden van de as
-    if mid is not None:
-        xlim = ax.get_xlim()
-        xmid = (mid-xlim[0]) / (xlim[1]-xlim[0])
-    else:
-        xmid = 0.5
-
-    # slechts één label?
-    if isinstance(labels, str):
-        labels = [labels]
-        xmid *= 2 # trucje voor de loop
-
-    # labels centreren relatief t.o.v. het mid-punt
-    for i, label in enumerate(labels):
-        xlabel = (i + xmid) / 2
-        ax.text(xlabel, ylabel,
-                label,
-                ha='center',
-                va='top',
-                rotation='horizontal',
-                color=plt.rcParams['axes.labelcolor'],
-                fontsize=plt.rcParams['axes.labelsize'],
-                transform=ax.transAxes)
-        # teken lijntjes
-        if len(labels) >= xParams['labellinemin']:
-            x1 = i * xmid
-            x2 = (1 - i) * xmid + i
-            line = lines.Line2D([x1+gap, x2-gap], [ylijn, ylijn],
-                                clip_on=False,
-                                transform=ax.transAxes,
-                                **xParams['labellineprop'])
-            ax.add_line(line)
-
-    return ylijn, ylabel
-
-
-
-def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
-    '''Twee labels met lijntjes
-
-       gap bepaalt hoe lang de lijntjes zijn (transAxes)
-       mid (optioneel) als het midden niet exact in het midden ligt (transData)
-       x (optioneel) list met xlijn en xlabel
-    '''
-
-    # negeer automatisch label
-    ax.set_ylabel('')
-
-    if x is not None:
-        xlijn, xlabel = x
-    else:
-        # bepaal bbox van de as-labels
-        fig = plt.gcf()
-        renderer = fig.canvas.get_renderer()
-        bbox = ax.get_tightbbox(renderer)
-
-        # gebruik zelfde padding als voor de tick-labels en as-labels
-        bbox.x0 -= plt.rcParams['xtick.major.pad']        # lijntjes
-        bbox.x1 = bbox.x0 - plt.rcParams['axes.labelpad'] # labels
-
-        # transform naar axis-coordinaten
-        bbox = bbox.transformed(ax.transAxes.inverted())
-        xlijn = bbox.x0
-        xlabel = bbox.x1
-
-    # bepaal het midden van de as
-    if mid is not None:
-        ylim = ax.get_ylim()
-        ymid = (mid-ylim[0]) / (ylim[1]-ylim[0])
-    else:
-        ymid = 0.5
-
-    # slechts één label?
-    if isinstance(labels, str):
-        labels = [labels]
-        ymid *= 2 # trucje voor de loop
-
-    # labels centreren relatief t.o.v. het mid-punt
-    for i, label in enumerate(labels):
-        ylabel = (i + ymid) / 2
-        ax.text(xlabel, ylabel,
-                label,
-                ha='right',
-                va='center',
-                rotation='vertical',
-                color=plt.rcParams['axes.labelcolor'],
-                fontsize=plt.rcParams['axes.labelsize'],
-                transform=ax.transAxes)
-        # teken lijntjes
-        if len(labels) >= xParams['labellinemin']:
-            y1 = i * ymid
-            y2 = (1 - i) * ymid + i
-            line = lines.Line2D([xlijn, xlijn], [y1+gap, y2-gap],
-                                clip_on=False,
-                                transform=ax.transAxes,
-                                **xParams['labellineprop'])
-            ax.add_line(line)
-
-    return xlijn, xlabel
+from ssdtools.branding import prediction_style
 
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
@@ -1352,19 +994,20 @@ def plot_history(history,
                  history_kwargs = {'sheet_name': 'realisatie'},
                  x='jaar',
                  y='verkeer',
-                 labels='handelsverkeer',
+                 labels=['handelsverkeer'],
                  xlabel='jaar',
                  ylabel='vliegtuigbewegingen',
                  xstep=1,
                  ystep=None,
                  ncol=None, ###Todo: via xParams
                  clip_on=False,
-                 style='MER2020:1', ###Todo: via global setting?
                  dpi=600,
                  fname='',                 
                  figsize=(8.27, 2.76),
                  **kwargs):
+#    style='MER2020:1', ###Todo: via global setting?
     ###TODO Vincent: corrigeer beschrijving parameters
+    ###STATUS: compleet
     """
 
     :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
@@ -1377,6 +1020,7 @@ def plot_history(history,
     :param str ylabel: label for the y-axis
     :param float|None xstep: step value for the x-axis
     :param float|None ystep: step value for the y-axis
+    :param int ncol: number of columns in legend
     :param boolean clip_on: clipping on plot area, default False    
     :param int dpi: dpi for saving figure to file, default is 600
     :param str fname: Name for the file, default is '' and no fig will be saved
@@ -1391,7 +1035,7 @@ def plot_history(history,
     df = read_file(history, **history_kwargs)
     
     # Set plot style
-    plot_style(style)
+#    branding.plot_style(style)
     
     # Plot the history
     ax = df.plot(x=x,
@@ -1402,11 +1046,13 @@ def plot_history(history,
     
     # margins
     ###TODO Vincent: store in xParams
-    plt.subplots_adjust(bottom=0.2)
+    ###STATUS: opgenomen in xParams in branding
+#    plt.subplots_adjust(bottom=0.2)
+    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
 
     # X-as
     if xlabel is not None:
-        set_xlabels(xlabel, ax=ax)
+        branding.set_xlabels(xlabel, ax=ax)
     else:
         ax.set_xlabel('') # verberg as-label
 
@@ -1417,7 +1063,7 @@ def plot_history(history,
 
     # Y-as
     if xlabel is not None:
-        set_ylabels(ylabel, ax=ax)
+        branding.set_ylabels(ylabel, ax=ax)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
     if ystep is not None:
         ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
@@ -1425,7 +1071,7 @@ def plot_history(history,
     # legend
     if ncol is None: ncol = len(y)
     ###TODO: Ed
-    ax.legend(ncol=ncol, **xParams['legend'])
+    ax.legend(ncol=ncol, **branding.xParams['legend'])
 
     # save figure
     fig = plt.gcf()
@@ -1442,19 +1088,20 @@ def plot_prediction(history,
                     prediction_fill_between_kwargs=None,
                     x='jaar',
                     y='verkeer',
-                    labels=['realisaie', 'prognose'],
+                    labels=['realisatie', 'prognose'],
                     xlabel='jaar',
                     ylabel='vliegtuigbewegingen',
                     xstep=1,
                     ystep=None,
                     ncol=None, ###Todo: via xParams
                     clip_on=False,
-                    style='MER2020:1', ###Todo: via global setting?
+                    
                     dpi=600,
                     fname='',                 
                     figsize=(8.27, 2.76),
                     **kwargs
                     ):
+#    style='MER2020:1', ###Todo: via global setting?
     """
 
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
@@ -1472,8 +1119,8 @@ def plot_prediction(history,
 
     ###TODO Vincent: opnemen in general plot_style
     # Apply the custom prediction errobar style if provided
-    prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
-                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
+#    prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
+#                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
     if prediction_errorbar_kwargs is not None:
         prediction_style.update(prediction_errorbar_kwargs)
 
@@ -1497,11 +1144,12 @@ def plot_prediction(history,
                            ystep=ystep,
                            ncol=ncol, ###Todo: via xParams
                            clip_on=clip_on,
-                           style=style, ###Todo: via global setting?
                            fname='',                 
                            figsize=figsize,
                            **kwargs)
 
+#    style=style, ###Todo: via global setting?
+    
     # Describe the prediction for each year
     statistics = prediction.groupby(x)[y].describe()
 
@@ -1520,7 +1168,7 @@ def plot_prediction(history,
 
     # legend
     if ncol is None: ncol = len(y)
-    ax.legend(ncol=ncol, **xParams['legend'])
+    ax.legend(ncol=ncol, **branding.xParams['legend'])
 
     # save figure
     fig = plt.gcf()
@@ -1553,8 +1201,8 @@ def plot_prediction2(history, prediction, column_name='data', prediction_errorba
         history_style.update(history_plot_kwargs)
 
     # Apply the custom prediction errobar style if provided
-    prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
-                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
+#    prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
+#                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
     if prediction_errorbar_kwargs is not None:
         prediction_style.update(prediction_errorbar_kwargs)
 
