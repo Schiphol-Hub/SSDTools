@@ -1080,7 +1080,8 @@ def plot_history(history,
 def plot_prediction(history, 
                     prediction,
                     history_kwargs={},
-                    prediction_fill_between_kwargs={}, # kan deze weg?
+                    errorbar_kwargs={},
+                    prediction_fill_between_kwargs=None,
                     x='jaar',
                     y='verkeer',
                     labels=['realisatie', 'prognose'],
@@ -1103,6 +1104,7 @@ def plot_prediction(history,
     'year' column.
     :param int|str column_name: the column name of the data to visualise, defaults to 'data'.
     :param dict history_plot_kwargs: argument arguments to overwrite the settings used for visualising the historic data.
+    :param dict errorbar_kwargs: arguments to overwrite the settings used for visualising the errorbars of
     the prediction.
     :param dict prediction_fill_between_kwargs: arguments to overwrite the settings used for visualising the filled area
     of the prediction.
@@ -1145,7 +1147,7 @@ def plot_prediction(history,
                 hist[y].tail(1).tolist() + statistics['mean'].tolist(),
                 yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
                       [0] + (statistics['max'] - statistics['mean']).tolist()],
-                **branding.xParams['errorbar'])
+                **branding.xParams['errorbar'].update(errorbar_kwargs))
 
     # Color the background of the prediction
     ax.fill_between(hist[x].tail(1).tolist() + statistics.index.tolist(),
