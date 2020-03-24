@@ -3,7 +3,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from ssdtools import branding
+from ssdtools import branding ###TODO Is dit nodig
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib import ticker
@@ -13,7 +13,6 @@ from matplotlib import colors, colorbar, lines
 from descartes import PolygonPatch
 from geopandas import GeoDataFrame
 from ssdtools.branding import default
-from ssdtools.branding import prediction_style
 
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
@@ -1005,7 +1004,6 @@ def plot_history(history,
                  fname='',                 
                  figsize=(8.27, 2.76),
                  **kwargs):
-#    style='MER2020:1', ###Todo: via global setting?
     ###TODO Vincent: corrigeer beschrijving parameters
     ###STATUS: compleet
     """
@@ -1047,7 +1045,6 @@ def plot_history(history,
     # margins
     ###TODO Vincent: store in xParams
     ###STATUS: opgenomen in xParams in branding
-#    plt.subplots_adjust(bottom=0.2)
     plt.subplots_adjust(**branding.xParams['subplots_adjust'])
 
     # X-as
@@ -1070,7 +1067,6 @@ def plot_history(history,
 
     # legend
     if ncol is None: ncol = len(y)
-    ###TODO: Ed
     ax.legend(ncol=ncol, **branding.xParams['legend'])
 
     # save figure
@@ -1084,8 +1080,7 @@ def plot_history(history,
 def plot_prediction(history, 
                     prediction,
                     history_kwargs={},
-                    prediction_errorbar_kwargs=None,
-                    prediction_fill_between_kwargs=None,
+                    prediction_fill_between_kwargs={}, # kan deze weg?
                     x='jaar',
                     y='verkeer',
                     labels=['realisatie', 'prognose'],
@@ -1101,29 +1096,22 @@ def plot_prediction(history,
                     figsize=(8.27, 2.76),
                     **kwargs
                     ):
-#    style='MER2020:1', ###Todo: via global setting?
     """
-
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
     and a 'year' column.
     :param pd.DataFrame prediction: the predicted values, should contain the specified column_name as the data and a
     'year' column.
     :param int|str column_name: the column name of the data to visualise, defaults to 'data'.
     :param dict history_plot_kwargs: argument arguments to overwrite the settings used for visualising the historic data.
-    :param dict prediction_errorbar_kwargs: arguments to overwrite the settings used for visualising the errorbars of
     the prediction.
     :param dict prediction_fill_between_kwargs: arguments to overwrite the settings used for visualising the filled area
     of the prediction.
     :return: a Matplotlib figure and axes.
     """
 
-    ###TODO Vincent: opnemen in general plot_style
-    # Apply the custom prediction errobar style if provided
-#    prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
-#                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}
-    if prediction_errorbar_kwargs is not None:
-        prediction_style.update(prediction_errorbar_kwargs)
-
+    ###TODO Vincent: prediction_fill_between_style opnemen in general plot_style
+    #                zie errorbar als voorbeeld
+    
     # Apply the custom prediction fill_between style if provided
     prediction_fill_between_style = {'color': '#027E9B', 'alpha': 0.3}
     if prediction_fill_between_kwargs is not None:
@@ -1147,17 +1135,17 @@ def plot_prediction(history,
                            fname='',                 
                            figsize=figsize,
                            **kwargs)
-
-#    style=style, ###Todo: via global setting?
     
     # Describe the prediction for each year
     statistics = prediction.groupby(x)[y].describe()
 
     # Plot the prediction
+    ###TODO eerste punt geen errorbar
     ax.errorbar(hist[x].tail(1).tolist() + statistics.index.tolist(),
                 hist[y].tail(1).tolist() + statistics['mean'].tolist(),
                 yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
-                      [0] + (statistics['max'] - statistics['mean']).tolist()], **prediction_style)
+                      [0] + (statistics['max'] - statistics['mean']).tolist()],
+                **branding.xParams['errorbar'])
 
     # Color the background of the prediction
     ax.fill_between(hist[x].tail(1).tolist() + statistics.index.tolist(),

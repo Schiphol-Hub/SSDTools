@@ -113,15 +113,12 @@ default = {
         'marker': 8
     }
 }
-    
-prediction_style = {'marker': '_', 'capsize': 4, 'ecolor': '#9491AA', 'markeredgewidth': 4,
-                        'markeredgecolor': '#9491AA', 'fillstyle': 'none', 'color': '#1B60DB', 'label': 'prediction'}        
-    
+        
 ###TODO Ed/Vincent: onderstaande functies netjes in de code-style van SSDtools zetten
 # -----------------------------------------------------------------------------
 # Pas de algemene plot style aan
 # -----------------------------------------------------------------------------
-def plot_style(style='MER2019', plottype='lijnplot'):
+def plot_style(style='MER2020', plottype='lijnplot'):
     ''' Algemene opmaak van een plot'''
 
     global xParams  # extra parameters t.o.v. rcParams
@@ -139,27 +136,42 @@ def plot_style(style='MER2019', plottype='lijnplot'):
 
     if style == 'MER2020':
         # fonts
-        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Frutiger for Schiphol Book', 'size':6})
+        plt.rc('font', **{'family': 'sans-serif',
+                          'sans-serif':'Frutiger for Schiphol Book',
+                          'size':6})
 
         # grid
         # wolkengrijs 1: #9491AA
         # wolkengrijs 2: #BFBDCC
         # wolkengrijs 3: #EAE9EE
-        plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='#BFBDCC', linewidth=0.3, linestyle='solid')
+        plt.rc('axes',
+               axisbelow=True,
+               grid=True)
+        plt.rc('grid',
+               color='#BFBDCC',
+               linewidth=0.3,
+               linestyle='solid')
 
         # spines en background
-        # plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='#EAE9EE') # achtergrond wolkengrijs 3
-        plt.rc('axes', edgecolor='#BFBDCC', linewidth=0.2, facecolor='white')   # achtergrond wit
+        plt.rc('axes',
+               edgecolor='#BFBDCC',
+               linewidth=0.2,
+               facecolor='white')   # achtergrond wit
 
+        ###TODO Kan hidespines weg?
 #        xParams['hidespines'] = ['left', 'right']
-        xParams['hidespines'] = []
+        # xParams['hidespines'] = []
 
         # labels
-        plt.rc('axes', labelcolor='black', labelsize=10, labelpad=4)
+        plt.rc('axes',
+               labelcolor='black',
+               labelsize=10,
+               labelpad=4)
 
         # label lines
-        xParams['labellineprop'] = {'linewidth':1, 'color':'black', 'marker':'None'}
+        xParams['labellineprop'] = {'linewidth':1,
+                                    'color':'black',
+                                    'marker':'None'}
         xParams['labellinemin'] = 1
 
         # tick marks en labels
@@ -176,7 +188,11 @@ def plot_style(style='MER2019', plottype='lijnplot'):
         plt.rc('axes', xmargin=0, ymargin=0)
         
         # legend
-        plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
+        plt.rc('legend',
+               markerscale=0.8,
+               fontsize=6,
+               frameon=False,
+               borderaxespad=0)
         plt.rc('text', color='Black')
         xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
         
@@ -191,11 +207,24 @@ def plot_style(style='MER2019', plottype='lijnplot'):
                         markeredgecolor='#141251',
                         markeredgewidth=0.5)
 
+        # errorbars
+        xParams['errorbar'] = {'color': '#141251',           # gemiddelde, lijnkleur
+                               'marker': 'None',             # gemiddelde, marker  
+                               'markeredgecolor': '#9491AA', # gemiddelede, markerkleur
+                               'capsize': 3,                 # length of the error bar caps in points
+                               'capthick': 2,                # thickness of the error bar cap
+                               'ecolor': '#9491AA',          # color the errorbar lines
+                               'elinewidth': 1,              # linewidth of the errorbar lines
+
+                               'fillstyle': 'none',          # ???          
+                               }        
+
         # patches, o.a. voor een barplot
         plt.rc('patch', force_edgecolor=True,
                         linewidth=0.2,
                         edgecolor = 'white')
         # heatmap
+        ###TODO: Afhankelijk maken van reeks, zie hieronder
 #        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
         xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
 
@@ -243,77 +272,9 @@ def plot_style(style='MER2019', plottype='lijnplot'):
                                          '#7f7f7f', '#bcbd22', '#17becf']))
 
     else:
-        # fonts
-        # Let op Myriad gaat niet goed bij aanmaken pdf-figuren
-        plt.rc('font', **{'family': 'sans-serif', 'sans-serif':'Myriad Pro', 'size':6})
-
-        # grid
-        plt.rc('axes', axisbelow=True, grid=True)
-        plt.rc('grid', color='white', linewidth=0.5, linestyle='solid')
-
-        # spines  en background
-        plt.rc('axes', edgecolor='#757575', linewidth=0.5, facecolor='#e3e1d3')
-        xParams['hidespines'] = []
-
-        # labels
-        plt.rc('axes', labelcolor='#757575', labelsize=10, labelpad=4)
-
-        # label lines
-        xParams['labellineprop'] = {'linewidth':0.5, 'color':'#757575', 'marker':'None'}
-        xParams['labellinemin'] = 1
-
-        # tick marks en labels
-        plt.rc('xtick', labelsize=6, color='#757575')
-        plt.rc('ytick', labelsize=6, color='#757575')
-
-        # ticks
-        plt.rc('xtick.major', size=0, width=0.5, pad=4)
-        plt.rc('ytick.major', size=0, width=0.5, pad=4)
-        plt.rc('xtick.minor', size=0, width=0.5, pad=4)
-        plt.rc('ytick.minor', size=0, width=0.5, pad=4)
-
-        # legend
-        plt.rc('legend', markerscale=0.8, fontsize=6, frameon=False, borderaxespad=0)
-        plt.rc('text', color='#757575')
-        xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
-
-        # lines en marker
-        plt.rc('lines', linewidth=1,
-                        markersize=4,
-                        marker='o',
-                        markerfacecolor='none',
-                        markeredgecolor='#666666',
-                        markeredgewidth=0.5)
-
-        # patches, o.a. voor een barplot
-        plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.5,
-                        edgecolor = '#4d4d4d')
-
-        # heatmap
-        xParams['cmap'] = 'YlOrBr'
+        print('Warning: style not defined:', style)
         
-        # margins
-        xParams['subplots_adjust'] = dict(bottom=0.2)
-
-        # specifiek voor een lijnplot
-        if plottype == 'lijnplot':
-            # colors
-            plt.rc('axes', prop_cycle=cycler(color=
-                                        ['#e4af00', '#4a8ab7',  # MER en hieronder de
-                                                                # de standaardkleuren
-                                         '#ff7f0e', '#2ca02c', '#d62728',
-                                         '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-                                         '#bcbd22', '#17becf']))
-        elif plottype == 'bar':
-            # colors
-            plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
-                                        ['#da9100', '#e4af00', '#f0d373', '#fcf7e6',
-                                                                # de standaardkleuren
-                                         '#ff7f0e', '#2ca02c', '#d62728',
-                                         '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
-                                         '#bcbd22', '#17becf']))
-
+        
 # -----------------------------------------------------------------------------
 # Get colors
 # -----------------------------------------------------------------------------
