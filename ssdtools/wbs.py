@@ -180,7 +180,7 @@ class WBS(object):
                 'sv40n': sv40n
             })
         
-    def get_inpasbaarvolume(self,lden_grid,lnight_grid,gwc):
+    def get_inpasbaarvolume(self,lden_grid,lnight_grid,gwc,how='inner'):
         """
         Find scaling factor for inpasbaar volume, relative to a set of limitic criteria
 
@@ -219,7 +219,10 @@ class WBS(object):
                 score = self.gwc(lden,lnight)
 
                 # check
-                check = (gwc[0]>score['w58den']) & (gwc[1]>score['eh48den']) & (gwc[2]>score['w48n']) & (gwc[3]>score['sv40n'])
+                if how == 'inner':
+                    check = (gwc[0]>score['w58den']) & (gwc[1]>score['eh48den']) & (gwc[2]>score['w48n']) & (gwc[3]>score['sv40n'])
+                elif how == 'outer':
+                    check = (gwc[0]>score['w58den']) | (gwc[1]>score['eh48den']) | (gwc[2]>score['w48n']) | (gwc[3]>score['sv40n'])
                 
                 # increase volume
                 volume = volume + step
