@@ -1147,10 +1147,11 @@ def plot_prediction(history,
 
     # Plot the prediction
     ###TODO eerste punt geen errorbar
-    ax.errorbar(hist[x].tail(1).tolist() + statistics.index.tolist(),
-                hist[y].tail(1).tolist() + statistics['mean'].tolist(),
-                yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
-                      [0] + (statistics['max'] - statistics['mean']).tolist()],
+    ###STATUS: opgelost door alleen laatste waarde te pakken. Mogelijk ook nog doen voor fill_between. 
+    ax.errorbar(hist[x].tail(1).tolist() + statistics.tail(1).index.tolist(),
+                hist[y].tail(1).tolist() + statistics['mean'].tail(1).tolist(),
+                yerr=[[0] + (statistics['mean'].tail(1) - statistics['min'].tail(1)).tolist(),
+                      [0] + (statistics['max'].tail(1) - statistics['mean'].tail(1)).tolist()],
                 **branding.xParams['errorbar'])#.update(errorbar_kwargs))
 
     # Color the background of the prediction

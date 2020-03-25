@@ -210,7 +210,7 @@ def plot_style(style='MER2020', plottype='lijnplot'):
         # errorbars
         xParams['errorbar'] = {'color': '#141251',           # gemiddelde, lijnkleur
                                'marker': 'None',             # gemiddelde, marker  
-                               'markeredgecolor': '#9491AA', # gemiddelede, markerkleur
+                               'markeredgecolor': '#027E9B', # gemiddelede, markerkleur
                                'capsize': 3,                 # length of the error bar caps in points
                                'capthick': 2,                # thickness of the error bar cap
                                'ecolor': '#9491AA',          # color the errorbar lines
