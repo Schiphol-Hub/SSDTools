@@ -217,7 +217,11 @@ def plot_style(style='MER2020', plottype='lijnplot'):
                                'elinewidth': 1,              # linewidth of the errorbar lines
 
                                'fillstyle': 'none',          # ???          
-                               }        
+                               }
+        
+        xParams['prediction_fill'] = {'color': '#027E9B',    # lijnkleur
+                                      'alpha': 0.3,          # doorzichtigheid
+                                                   }        
 
         # patches, o.a. voor een barplot
         plt.rc('patch', force_edgecolor=True,

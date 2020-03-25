@@ -1081,7 +1081,7 @@ def plot_prediction(history,
                     prediction,
                     history_kwargs={},
                     errorbar_kwargs={},
-                    prediction_fill_between_kwargs=None,
+                    prediction_fill_kwargs=None,
                     x='jaar',
                     y='verkeer',
                     labels=['realisatie', 'prognose'],
@@ -1106,18 +1106,22 @@ def plot_prediction(history,
     :param dict history_plot_kwargs: argument arguments to overwrite the settings used for visualising the historic data.
     :param dict errorbar_kwargs: arguments to overwrite the settings used for visualising the errorbars of
     the prediction.
-    :param dict prediction_fill_between_kwargs: arguments to overwrite the settings used for visualising the filled area
+    :param dict prediction_fill_kwargs: arguments to overwrite the settings used for visualising the filled area
     of the prediction.
     :return: a Matplotlib figure and axes.
     """
 
-    ###TODO Vincent: prediction_fill_between_style opnemen in general plot_style
+    ###TODO Vincent: prediction_fill opnemen in general plot_style
     #                zie errorbar als voorbeeld
+    ###STATUS: opgenomen in plot_style, update statements voor zowel errorbar als prediction_fill in deze functie gelaten
+
+    if errorbar_kwargs is not None:
+        branding.xParams['errorbar'].update(errorbar_kwargs)
     
     # Apply the custom prediction fill_between style if provided
-    prediction_fill_between_style = {'color': '#027E9B', 'alpha': 0.3}
-    if prediction_fill_between_kwargs is not None:
-        prediction_fill_between_style.update(prediction_fill_between_kwargs)
+#    prediction_fill = {'color': '#027E9B', 'alpha': 0.3}
+    if prediction_fill_kwargs is not None:
+        branding.xParams['prediction_fill'].update(prediction_fill_kwargs)
 
     # Import history data in dataframe
     hist = read_file(history, **history_kwargs)
@@ -1147,14 +1151,14 @@ def plot_prediction(history,
                 hist[y].tail(1).tolist() + statistics['mean'].tolist(),
                 yerr=[[0] + (statistics['mean'] - statistics['min']).tolist(),
                       [0] + (statistics['max'] - statistics['mean']).tolist()],
-                **branding.xParams['errorbar'].update(errorbar_kwargs))
+                **branding.xParams['errorbar'])#.update(errorbar_kwargs))
 
     # Color the background of the prediction
     ax.fill_between(hist[x].tail(1).tolist() + statistics.index.tolist(),
                     hist[y].tail(1).tolist() + statistics['min'].tolist(),
                     hist[y].tail(1).tolist() + statistics['max'].tolist(),
                     label=labels[1], ###TODO Check inbouwen
-                    **prediction_fill_between_style)
+                    **branding.xParams['prediction_fill'])
 
     # legend
     if ncol is None: ncol = len(y)
@@ -1169,7 +1173,7 @@ def plot_prediction(history,
         return fig, ax
 
 def plot_prediction2(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
-                    prediction_fill_between_kwargs=None, history_plot_kwargs=None,doc29_factor=None):
+                    prediction_fill_kwargs=None, history_plot_kwargs=None,doc29_factor=None):
     """
 
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
@@ -1180,7 +1184,7 @@ def plot_prediction2(history, prediction, column_name='data', prediction_errorba
     :param dict history_plot_kwargs: argument arguments to overwrite the settings used for visualising the historic data.
     :param dict prediction_errorbar_kwargs: arguments to overwrite the settings used for visualising the errorbars of
     the prediction.
-    :param dict prediction_fill_between_kwargs: arguments to overwrite the settings used for visualising the filled area
+    :param dict prediction_fill_kwargs: arguments to overwrite the settings used for visualising the filled area
     of the prediction.
     :return: a Matplotlib figure and axes.
     """
@@ -1197,9 +1201,9 @@ def plot_prediction2(history, prediction, column_name='data', prediction_errorba
         prediction_style.update(prediction_errorbar_kwargs)
 
     # Apply the custom prediction fill_between style if provided
-    prediction_fill_between_style = {'color': '#027E9B', 'alpha': 0.3}
-    if prediction_fill_between_kwargs is not None:
-        prediction_fill_between_style.update(prediction_fill_between_kwargs)
+    prediction_fill = {'color': '#027E9B', 'alpha': 0.3}
+    if prediction_fill_kwargs is not None:
+        prediction_fill.update(prediction_fill_kwargs)
 
 
     # Create a figure
@@ -1222,7 +1226,7 @@ def plot_prediction2(history, prediction, column_name='data', prediction_errorba
     plt.fill_between(history['years'].tail(1).tolist() + [prediction['years'].max()],
                      history[column_name].tail(1).tolist() + [statistics[0]],
                      history[column_name].tail(1).tolist() + [statistics[2]],
-                     **prediction_fill_between_style)
+                     **prediction_fill)
 
 
     # Set the xticks
