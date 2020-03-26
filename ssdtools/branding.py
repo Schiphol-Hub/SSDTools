@@ -118,7 +118,7 @@ default = {
 # -----------------------------------------------------------------------------
 # Pas de algemene plot style aan
 # -----------------------------------------------------------------------------
-def plot_style(style='MER2020', plottype='lijnplot'):
+def plot_style(style='MER2020'):
     ''' Algemene opmaak van een plot'''
 
     global xParams  # extra parameters t.o.v. rcParams
