@@ -1148,16 +1148,16 @@ def plot_prediction(history,
     # Plot the prediction
     ###TODO eerste punt geen errorbar
     ###STATUS: opgelost door alleen laatste waarde te pakken. Mogelijk ook nog doen voor fill_between. 
-    ax.errorbar(hist[x].tail(1).tolist() + statistics.tail(1).index.tolist(),
-                hist[y].tail(1).tolist() + statistics['mean'].tail(1).tolist(),
-                yerr=[[0] + (statistics['mean'].tail(1) - statistics['min'].tail(1)).tolist(),
-                      [0] + (statistics['max'].tail(1) - statistics['mean'].tail(1)).tolist()],
-                **branding.xParams['errorbar'])#.update(errorbar_kwargs))
-
-    # Color the background of the prediction
-    ax.fill_between(hist[x].tail(1).tolist() + statistics.index.tolist(),
-                    hist[y].tail(1).tolist() + statistics['min'].tolist(),
-                    hist[y].tail(1).tolist() + statistics['max'].tolist(),
+    ###STATUS: errorbar + fill_between herschreven
+    ax.errorbar([hist.iloc[-1][x]] + [statistics.index[-1]],
+                [hist.iloc[-1][y]] + [statistics.iloc[-1]['mean']],
+                yerr=[[0] + [(statistics.iloc[-1]['mean'] - statistics.iloc[-1]['min'])],
+                      [0] + [(statistics.iloc[-1]['max'] - statistics.iloc[-1]['mean'])]],
+                **branding.xParams['errorbar'])#.update(errorbar_kwargs))    
+    
+    ax.fill_between([hist.iloc[-1][x]] + statistics.index.tolist(),
+                    [hist.iloc[-1][y]] + statistics['min'].tolist(),
+                    [hist.iloc[-1][y]] + statistics['max'].tolist(),
                     label=labels[1], ###TODO Check inbouwen
                     **branding.xParams['prediction_fill'])
 
