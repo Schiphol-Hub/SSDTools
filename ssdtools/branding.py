@@ -3,6 +3,9 @@ from matplotlib import lines
 from matplotlib import colors
 from cycler import cycler
 
+global xParams  # extra parameters t.o.v. rcParams
+xParams = dict()
+
 baangebruik = {'MER': {'markerwidth': [0.7, 0.4, 0.08],  # voor 1, 2 en >2 traffics     #old: [0.5, 0.4, 0.08]
                        'markerheight': [0.3, 0.2, 0.08],  # voor 1, 2 en >2             #old: [0.2, 0.2, 0.08]
                        'barwidth': [0.35, 0.15, 0.04],                                  #old:[0.15, 0.15, 0.04]
@@ -124,8 +127,9 @@ def plot_style(style='MER2020'):
     global xParams  # extra parameters t.o.v. rcParams
     xParams = dict()
 
-    #Python_default = plt.rcParams.copy()
-
+    # Start met defaults
+    plt.rcParams.update(plt.rcParamsDefault)
+    
     # https://matplotlib.org/users/customizing.html
     # [(k,v) for k,v in plt.rcParams.items() if 'color' in k]
     
@@ -203,34 +207,11 @@ def plot_style(style='MER2020'):
         plt.rc('lines', linewidth=1,
                         markersize=4,
                         marker='o',
-                        markerfacecolor='None',
-                        markeredgecolor='#141251',
+                        # markerfacecolor='None', # transparant
+                        markerfacecolor='white',
+                        # markeredgecolor='#141251', # zonder instellen volgen ze de cycler
                         markeredgewidth=0.5)
 
-        # errorbars
-        xParams['errorbar'] = {'color': '#141251',           # gemiddelde, lijnkleur
-                               'marker': 'None',             # gemiddelde, marker  
-                               'markeredgecolor': '#027E9B', # gemiddelede, markerkleur
-                               'capsize': 3,                 # length of the error bar caps in points
-                               'capthick': 2,                # thickness of the error bar cap
-                               'ecolor': '#9491AA',          # color the errorbar lines
-                               'elinewidth': 1,              # linewidth of the errorbar lines
-
-                               'fillstyle': 'none',          # ???          
-                               }
-        
-        xParams['prediction_fill'] = {'color': '#027E9B',    # lijnkleur
-                                      'alpha': 0.3,          # doorzichtigheid
-                                                   }        
-
-        # patches, o.a. voor een barplot
-        plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.2,
-                        edgecolor = 'white')
-        # heatmap
-        ###TODO: Afhankelijk maken van reeks, zie hieronder
-#        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
-        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
 
         if reeks == '1':
             plt.rc('axes', prop_cycle=cycler(color=             # MER en hieronder de
@@ -274,6 +255,33 @@ def plot_style(style='MER2020'):
                                                                 # de standaardkleuren
                                          '#d62728', '#9467bd', '#8c564b', '#e377c2',
                                          '#7f7f7f', '#bcbd22', '#17becf']))
+        # errorbars
+        # door de kleuren niet in te stellen worden deze gelijk aan de lijnkleur
+        # van de laatst geplotte lijn    
+        xParams['errorbar'] = {#'color': '#141251',           # gemiddelde, lijnkleur
+                               #'marker': 'None',             # gemiddelde, marker  
+                               #'markeredgecolor': '#027E9B', # gemiddelede, markerkleur
+                               'capsize': 3,                 # length of the error bar caps in points
+                               'capthick': 2,                # thickness of the error bar cap
+                               #'ecolor': '#9491AA',          # color the errorbar lines
+                               'elinewidth': 1.5,            # linewidth of the errorbar lines
+
+                               #'fillstyle': 'none',          # ???          
+                               }
+        
+        xParams['prediction_fill'] = {#'color': '#027E9B',    # lijnkleur
+                                      'color': get_cycler_color(1),
+                                      'alpha': 0.2,          # doorzichtigheid
+                                                   }        
+
+        # patches, o.a. voor een barplot
+        plt.rc('patch', force_edgecolor=True,
+                        linewidth=0.2,
+                        edgecolor = 'white')
+        # heatmap
+        ###TODO: Afhankelijk maken van reeks, zie hieronder
+#        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
+        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
 
     else:
         print('Warning: style not defined:', style)

@@ -988,6 +988,16 @@ def read_file (filename, delimiter='\t', **kwargs):
             return pd.read_csv(filename, delimiter=delimiter, **kwargs)
     else:
          return filename
+
+# -----------------------------------------------------------------------------
+# Get colors
+# -----------------------------------------------------------------------------
+def get_cycler_color(index=0):
+    ''' Cycler color o.b.v. de index
+    '''
+    return plt.rcParams['axes.prop_cycle'].by_key()['color'][index]
+
+
      
 def plot_history(history,
                  history_kwargs = {'sheet_name': 'realisatie'},
