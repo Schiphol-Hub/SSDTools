@@ -296,27 +296,25 @@ class GridPlot(object):
                                  colors=secondary_color, 
                                  linewidths=[1, 1])
     
-#            h1,_ = cs1.legend_elements()
-#            h2,_ = cs2.legend_elements()
-#            self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',fontsize=12)
-        legend_elements = [
-                           Line2D([0], [0], color=default['kleuren']['schemerblauw']),
-                           Line2D([0], [0], color=default['kleuren']['schemergroen']),
-                           Line2D([0], [0], color=default['kleuren']['middagblauw']),
-                           Line2D([0], [0], color=default['kleuren']['schipholblauw']),
-                           Line2D([0], [0], color=default['kleuren']['middaglichtblauw']),
-                           Line2D([0], [0], color=default['kleuren']['wolkengrijs_1'])
-                           ]
-
-        self.ax.legend(legend_elements, ['1-4 vluchten', 
-                                         '5-9 vluchten', 
-                                         '10-49 vluchten', 
-                                         '50-99 vluchten', 
-                                         '100-199 vluchten',
-                                         '200+ vluchten'],
-                loc='upper left',fontsize=12,title='Aantal vluchten boven 60dB(A)')
-
-
+            h1,_ = cs1.legend_elements()
+            h2,_ = cs2.legend_elements()
+            self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',fontsize=12)
+#        legend_elements = [
+#                           Line2D([0], [0], color=default['kleuren']['schemerblauw']),
+#                           Line2D([0], [0], color=default['kleuren']['schemergroen']),
+#                           Line2D([0], [0], color=default['kleuren']['middagblauw']),
+#                           Line2D([0], [0], color=default['kleuren']['schipholblauw']),
+#                           Line2D([0], [0], color=default['kleuren']['middaglichtblauw']),
+#                           Line2D([0], [0], color=default['kleuren']['wolkengrijs_1'])
+#                           ]
+#
+#        self.ax.legend(legend_elements, ['1-4 vluchten', 
+#                                         '5-9 vluchten', 
+#                                         '10-49 vluchten', 
+#                                         '50-99 vluchten', 
+#                                         '100-199 vluchten',
+#                                         '200+ vluchten'],
+#                loc='upper left',fontsize=12,title='Aantal vluchten boven 60dB(A)')
         return 
 
 
