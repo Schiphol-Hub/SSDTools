@@ -1086,10 +1086,9 @@ def plot_history(history,
         return fig, ax
 
 def plot_prediction(history, 
-                    prediction,
+                    prediction=None,
+                    stats=None,
                     history_kwargs={},
-                    errorbar_kwargs={},
-                    prediction_fill_kwargs=None,
                     x='jaar',
                     y='verkeer',
                     labels=['realisatie', 'prognose'],
@@ -1098,38 +1097,24 @@ def plot_prediction(history,
                     xstep=1,
                     ystep=None,
                     ncol=None, ###Todo: via xParams
-                    clip_on=False,
-                    
+                    clip_on=False,                   
                     dpi=600,
                     fname='',                 
                     figsize=(8.27, 2.76),
                     **kwargs
                     ):
+    ###TODO: Functiebeschrijving aanvullen
+    #        Ik ben bang dat ik onderstaande commentaar heb overschreven met
+    #        een oude versie. 
     """
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
-    and a 'year' column.
+    and a x-column.
     :param pd.DataFrame prediction: the predicted values, should contain the specified column_name as the data and a
-    'year' column.
-    :param int|str column_name: the column name of the data to visualise, defaults to 'data'.
-    :param dict history_plot_kwargs: argument arguments to overwrite the settings used for visualising the historic data.
-    :param dict errorbar_kwargs: arguments to overwrite the settings used for visualising the errorbars of
-    the prediction.
-    :param dict prediction_fill_kwargs: arguments to overwrite the settings used for visualising the filled area
-    of the prediction.
+    x-column.
+    :param int|str y: the column of the data to visualise, defaults to 'verkeer'.
+    :param dict history_kwargs: optional argument for reading the historic data from file.
     :return: a Matplotlib figure and axes.
     """
-
-    ###TODO Vincent: prediction_fill opnemen in general plot_style
-    #                zie errorbar als voorbeeld
-    ###STATUS: opgenomen in plot_style, update statements voor zowel errorbar als prediction_fill in deze functie gelaten
-
-    if errorbar_kwargs is not None:
-        branding.xParams['errorbar'].update(errorbar_kwargs)
-    
-    # Apply the custom prediction fill_between style if provided
-#    prediction_fill = {'color': '#027E9B', 'alpha': 0.3}
-    if prediction_fill_kwargs is not None:
-        branding.xParams['prediction_fill'].update(prediction_fill_kwargs)
 
     # Import history data in dataframe
     hist = read_file(history, **history_kwargs)
@@ -1152,10 +1137,11 @@ def plot_prediction(history,
                            **kwargs)
     
     # Describe the prediction for each year
-    stats = prediction.groupby(x)[y]
-    means = stats.mean()
-    lo = stats.min()
-    hi = stats.max()
+    if stats is None:
+        stats = prediction.groupby(x)[y].describe()
+    means = stats['mean']
+    lo = stats['min']
+    hi = stats['max']
     
     # Combine last point from history with prediction
     hist = hist.set_index(x)
