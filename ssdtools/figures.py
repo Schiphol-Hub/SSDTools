@@ -1148,26 +1148,39 @@ def plot_prediction(history,
                            clip_on=clip_on,
                            fname='',                 
                            figsize=figsize,
+                           zorder=3, # plot on top
                            **kwargs)
     
     # Describe the prediction for each year
-    statistics = prediction.groupby(x)[y].describe()
-
-    # Plot the prediction
-    ###TODO eerste punt geen errorbar
-    ###STATUS: opgelost door alleen laatste waarde te pakken. Mogelijk ook nog doen voor fill_between. 
-    ###STATUS: errorbar + fill_between herschreven
-    ax.errorbar([hist.iloc[-1][x]] + [statistics.index[-1]],
-                [hist.iloc[-1][y]] + [statistics.iloc[-1]['mean']],
-                yerr=[[0] + [(statistics.iloc[-1]['mean'] - statistics.iloc[-1]['min'])],
-                      [0] + [(statistics.iloc[-1]['max'] - statistics.iloc[-1]['mean'])]],
-                **branding.xParams['errorbar'])#.update(errorbar_kwargs))    
+    stats = prediction.groupby(x)[y]
+    means = stats.mean()
+    lo = stats.min()
+    hi = stats.max()
     
-    ax.fill_between([hist.iloc[-1][x]] + statistics.index.tolist(),
-                    [hist.iloc[-1][y]] + statistics['min'].tolist(),
-                    [hist.iloc[-1][y]] + statistics['max'].tolist(),
-                    label=labels[1], ###TODO Check inbouwen
+    # Combine last point from history with prediction
+    hist = hist.set_index(x)
+    p_mean = hist[y].tail(1).append(means)
+    p_lo = hist[y].tail(1).append(lo)
+    p_hi = hist[y].tail(1).append(hi)
+
+    # Color the background of the prediction
+    ax.fill_between(p_mean.index,
+                    p_lo,
+                    p_hi,
                     **branding.xParams['prediction_fill'])
+    
+    # Plot the error bars
+    ax.errorbar(means.index,
+                means,
+                yerr=[means-lo, hi-means],  # asymmetrisch interval
+                **branding.xParams['errorbar'])
+    
+    # Plot de lijnen voor het gemiddelde
+    ax.plot(p_mean.index,
+            p_mean,
+            color=get_cycler_color(1),
+            label=labels[1],
+            markevery=(1,1)) # skip first marker
 
     # legend
     if ncol is None: ncol = len(y)
