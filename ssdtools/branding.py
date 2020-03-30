@@ -346,6 +346,7 @@ def set_xlabels (labels, ax, gap=0.01, mid=None, y=None):
         bbox = ax.get_tightbbox(renderer)
 
         # gebruik zelfde padding als voor de tick-labels en as-labels
+        lw = xParams['labellineprop']['linewidth']
         bbox.y0 -= plt.rcParams['xtick.major.pad']        # lijntjes
         bbox.y1 = bbox.y0 - plt.rcParams['axes.labelpad'] # labels
 
@@ -411,7 +412,9 @@ def set_ylabels (labels, ax, gap=0.02, mid=None, x=None):
         bbox = ax.get_tightbbox(renderer)
 
         # gebruik zelfde padding als voor de tick-labels en as-labels
-        bbox.x0 -= plt.rcParams['xtick.major.pad']        # lijntjes
+        ###TODO hoe is die lw gedifinieerd? de x2 is een benadering die werkt
+        lw = xParams['labellineprop']['linewidth']
+        bbox.x0 -= plt.rcParams['ytick.major.pad'] + lw*2 # lijntjes
         bbox.x1 = bbox.x0 - plt.rcParams['axes.labelpad'] # labels
 
         # transform naar axis-coordinaten
