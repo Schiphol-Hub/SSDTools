@@ -1001,7 +1001,7 @@ def plot_history(history,
                  history_kwargs = {'sheet_name': 'realisatie'},
                  x='jaar',
                  y='verkeer',
-                 labels=['handelsverkeer'],
+                 label=['handelsverkeer'],
                  xlabel='jaar',
                  ylabel='vliegtuigbewegingen',
                  xstep=1,
@@ -1012,10 +1012,7 @@ def plot_history(history,
                  fname='',                 
                  figsize=(8.27, 2.76),
                  **kwargs):
-    ###TODO Vincent: corrigeer beschrijving parameters
-    ###STATUS: compleet
     """
-
     :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
     If it is a string then the file will be inported in a pd.DataFrame.
     :param dict history_kwargs: optional arguments for read_file
@@ -1031,17 +1028,15 @@ def plot_history(history,
     :param int dpi: dpi for saving figure to file, default is 600
     :param str fname: Name for the file, default is '' and no fig will be saved
     :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
-    :return: a Matplotlib figure and axes.
+    :return: if fname='', return a Matplotlib figure and axes.
     """
+    
     def NumberFormatter(x, pos):
         'The two args are the value and tick position'
         return '{:,.0f}'.format(x).replace(',', '.')
     
     # Import history data in dataframe
     df = read_file(history, **history_kwargs)
-    
-    # Set plot style
-#    branding.plot_style(style)
     
     # Plot the history
     ax = df.plot(x=x,
@@ -1051,8 +1046,6 @@ def plot_history(history,
                  **kwargs)
     
     # margins
-    ###TODO Vincent: store in xParams
-    ###STATUS: opgenomen in xParams in branding
     plt.subplots_adjust(**branding.xParams['subplots_adjust'])
 
     # X-as
@@ -1088,7 +1081,7 @@ def plot_history(history,
 def plot_prediction(history, 
                     prediction=None,
                     stats=None,
-                    history_kwargs={},
+                    history_kwargs = {'sheet_name': 'realisatie'},
                     x='jaar',
                     y='verkeer',
                     labels=['realisatie', 'prognose'],
@@ -1103,17 +1096,27 @@ def plot_prediction(history,
                     figsize=(8.27, 2.76),
                     **kwargs
                     ):
-    ###TODO: Functiebeschrijving aanvullen
-    #        Ik ben bang dat ik onderstaande commentaar heb overschreven met
-    #        een oude versie. 
+
     """
-    :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
-    and a x-column.
-    :param pd.DataFrame prediction: the predicted values, should contain the specified column_name as the data and a
-    x-column.
-    :param int|str y: the column of the data to visualise, defaults to 'verkeer'.
-    :param dict history_kwargs: optional argument for reading the historic data from file.
-    :return: a Matplotlib figure and axes.
+    :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
+    If it is a string then the file will be inported in a pd.DataFrame.
+    :param pd.DataFrame prediction: the raw predicted values, should contain the specified column_name as the data and a
+    x-column. Will be superseeded if stats are given
+    :param pd.DataFrame stats: the min, max and mean predicted values and year as index.
+    :param dict history_kwargs: optional arguments for read_file
+    :param int|str x: the column name of the data to visualise, defaults to 'jaar'.
+    :param int|str y: the column name of the data to visualise, defaults to 'verkeer'.
+    :param str label: label for the legend
+    :param str xlabel: label for the x-axis
+    :param str ylabel: label for the y-axis
+    :param float|None xstep: step value for the x-axis
+    :param float|None ystep: step value for the y-axis
+    :param int ncol: number of columns in legend
+    :param boolean clip_on: clipping on plot area, default False    
+    :param int dpi: dpi for saving figure to file, default is 600
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :return: if fname='', return a Matplotlib figure and axes.
     """
 
     # Import history data in dataframe
@@ -1179,6 +1182,7 @@ def plot_prediction(history,
         plt.close(fig)
     else:
         return fig, ax
+
 
 def plot_prediction2(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
                     prediction_fill_kwargs=None, history_plot_kwargs=None,doc29_factor=None):
