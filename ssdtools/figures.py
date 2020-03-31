@@ -1156,19 +1156,26 @@ def plot_prediction(history,
     ax.fill_between(p_mean.index,
                     p_lo,
                     p_hi,
+                    clip_on=clip_on,
                     **branding.xParams['prediction_fill'])
     
     # Plot the error bars
-    ax.errorbar(means.index,
-                means,
-                yerr=[means-lo, hi-means],  # asymmetrisch interval
-                **branding.xParams['errorbar'])
+    e = ax.errorbar(means.index,
+                    means,
+                    yerr=[means-lo, hi-means],  # asymmetrisch interval
+                    # clip_on=clip_on, #Bug in Matplotlib? Lijkt niet te werken
+                    **branding.xParams['errorbar'])
+    # clip_on?
+    if not clip_on:
+        for b in e[1]:
+            b.set_clip_on(False)
     
     # Plot de lijnen voor het gemiddelde
     ax.plot(p_mean.index,
             p_mean,
             color=get_cycler_color(1),
             label=labels[1],
+            clip_on=clip_on,
             markevery=(1,1)) # skip first marker
 
     # legend
