@@ -1163,6 +1163,7 @@ def plot_prediction(history,
     e = ax.errorbar(means.index,
                     means,
                     yerr=[means-lo, hi-means],  # asymmetrisch interval
+                    label=labels[1],
                     # clip_on=clip_on, #Bug in Matplotlib? Lijkt niet te werken
                     **branding.xParams['errorbar'])
     # clip_on?
@@ -1174,10 +1175,9 @@ def plot_prediction(history,
     ax.plot(p_mean.index,
             p_mean,
             color=get_cycler_color(1),
-            label=labels[1],
-            clip_on=clip_on,
-            markevery=(1,1)) # skip first marker
-
+            marker='None',
+            clip_on=clip_on)
+    
     # legend
     if ncol is None: ncol = len(y)
     ax.legend(ncol=ncol, **branding.xParams['legend'])
