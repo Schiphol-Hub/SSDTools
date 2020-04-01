@@ -1491,6 +1491,7 @@ def plot_baangebruik(trf_files,
                 ax.grid(which='major', axis='x', b=False)
 
                 # X-as
+                ax.margins(x=0.02)
                 ax.set_xticks(x)
                 ax.set_xticklabels(trf2['d_runway'])
                 set_xlabels(xlabel, gap=0.02, ax=ax)

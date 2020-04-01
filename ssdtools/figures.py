@@ -1,9 +1,8 @@
-from os.path import splitext
 import matplotlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from ssdtools import branding ###TODO Is dit nodig
+
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib import ticker
@@ -12,7 +11,13 @@ from imageio import imread
 from matplotlib import colors, colorbar, lines
 from descartes import PolygonPatch
 from geopandas import GeoDataFrame
+
+from ssdtools import branding ###TODO Is dit nodig
 from ssdtools.branding import default
+from ssdtools.traffic import Traffic
+from ssdtools.traffic import read_file
+
+
 
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
@@ -762,20 +767,6 @@ class BracketPlot(object):
     def show(self):
         return self.fig.show()
 
-
-###TODO Vincent: opslaan op een logische plek
-def read_file (filename, delimiter='\t', **kwargs):
-    '''Importeer xls-, xlsx- of tekstbestand in een dataframe,
-       als filename geen sting is dan is het waarschijnlijk al een dataframe'''
-    if isinstance(filename, str):
-        _, ext = splitext(filename)
-        if ext in ['.xls', '.xlsx']:
-            return pd.read_excel(filename, **kwargs)
-        else:
-            return pd.read_csv(filename, delimiter=delimiter, **kwargs)
-    else:
-         return filename
-
 # -----------------------------------------------------------------------------
 # Get colors
 # -----------------------------------------------------------------------------
@@ -1153,7 +1144,7 @@ def plot_windrose(windrose):
 
 def plot_runway_usage(traffic,
                       labels,
-                      den=['D', 'E', 'N'],
+                      den=('D', 'E', 'N'),
                       fname=None,
                       n=7,
                       runways=None,
@@ -1217,18 +1208,14 @@ def plot_runway_usage(traffic,
     fig.subplots_adjust(bottom=0.18, wspace=0)
 
     # verwerken traffics
-    for i, trf_file in enumerate(traffic):
+    for i, trf in enumerate(traffic):
+        
+        # Read traffic
+        if isinstance(trf, str):
+            trf = Traffic.read_daisy_meteoyear_file(trf)
 
         # Get the runway statistics
-        trf_stats = trf_file.get_runway_usage_statistics('|'.join(den)).reset_index()
-
-        # # lees csv
-        # trf = pd.read_csv(trf_file, delimiter='\t')
-        # trf = trf.loc[trf['d_den'].isin(den)]
-
-        # # aggregeer etmaalperiode en bereken stats
-        # trf = trf.groupby(['d_lt', 'd_runway', 'd_myear'])['total'].sum().reset_index()
-        # trf_stats = trf.groupby(['d_lt', 'd_runway'])['total'].agg(['min','max','mean']).reset_index()
+        trf_stats = trf.get_runway_usage_statistics('|'.join(den)).reset_index()
 
         # sorteer
         if 'key' not in trf_stats.columns:
@@ -1278,6 +1265,7 @@ def plot_runway_usage(traffic,
                 ax.grid(which='major', axis='x', b=False)
 
                 # X-as
+                ax.margins(x=0.02)
                 ax.set_xticks(x)
                 ax.set_xticklabels(trf2['d_runway'])
                 branding.set_xlabels(xlabel, gap=0.02, ax=ax)

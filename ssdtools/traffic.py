@@ -1,9 +1,22 @@
 import datetime
+from os.path import splitext
 
 import xlrd
 import numpy as np
 import pandas as pd
 import math
+
+def read_file (filename, delimiter='\t', **kwargs):
+    '''Importeer xls-, xlsx- of tekstbestand in een dataframe,
+       als filename geen sting is dan is het waarschijnlijk al een dataframe'''
+    if isinstance(filename, str):
+        _, ext = splitext(filename)
+        if ext in ['.xls', '.xlsx']:
+            return pd.read_excel(filename, **kwargs)
+        else:
+            return pd.read_csv(filename, delimiter=delimiter, **kwargs)
+    else:
+         return filename
 
 class Traffic(object):
     def __init__(self, data=None, date_column=None, class_column=None, id_column=None, den_column='DEN',
@@ -27,7 +40,7 @@ class Traffic(object):
         self.engine_column=engine_column
 
     @classmethod
-    def read_daisy_phase_file(cls, path):
+    def read_daisy_phase_file(cls, path, **kwargs):
         """
         A method to read daisy phase files.
         E.g. summer seasons, winter seasons and maintenance periods.
@@ -36,10 +49,10 @@ class Traffic(object):
         :return: daisy phase aggregate of traffic.
         :rtype: TrafficAggregate
         """
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.phase')
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.phase')
 
     @classmethod
-    def read_daisy_meteoyear_file(cls, path):
+    def read_daisy_meteoyear_file(cls, path, **kwargs):
         """
         A method to read daisy meteoyear files.
 
@@ -47,10 +60,11 @@ class Traffic(object):
         :return: daisy meteoyear aggregate of traffic.
         :rtype: TrafficAggregate
         """
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.meteoyear')
+        ###TODO: Test, is index_col=None ndig?
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.meteoyear')
 
     @classmethod
-    def read_daisy_runway_combination_file(cls, path):
+    def read_daisy_runway_combination_file(cls, path, **kwargs):
         """
         A method to read daisy runway combination files.
 
@@ -60,7 +74,7 @@ class Traffic(object):
         """
 
         # Read the file as DataFrame
-        data_frame = pd.read_csv(path, sep='\t', index_col=None)
+        data_frame = read_file(path, **kwargs)
 
         # todo: Split the runway combination (d_combination)
 
@@ -68,7 +82,7 @@ class Traffic(object):
         return TrafficAggregate(data=data_frame, aggregate_type='daisy.runway_combination')
 
     @classmethod
-    def read_daisy_mean_file(cls, path):
+    def read_daisy_mean_file(cls, path, **kwargs):
         """
         A method to read daisy mean files.
 
@@ -77,10 +91,10 @@ class Traffic(object):
         :rtype: TrafficAggregate
         """
 
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.mean')
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.mean')
 
     @classmethod
-    def read_daisy_emissions_file(cls, path):
+    def read_daisy_emissions_file(cls, path, **kwargs):
         """
         A method to read daisy mean files for emissions.
 
@@ -89,10 +103,10 @@ class Traffic(object):
         :rtype: TrafficAggregate
         """
 
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.emissions')
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.emissions')
     
     @classmethod
-    def read_daisy_HG_file(cls, path):
+    def read_daisy_HG_file(cls, path, **kwargs):
         """
         A method to read daisy mean files for HG computation.
 
@@ -101,10 +115,10 @@ class Traffic(object):
         :rtype: TrafficAggregate
         """
 
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.HG')
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.HG')
 
     @classmethod
-    def read_daisy_weekday_file(cls, path):
+    def read_daisy_weekday_file(cls, path, **kwargs):
         """
         A method to read daisy weekday files.
 
@@ -113,7 +127,7 @@ class Traffic(object):
         :rtype: TrafficAggregate
         """
 
-        return TrafficAggregate(data=pd.read_csv(path, sep='\t', index_col=None), aggregate_type='daisy.weekday')
+        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.weekday')
 
     @classmethod
     def read_taf_file(cls, path, **kwargs):
@@ -126,7 +140,7 @@ class Traffic(object):
         """
 
         # Read the csv file
-        data = pd.read_csv(path, **kwargs)
+        data = read_file(path, **kwargs)
 
         # Replace A (arrival) and D (departure) by L (landing) and T (takeoff)
         data['d_lt'] = data['d_lt'].str.replace(r'^A$', 'L').str.replace(r'^D$', 'T')
@@ -135,10 +149,10 @@ class Traffic(object):
         return TrafficAggregate(data=data, aggregate_type='taf.sir')
 
     @classmethod
-    def read_casper_file(cls, path):
+    def read_casper_file(cls, path, delimiter=',', **kwargs):
 
         # Parse the file
-        data = pd.read_csv(path, sep=',', index_col=None)
+        data = read_file(path, delimiter=delimiter, **kwargs)
 
         # Convert the dates
         data['C_actual'] = pd.to_datetime(data['C_actual'], format='%Y-%m-%d %H:%M:%S')
@@ -146,7 +160,7 @@ class Traffic(object):
         return cls(data, date_column='C_actual', class_column='C_Klasse', id_column='C_id')
 
     @classmethod
-    def read_nlr_file(cls, path):
+    def read_nlr_file(cls, path, **kwargs):
 
         # Open the .xlsx file (this might take a while, but this is the only way to open large .xlsx files...)
         workbook = xlrd.open_workbook(path, on_demand=True)
@@ -161,6 +175,9 @@ class Traffic(object):
 
         # Put the data in a DataFrame
         data_frame = pd.DataFrame(data)
+        
+        ###TODO Test of bovenstaande code kan worden vervangen door
+        # data_frame = read_file(path, **kwargs)
 
         # Create a datetime column
         data_frame['timestamp'] = pd.to_datetime(data_frame['Datum'] + data_frame['Tijd (LT)'], unit='D',
