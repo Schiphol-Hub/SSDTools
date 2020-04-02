@@ -843,14 +843,15 @@ def plot_history(history,
         return '{:,.0f}'.format(x).replace(',', '.')
     
     # Import history data in dataframe
-    df = read_file(history, **history_kwargs)
+    if isinstance(history, str):
+        history = read_file(history, **history_kwargs)
     
     # Plot the history
-    ax = df.plot(x=x,
-                 y=y,
-                 figsize=figsize,
-                 clip_on=clip_on,
-                 **kwargs)
+    ax = history.plot(x=x,
+                      y=y,
+                      figsize=figsize,
+                      clip_on=clip_on,
+                      **kwargs)
     
     # margins
     plt.subplots_adjust(**branding.xParams['subplots_adjust'])
@@ -927,10 +928,11 @@ def plot_prediction(history,
     """
 
     # Import history data in dataframe
-    hist = read_file(history, **history_kwargs)
+    if isinstance(history, str):
+        history = read_file(history, **history_kwargs)
 
     # Plot the history
-    fig, ax = plot_history(history=hist,
+    fig, ax = plot_history(history=history,
                            history_kwargs=history_kwargs,
                            x=x,
                            y=y,
@@ -954,10 +956,10 @@ def plot_prediction(history,
     hi = stats['max']
     
     # Combine last point from history with prediction
-    hist = hist.set_index(x)
-    p_mean = hist[y].tail(1).append(means)
-    p_lo = hist[y].tail(1).append(lo)
-    p_hi = hist[y].tail(1).append(hi)
+    history = history.set_index(x)
+    p_mean = history[y].tail(1).append(means)
+    p_lo = history[y].tail(1).append(lo)
+    p_hi = history[y].tail(1).append(hi)
 
     # Color the background of the prediction
     ax.fill_between(p_mean.index,
