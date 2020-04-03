@@ -1146,8 +1146,7 @@ def plot_windrose(windrose):
 
 def plot_runway_usage(traffic,
                       labels,
-                      den=('D', 'E', 'N'),
-                      fname=None,
+                      den=('D','E','N'),
                       n=7,
                       runways=None,
                       ylabel='vliegtuigbewegingen',
@@ -1155,6 +1154,7 @@ def plot_runway_usage(traffic,
                       dy=10000,
                       reftraffic=1,
                       numbers=False,
+                      fname=None,
                       dpi=600):
     '''Plot het baangebruik'''
 
@@ -1170,14 +1170,14 @@ def plot_runway_usage(traffic,
             return var
 
     # kopie van plotformat
-    MarkerWidth =  [0.3, 0.3*1.2, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
-    MarkerHeight = [0.1, 0.1*1.2, 0.1, 0.1, 0.08]
-    BarWidth = [0.1, 0.08*2, 0.06, 0.06, 0.04]
+    MarkerWidth =  [0.36, 0.36, 0.2, 0.2, 0.1]  # voor 1, 2 en >2 traffics
+    MarkerHeight = [0.12, 0.12, 0.1, 0.1, 0.08]
+    BarWidth = [0.16, 0.16, 0.06, 0.06, 0.04]
     BarGap = [0, 0, 0.05, 0.05, 0.04]
 
-    # Check if multiple traffics are provided
-    if not isinstance(traffic, list): traffic = [traffic] # converteer naar list
-    # if isinstance(trf_files, str): trf_files =[trf_files]
+    # converteer naar list
+    if not isinstance(traffic, list): traffic = [traffic]
+    if not isinstance(labels, list): labels = [labels]
 
     # X-positie van de bars
     x = np.arange(n)
@@ -1302,7 +1302,14 @@ def plot_runway_usage(traffic,
                      ha='center', va='top', fontsize=3)
 
     # legenda
-    if ntrf == 2:
+    if ntrf == 1:
+        w *= 0.8      # legenda op 80%
+        g *= 0.8
+        mw *= 0.8
+        dx = [0]      # x voor de staafjes
+        dxm = [0]     # x voor de markers
+        plot_matrix = [(0, 0.30, 0.05, 0.2, 'left')]        
+    elif ntrf == 2:
         w *= 0.8                # legenda op 80%
         g *= 0.8
         mw *= 0.8
@@ -1343,7 +1350,7 @@ def plot_runway_usage(traffic,
                 color=get_cycler_color(c),
                 clip_on=False)
         if ha:
-            t = ax0.text(dx[i]+xt , 0.5, labels[c],
+            t = ax0.text(dx[i]+xt , 0.50, labels[c],
                          horizontalalignment=ha,
                          verticalalignment='top')
         if i == 2:
