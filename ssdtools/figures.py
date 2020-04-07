@@ -1214,7 +1214,15 @@ def plot_runway_usage(traffic,
         
         # Read traffic
         if isinstance(trf, str):
-            trf = Traffic.read_daisy_meteoyear_file(trf)
+            
+            # trf = Traffic.read_daisy_meteoyear_file(trf)
+            if '- years' in trf:
+                trf = Traffic.read_daisy_meteoyear_file(trf)
+            else:
+                trf = Traffic.read_casper_file(trf)
+                trf.add_den()
+                trf.add_landing_takeoff()
+                trf.data = trf.data.rename(columns={'LT':'d_lt','C_runway':'d_runway','DEN':'d_den'}).assign(d_myear=2019,total=1)
 
         # Get the runway statistics
         trf_stats = trf.get_runway_usage_statistics('|'.join(den)).reset_index()

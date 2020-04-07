@@ -433,6 +433,38 @@ class Traffic(object):
         distribution=distribution.rename(columns={"C_ac_type": "d_type", "C_engine_type": "MTT_ENGINE_TYPE"})
 
         return distribution
+    
+    def get_runway_usage_statistics(self, period):
+        """
+        Aggregate the runway usage for the given period of the day and calculate the various statistics, including mean,
+        median, minimum, maximum and standard deviation.
+
+        :param str period: a regular expression for the period, e.g. 'D' or 'D|E|N'
+        :rtype: pd.DataFrame
+        """
+
+        # # Define the supported types
+        # supported_types = ['daisy.meteoyear']
+
+        # # Check if a different type is provided
+        # if self.type not in supported_types:
+        #     # List the supported types as a string
+        #     supported_types_string = ', '.join(supported_types)
+
+        #     # Include 'or' after the last comma
+        #     supported_types_string = ', or '.join(supported_types_string.rsplit(', ', 1))
+
+        #     raise TypeError('This method is only supported for traffic aggregates of type {}, but {} is given'.format(
+        #         supported_types_string, self.type))
+
+        # Match the period
+        data = self.data[self.data['d_den'].str.match(period)]
+
+        # Calculate the total runway usage per operation per year
+        data = data.groupby(['d_lt', 'd_runway', 'd_myear'])['total'].sum().reset_index()
+
+        # Describe the various yearly scenarios per runway per type of operation
+        return data.groupby(['d_lt', 'd_runway'])['total'].describe()
 
 
 class TrafficAggregate(object):
