@@ -1145,7 +1145,8 @@ def plot_windrose(windrose):
 
 
 def plot_runway_usage(traffic,
-                      labels,
+                      realization=None,
+                      labels=None,
                       den=('D','E','N'),
                       n=7,
                       runways=None,
@@ -1179,9 +1180,12 @@ def plot_runway_usage(traffic,
     if not isinstance(traffic, list): traffic = [traffic]
     if not isinstance(labels, list): labels = [labels]
 
+
+    # append realization to traffic
+    if realization: traffic.append(realization)
+
     # X-positie van de bars
     x = np.arange(n)
-
     ntrf = len(traffic)
     i = ntrf - 1
     w = GetVal(BarWidth, i) * n/7  # normaliseer voor de aslengte
@@ -1214,15 +1218,18 @@ def plot_runway_usage(traffic,
         
         # Read traffic
         if isinstance(trf, str):
-            
-            # trf = Traffic.read_daisy_meteoyear_file(trf)
-            if '- years' in trf:
-                trf = Traffic.read_daisy_meteoyear_file(trf)
-            else:
+            ###Vincent: Dit is wel een beetje foutgevoelig, vertrouwen
+            ###         op de filenaam. Beter is om een optionele parameter mee
+            ###         te geven in de functie net als 'history' en 'prediction'
+            ###         in plot_prediction.
+            if realization and i==ntrf-1:
                 trf = Traffic.read_casper_file(trf)
+                ###TODO: Vincent, onderstaande conversie opnemen in read_casper_file
                 trf.add_den()
                 trf.add_landing_takeoff()
                 trf.data = trf.data.rename(columns={'LT':'d_lt','C_runway':'d_runway','DEN':'d_den'}).assign(d_myear=2019,total=1)
+            else:                
+                trf = Traffic.read_daisy_meteoyear_file(trf)
 
         # Get the runway statistics
         trf_stats = trf.get_runway_usage_statistics('|'.join(den)).reset_index()
@@ -1349,10 +1356,11 @@ def plot_runway_usage(traffic,
             c = 1
         else:
             c = 0
-        ax0.bar(dx[i], height=0.5, bottom=bottom,
-                width=w,
-                color=get_cycler_color(c),
-                clip_on=False)
+        if not (realization and i==ntrf-1):
+            ax0.bar(dx[i], height=0.5, bottom=bottom,
+                    width=w,
+                    color=get_cycler_color(c),
+                    clip_on=False)
         ax0.bar(dxm[i], height=0.05, bottom=yi,
                 width=mw,
                 color=get_cycler_color(c),
