@@ -1145,7 +1145,6 @@ def plot_windrose(windrose):
 
 
 def plot_runway_usage(traffic,
-                      realization=None,
                       labels=None,
                       den=('D','E','N'),
                       n=7,
@@ -1180,10 +1179,6 @@ def plot_runway_usage(traffic,
     if not isinstance(traffic, list): traffic = [traffic]
     if not isinstance(labels, list): labels = [labels]
 
-
-    # append realization to traffic
-    if realization: traffic.append(realization)
-
     # X-positie van de bars
     x = np.arange(n)
     ntrf = len(traffic)
@@ -1214,22 +1209,24 @@ def plot_runway_usage(traffic,
     fig.subplots_adjust(bottom=0.18, wspace=0)
 
     # verwerken traffics
+    realization = [] # als Casper realisaties worden gebruikt
     for i, trf in enumerate(traffic):
         
         # Read traffic
         if isinstance(trf, str):
-            ###Vincent: Dit is wel een beetje foutgevoelig, vertrouwen
-            ###         op de filenaam. Beter is om een optionele parameter mee
-            ###         te geven in de functie net als 'history' en 'prediction'
-            ###         in plot_prediction.
-            if realization and i==ntrf-1:
-                trf = Traffic.read_casper_file(trf)
-                ###TODO: Vincent, onderstaande conversie opnemen in read_casper_file
-                trf.add_den()
-                trf.add_landing_takeoff()
-                trf.data = trf.data.rename(columns={'LT':'d_lt','C_runway':'d_runway','DEN':'d_den'}).assign(d_myear=2019,total=1)
-            else:                
-                trf = Traffic.read_daisy_meteoyear_file(trf)
+            df = read_file(trf, sep=None, engine='python')
+            if 'C_runway' in df.columns:
+                trf = Traffic.read_casper_file(df)
+            elif 'd_runway' in df.columns:
+                trf = Traffic.read_daisy_meteoyear_file(df)
+
+        # realisatietraffic aanpassen
+        if 'C_runway' in trf.data:
+            realization.append(i)
+            trf.add_den()
+            trf.add_landing_takeoff()
+            trf.data = (trf.data.rename(columns={'LT':'d_lt','C_runway':'d_runway','DEN':'d_den'})
+                                .assign(d_myear=2019, total=1))
 
         # Get the runway statistics
         trf_stats = trf.get_runway_usage_statistics('|'.join(den)).reset_index()
@@ -1356,7 +1353,7 @@ def plot_runway_usage(traffic,
             c = 1
         else:
             c = 0
-        if not (realization and i==ntrf-1):
+        if i not in realization:
             ax0.bar(dx[i], height=0.5, bottom=bottom,
                     width=w,
                     color=get_cycler_color(c),

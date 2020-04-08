@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import math
 
-def read_file (filename, delimiter='\t', **kwargs):
+def read_file (filename, sep='\t', **kwargs):
     '''Importeer xls-, xlsx- of tekstbestand in een dataframe,
        als filename geen sting is dan is het waarschijnlijk al een dataframe'''
     if isinstance(filename, str):
@@ -14,7 +14,7 @@ def read_file (filename, delimiter='\t', **kwargs):
         if ext in ['.xls', '.xlsx']:
             return pd.read_excel(filename, **kwargs)
         else:
-            return pd.read_csv(filename, delimiter=delimiter, **kwargs)
+            return pd.read_csv(filename, sep=sep, **kwargs)
     else:
          return filename
 
@@ -150,10 +150,10 @@ class Traffic(object):
         return TrafficAggregate(data=data, aggregate_type='taf.sir')
 
     @classmethod
-    def read_casper_file(cls, path, delimiter=',', **kwargs):
+    def read_casper_file(cls, path, sep=',', **kwargs):
 
         # Parse the file
-        data = read_file(path, delimiter=delimiter, **kwargs)
+        data = read_file(path, sep=sep, **kwargs)
 
         # Convert the dates
         data['C_actual'] = pd.to_datetime(data['C_actual'], format='%Y-%m-%d %H:%M:%S')
