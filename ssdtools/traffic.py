@@ -9,12 +9,15 @@ import math
 def read_file (filename, delimiter='\t', **kwargs):
     '''Importeer xls-, xlsx- of tekstbestand in een dataframe,
        als filename geen sting is dan is het waarschijnlijk al een dataframe'''
-
-    _, ext = splitext(filename)
-    if ext in ['.xls', '.xlsx']:
-        return pd.read_excel(filename, **kwargs)
+    if isinstance(filename, str):
+        _, ext = splitext(filename)
+        if ext in ['.xls', '.xlsx']:
+            return pd.read_excel(filename, **kwargs)
+        else:
+            return pd.read_csv(filename, delimiter=delimiter, **kwargs)
     else:
-        return pd.read_csv(filename, delimiter=delimiter, **kwargs)
+         return filename
+
 
 class Traffic(object):
     def __init__(self, data=None, date_column=None, class_column=None, id_column=None, den_column='DEN',
