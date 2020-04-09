@@ -1158,6 +1158,7 @@ def plot_runway_usage(traffic,
                       fname=None,
                       dpi=600):
     '''Plot het baangebruik'''
+    ###TODO: beschrijven parameters
 
     def NumberFormatter(x, pos):
         'The two args are the value and tick position'
@@ -1391,7 +1392,8 @@ def plot_noise_bba(grids,
                    dpi=600,
                    prognose_dir = './data/'
                    ):
-    
+    ###TODO: beschrijven parameters en uitbreiden functionaliteit naar individuele contouren, verschilplots, bba
+
     # Get the Lden grid
     lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     grid = Grid.read_enviras(grids, pattern=lden_pattern).scale(scale_ga).scale(scale)
@@ -1406,7 +1408,7 @@ def plot_noise_bba(grids,
     plot.add_scale()
 
     # Add the terrain
-    # plot.add_terrain(prognose_dir + '2013-spl-luchtvaartterrein.shp')
+    plot.add_terrain(prognose_dir + '2013-spl-luchtvaartterrein.shp')
 
     # Add the place names
     plot.add_place_names(prognose_dir + 'plaatsnamen.csv')
@@ -1422,4 +1424,4 @@ def plot_noise_bba(grids,
     if fname:
         plot.save(fname, dpi=dpi)
     else:
-        plot.show()
+        plot.show() 
