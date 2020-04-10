@@ -16,6 +16,7 @@ from ssdtools import branding ###TODO Is dit nodig
 from ssdtools.branding import default
 from ssdtools.traffic import Traffic
 from ssdtools.traffic import read_file
+from ssdtools.grid import Grid
 
 
 
@@ -1183,6 +1184,7 @@ def plot_runway_usage(traffic,
                       fname=None,
                       dpi=600):
     '''Plot het baangebruik'''
+    ###TODO: beschrijven parameters
 
     def NumberFormatter(x, pos):
         'The two args are the value and tick position'
@@ -1407,3 +1409,45 @@ def plot_runway_usage(traffic,
         plt.close(fig)
     else:
         return fig, (ax1, ax2)
+
+def plot_noise_bba(grids,
+                   scale_ga=1.025,
+                   scale=None,
+                   contours=[48, 58],
+                   fname=None,
+                   dpi=600,
+                   prognose_dir = './data/'
+                   ):
+    ###TODO: beschrijven parameters en uitbreiden functionaliteit naar individuele contouren, verschilplots, bba
+
+    # Get the Lden grid
+    lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    grid = Grid.read_enviras(grids, pattern=lden_pattern).scale(scale_ga).scale(scale)
+
+    # Create a figure
+    plot = GridPlot(grid,figsize = (30 / 2.54, 30 / 2.54))
+
+    # Add the background
+    plot.add_background(prognose_dir + 'Schiphol_RD900dpi.png')
+
+    # Add a scale
+    plot.add_scale()
+
+    # Add the terrain
+    plot.add_terrain(prognose_dir + '2013-spl-luchtvaartterrein.shp')
+
+    # Add the place names
+    plot.add_place_names(prognose_dir + 'plaatsnamen.csv')
+
+    if len(contours) == 2: 
+        # Add the 58dB contour
+        plot.add_contours(contours[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = '58 Lden')
+
+    # Add the 48dB contour
+    plot.add_contours(contours[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = '48 Lden')
+
+    # Show plot
+    if fname:
+        plot.save(fname, dpi=dpi)
+    else:
+        plot.show() 
