@@ -5,7 +5,11 @@ import re
 import textwrap
 import numpy as np
 import pandas as pd
-import shapefile
+
+# import shapefile
+###TODO Vincent, zonder deze module werkt de toolbox niet meer, 
+###              misschien het script/demodule opnemen in de ssdtools?
+
 import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline
 from shapely.geometry import Polygon
