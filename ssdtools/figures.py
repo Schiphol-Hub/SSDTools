@@ -567,7 +567,32 @@ def plot_season_traffic(distribution,
         return fig, ax
 
 
-def plot_aircraft_types(traffic_aggregate, ax=None, **kwargs):
+def plot_aircraft_types(traffic_aggregate,
+                        width=0.6,
+                        xlabel='maximum startgewicht in tonnen',
+                        rot=0,
+                        ylabel='aandeel in de vloot',
+                        ylim=(0,60),
+                        ystep=None,
+                        fname='',
+                        figsize=(8.27, 2.76),
+                        dpi=600,
+                        **kwargs):
+    """
+    A function to create a fleetmix plot. 
+
+    :param Traffic.??? traffic_aggregate
+    :param float width: barwidth
+    :param str xlabel: label for the x-axis
+    :param float rot: label rotation x-axis
+    :param str ylabel: label for the y-axis
+    :param float|None ystep: step value for the y-axis
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='', return a Matplotlib figure and axes.
+    """
+
     # Extract the weight class
     weight_class = pd.concat([traffic_aggregate.data['total'],
                               traffic_aggregate.data['d_ac_cat'].str.get(0).fillna(0).astype(int)], axis=1)
@@ -597,34 +622,39 @@ def plot_aircraft_types(traffic_aggregate, ax=None, **kwargs):
     fleet = fleet.fillna(0)
     print (fleet)
 
-    if ax is None:
-        # Create a figure
-        fig, ax = plt.subplots(figsize=(12, 4))
+    # plot    
+    ax = fleet.plot.bar(figsize=figsize,
+                        width=width,
+                        edgecolor='none',
+                        ylim=ylim,
+                        rot=rot,
+                        **kwargs)
 
-    # Add horizontal grid lines
-    ax.grid(axis='y')
-
-    # Create the bar plot
-    ax.bar(range(fleet.shape[0]), fleet, **kwargs)
-
-    # Set the x-ticks
-    plt.xticks(range(fleet.shape[0]), fleet.index.tolist())
-
-    # Format the y-ticks
-    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d %%'))
-
-    # Set the x-label
-    ax.set_xlabel('Maximum startgewicht in tonnen')
-
-    # Get rid of box around graph
-    for spine in plt.gca().spines.values():
-        spine.set_visible(False)
+    # margins
+    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
     
+    # geen verticale  gridlines
+    ax.xaxis.grid(which='major', color='None')   
 
-    try:
+    # X-as
+    if xlabel is not None:
+        branding.set_xlabels(xlabel, ax=ax)
+    else:
+        ax.set_xlabel('') # verberg as-label
+        
+    # Y-as
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d%%'))
+    if ylabel is not None:
+        branding.set_ylabels(ylabel, ax=ax)
+        
+    # save figure
+    fig = plt.gcf()
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
         return fig, ax
-    except NameError:
-        return None, ax
+
 
 class BracketPlot(object):
     def __init__(self, slond_colors=None, figsize=None, capacity_color='#cdbbce', takeoff_color='#4a8ab7',
