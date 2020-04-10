@@ -484,60 +484,86 @@ class GridPlot(object):
         return self.fig.show()
 
 
-def plot_season_traffic(distribution, column_colors=None):
+def plot_season_traffic(distribution,
+                        xlabel='vliegtuigbewegingen',
+                        xlim=(0,160000),
+                        xstep=None,
+                        width=0.6,
+                        ncol=4,
+                        dpi=600,
+                        fname='',
+                        figsize=(8.27, 2.76),
+                        **kwargs):
     """
     A function to create a traffic per season plot. Can also be used to plot other grouped horizontal stacked bar
     charts.
 
-    :param dict column_colors: a dict containing the colors for the columns.
     :param pd.DataFrame distribution: a dataframe containing the numbers to visualise. The dataframe should have a
     2-level multiindex, where the first level is the seasons and the second level is the type of operation. The columns
     are used as labels for the data.
-    :return: figure and axes.
+    :param str xlabel: label for the x-axis
+    :param str ylabel: label for the y-axis
+    :param float|None xstep: step value for the x-axis
+    :param float width: barwidth
+    :param int ncol: number of columns in legend
+    :param int dpi: dpi for saving figure to file, default is 600
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :return: if fname='', return a Matplotlib figure and axes.
     """
+    
+    def NumberFormatter(x, pos):
+        'The two args are the value and tick position'
+        return '{:,.0f}'.format(x).replace(',', '.')
+    
+    # plot
+    ax = distribution.plot.barh(stacked=True,
+                                figsize=figsize,
+                                width=width,
+                                edgecolor='none',
+                                xlim=xlim,
+                                **kwargs)
 
-    # Get the seasons
-    seasons = distribution.index.get_level_values(0).unique()
+    # margins
+    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
+            
+    # X-as
+    if xlabel is not None:
+        branding.set_xlabels(xlabel, ax=ax)
+    else:
+        ax.set_xlabel('') # verberg as-label
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
+    if xstep is not None:
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
+        
+    # Y-as
+    ax.invert_yaxis()
+    ax.set_yticklabels(distribution.index.get_level_values(1),
+                       va='center',
+                       rotation='vertical')
+    branding.set_ylabels(distribution.index.get_level_values(0).unique()[::-1],
+                         ax=ax)
 
-    # Create a subplot for each season
-    fig, ax = plt.subplots(len(seasons))
-    plt.subplots_adjust(left=.25, hspace=0.0)
-    fig.set_size_inches(30 / 2.54, 10 / 2.54)
+    # geen horizontale  gridlines
+    ax.yaxis.grid(which='major', color='None')        
 
-    # Add the data to each subplot
-    for i, season in enumerate(seasons):
-        # Select the data
-        season_data = distribution.loc[season]
+    # legend
+    leg = ax.legend(ncol=ncol,
+                    handletextpad=-0.5,
+                    **branding.xParams['legend'])
 
-        # Create a cumulative sum to get the indentation of the bars right
-        season_data_cumsum = np.zeros(season_data.shape, dtype=int)
-        season_data_cumsum[:, 1::] = np.cumsum(season_data.values[:, :-1], axis=1)
+    for patch in leg.get_patches():  # Maak de patches vierkant
+        patch.set_height(5)
+        patch.set_width(5)
+        patch.set_y(-1)              # Vertikaal uitlijnen
 
-        # Add the column
-        for j, column in enumerate(season_data.columns):
-            if column_colors is not None and column in column_colors:
-                color = column_colors[column]
-            else:
-                color = None
-
-            ax[i].barh(season_data.index, season_data.values[:, j], left=season_data_cumsum[:, j], label=column,
-                       color=color)
-
-        ax[i].set_ylabel(season)
-        ax[i].spines['top'].set_visible(False)
-        ax[i].spines['bottom'].set_visible(False)
-        ax[i].spines['right'].set_visible(False)
-
-        # Add vertical grid lines
-        ax[i].grid(axis='x')
-
-        ax[i].set_xlim([0, distribution.sum(axis=1).max()])
-
-    # Remove the top ticks
-    for i in range(len(seasons) - 1):
-        ax[i].axes.xaxis.set_ticklabels([])
-
-    return fig, ax
+    # save figure
+    fig = plt.gcf()
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
+        return fig, ax
 
 
 def plot_aircraft_types(traffic_aggregate, ax=None, **kwargs):
@@ -868,7 +894,7 @@ def plot_history(history,
         ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
 
     # Y-as
-    if xlabel is not None:
+    if ylabel is not None:
         branding.set_ylabels(ylabel, ax=ax)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
     if ystep is not None:
