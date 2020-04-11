@@ -201,7 +201,7 @@ def plot_style(style='MER2020'):
         xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
         
         # margins
-        xParams['subplots_adjust'] = dict(bottom=0.2)
+        plt.rc('figure.subplot', bottom=0.2)       
 
         # lines en marker
         plt.rc('lines', linewidth=1,

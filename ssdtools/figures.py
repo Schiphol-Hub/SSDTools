@@ -524,9 +524,6 @@ def plot_season_traffic(distribution,
                                 edgecolor='none',
                                 xlim=xlim,
                                 **kwargs)
-
-    # margins
-    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
             
     # X-as
     if xlabel is not None:
@@ -630,9 +627,6 @@ def plot_aircraft_types(traffic_aggregate,
                         rot=rot,
                         **kwargs)
 
-    # margins
-    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
-    
     # geen verticale  gridlines
     ax.xaxis.grid(which='major', color='None')   
 
@@ -909,9 +903,6 @@ def plot_history(history,
                       figsize=figsize,
                       clip_on=clip_on,
                       **kwargs)
-    
-    # margins
-    plt.subplots_adjust(**branding.xParams['subplots_adjust'])
 
     # X-as
     if xlabel is not None:
