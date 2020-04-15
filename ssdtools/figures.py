@@ -859,7 +859,6 @@ def plot_history(history,
                  history_kwargs = {'sheet_name': 'realisatie'},
                  x='jaar',
                  y='verkeer',
-                 label=['handelsverkeer'],
                  xlabel='jaar',
                  ylabel='vliegtuigbewegingen',
                  xstep=1,
@@ -876,7 +875,6 @@ def plot_history(history,
     :param dict history_kwargs: optional arguments for read_file
     :param int|str x: the column name of the data to visualise, defaults to 'jaar'.
     :param int|str y: the column name of the data to visualise, defaults to 'verkeer'.
-    :param str label: label for the legend
     :param str xlabel: label for the x-axis
     :param str ylabel: label for the y-axis
     :param float|None xstep: step value for the x-axis
