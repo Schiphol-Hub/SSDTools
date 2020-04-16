@@ -162,10 +162,6 @@ def plot_style(style='MER2020'):
                linewidth=0.2,
                facecolor='white')   # achtergrond wit
 
-        ###TODO Kan hidespines weg?
-#        xParams['hidespines'] = ['left', 'right']
-        # xParams['hidespines'] = []
-
         # labels
         plt.rc('axes',
                labelcolor='black',

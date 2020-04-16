@@ -19,6 +19,7 @@ from ssdtools import branding ###TODO Is dit nodig
 from ssdtools.traffic import read_file
 from ssdtools.figures import get_cycler_color, update_legend_position
 
+
 # -----------------------------------------------------------------------------
 # Baansimulaties
 # -----------------------------------------------------------------------------
@@ -326,10 +327,6 @@ def plot_groepsrisico(inpFile,
 
     # Y-as
     branding.set_ylabels(ylabel, ax=ax)
-
-    # hide spines
-    for side in branding.xParams['hidespines']:
-        ax.spines[side].set_color('none')
 
     # legend
     if ncol is None: ncol = len(y)
