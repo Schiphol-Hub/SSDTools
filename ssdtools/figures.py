@@ -564,7 +564,18 @@ def plot_season_traffic(distribution,
         return fig, ax
 
 
-def plot_aircraft_types(traffic_aggregate,
+def plot_aircraft_types(traffic,
+                        traffic_kwargs={},
+                        weight_classes= {0: '< 6',
+                                         1: '6 - 40',
+                                         2: '6 - 40',
+                                         3: '40 - 60',
+                                         4: '60 - 160',
+                                         5: '60 - 160',
+                                         6: '160 - 230',
+                                         7: '230 - 300',
+                                         8: '> 300',
+                                         9: '> 300'},
                         width=0.6,
                         xlabel='maximum startgewicht in tonnen',
                         rot=0,
@@ -578,7 +589,8 @@ def plot_aircraft_types(traffic_aggregate,
     """
     A function to create a fleetmix plot. 
 
-    :param Traffic.??? traffic_aggregate
+    :param Traffic.??? traffic
+    :param dict taffic_kwargs
     :param float width: barwidth
     :param str xlabel: label for the x-axis
     :param float rot: label rotation x-axis
@@ -590,33 +602,22 @@ def plot_aircraft_types(traffic_aggregate,
     :return: if fname='', return a Matplotlib figure and axes.
     """
 
-    # Extract the weight class
-    weight_class = pd.concat([traffic_aggregate.data['total'],
-                              traffic_aggregate.data['d_ac_cat'].str.get(0).fillna(0).astype(int)], axis=1)
-    weight_class.columns = ('total', 'weight_class')
-
-    # Set the MTOW definitions
-    mtow_def = pd.Series({
-        0: '< 6',
-        1: '6 - 40',
-        2: '6 - 40',
-        3: '40 - 60',
-        4: '60 - 160',
-        5: '60 - 160',
-        6: '160 - 230',
-        7: '230 - 300',
-        8: '> 300',
-        9: '> 300'
-    }).reset_index(drop=False, name='MTOW').rename(columns={'index': 'weight_class'})
-
-    # Add the MTOW definitions to the weight classes
-    weight_class = pd.merge(weight_class, mtow_def, on='weight_class', how='left')
-
-    # Calculate the fleet distribution by MTOW
-    fleet = weight_class.groupby(['MTOW'])['total'].sum()
-    fleet = fleet.reindex(mtow_def['MTOW'].unique())
-    fleet = fleet / fleet.sum() * 100
-    fleet = fleet.fillna(0)
+    # Import traffic
+    if isinstance(traffic, str):
+        traffic = Traffic.read_daisy_mean_file(traffic, **traffic_kwargs)
+    trf = traffic.data
+    
+    # Add weight class
+    trf['weight_class'] = trf['d_ac_cat'].str.get(0).astype(int)
+    
+    # Add MTOW classes
+    df = pd.DataFrame(data=weight_classes.values(), columns=['mtow'],
+                      index=weight_classes.keys())
+    fleet = df.merge(trf, left_index=True, right_on='weight_class', how='left').fillna(0)
+    
+    # Group by mtow class
+    fleet = fleet.groupby(['mtow'], sort=False)['total'].sum()
+    fleet = 100 * fleet / fleet.sum()
     print (fleet)
 
     # plot    
