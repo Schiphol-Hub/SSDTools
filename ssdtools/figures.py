@@ -606,14 +606,15 @@ def plot_aircraft_types(traffic,
          
     # converteer naar list
     if not isinstance(traffic, list): traffic = [traffic]
-    if not isinstance(labels, list): labels = [labels]
+    if labels is not None :
+        if not isinstance(labels, list): labels = [labels]
     
     # df for storing results with unique index   
     df = (pd.DataFrame(data=weight_classes.values(), columns=['mtow'])
             .drop_duplicates()
             .set_index('mtow'))
     
-    for trf, label in zip(traffic, labels):
+    for i, trf in enumerate(traffic):
         # Read traffic
         if isinstance(trf, str):
             trf = read_file(trf, **traffic_kwargs)
@@ -627,8 +628,7 @@ def plot_aircraft_types(traffic,
             trf = (trf.dropna(subset=['C_VVC'])
                       .rename(columns={'C_VVC':'d_ac_cat'})
                       .assign(total=1))
-            
-        
+                    
         # Add weight and mtow class
         trf['weight_class'] = trf['d_ac_cat'].str.get(0).astype(int)
         trf['mtow'] = trf['weight_class'].map(weight_classes)
@@ -638,10 +638,19 @@ def plot_aircraft_types(traffic,
         trf = 100 * trf / trf.sum()
         
         # Store results
-        df = df.join(trf, how='left').fillna(0).rename(columns={'total': label})
+        df = df.join(trf, how='left').fillna(0)
+        
+        # Name the result
+        if labels is None:
+            
+            label = f'traffic {i}'
+        else: 
+            label = labels[i]
+        df = df.rename(columns={'total': label})
 
-    # Print table        
-    print(df)
+    # Print table
+    with pd.option_context('display.float_format', '{:,.1f}%'.format):    
+        print(df.reset_index().to_string(index=False))
 
     # plot    
     ax = df.plot.bar(figsize=figsize,
