@@ -565,7 +565,7 @@ def plot_season_traffic(distribution,
 
 
 def plot_aircraft_types(traffic,
-                        traffic_kwargs={},
+                        traffic_kwargs={'sep':None, 'engine':'python'},
                         weight_classes= {0: '< 6',
                                          1: '6 - 40',
                                          2: '6 - 40',
@@ -577,11 +577,13 @@ def plot_aircraft_types(traffic,
                                          8: '> 300',
                                          9: '> 300'},
                         width=0.6,
+                        labels='handelsverkeer',
                         xlabel='maximum startgewicht in tonnen',
                         rot=0,
                         ylabel='aandeel in de vloot',
                         ylim=(0,60),
                         ystep=None,
+                        ncol=None,
                         fname='',
                         figsize=(8.27, 2.76),
                         dpi=600,
@@ -601,32 +603,53 @@ def plot_aircraft_types(traffic,
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='', return a Matplotlib figure and axes.
     """
+         
+    # converteer naar list
+    if not isinstance(traffic, list): traffic = [traffic]
+    if not isinstance(labels, list): labels = [labels]
+    
+    # df for storing results with unique index   
+    df = (pd.DataFrame(data=weight_classes.values(), columns=['mtow'])
+            .drop_duplicates()
+            .set_index('mtow'))
+    
+    for trf, label in zip(traffic, labels):
+        # Read traffic
+        if isinstance(trf, str):
+            trf = read_file(trf, **traffic_kwargs)
+        else:
+            trf = trf.data
+    
+        # Realisatietraffic aanpassen
+        if 'C_VVC' in trf:
+            if trf['C_VVC'].isna().any():
+                print("Missing VVC's in traffic:", trf['C_VVC'].isna().sum())
+            trf = (trf.dropna(subset=['C_VVC'])
+                      .rename(columns={'C_VVC':'d_ac_cat'})
+                      .assign(total=1))
+            
+        
+        # Add weight and mtow class
+        trf['weight_class'] = trf['d_ac_cat'].str.get(0).astype(int)
+        trf['mtow'] = trf['weight_class'].map(weight_classes)
 
-    # Import traffic
-    if isinstance(traffic, str):
-        traffic = Traffic.read_daisy_mean_file(traffic, **traffic_kwargs)
-    trf = traffic.data
-    
-    # Add weight class
-    trf['weight_class'] = trf['d_ac_cat'].str.get(0).astype(int)
-    
-    # Add MTOW classes
-    df = pd.DataFrame(data=weight_classes.values(), columns=['mtow'],
-                      index=weight_classes.keys())
-    fleet = df.merge(trf, left_index=True, right_on='weight_class', how='left').fillna(0)
-    
-    # Group by mtow class
-    fleet = fleet.groupby(['mtow'], sort=False)['total'].sum()
-    fleet = 100 * fleet / fleet.sum()
-    print (fleet)
+        # Group by mtow class
+        trf = trf.groupby(['mtow'])['total'].sum()
+        trf = 100 * trf / trf.sum()
+        
+        # Store results
+        df = df.join(trf, how='left').fillna(0).rename(columns={'total': label})
+
+    # Print table        
+    print(df)
 
     # plot    
-    ax = fleet.plot.bar(figsize=figsize,
-                        width=width,
-                        edgecolor='none',
-                        ylim=ylim,
-                        rot=rot,
-                        **kwargs)
+    ax = df.plot.bar(figsize=figsize,
+                     width=width,
+                     edgecolor='none',
+                     ylim=ylim,
+                     rot=rot,
+                     **kwargs)
 
     # geen verticale  gridlines
     ax.xaxis.grid(which='major', color='None')   
@@ -641,6 +664,17 @@ def plot_aircraft_types(traffic,
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d%%'))
     if ylabel is not None:
         branding.set_ylabels(ylabel, ax=ax)
+
+    # legend
+    if ncol is None: ncol = len(traffic)
+    leg = ax.legend(ncol=ncol,
+                    handletextpad=-0.5,
+                    **branding.xParams['legend'])
+
+    for patch in leg.get_patches():  # Maak de patches vierkant
+        patch.set_height(5)
+        patch.set_width(5)
+        patch.set_y(-1)              # Vertikaal uitlijnen
         
     # save figure
     fig = plt.gcf()
