@@ -15,6 +15,7 @@ from geopandas import GeoDataFrame
 from ssdtools import branding ###TODO Is dit nodig
 from ssdtools.branding import default
 from ssdtools.traffic import Traffic
+from ssdtools.traffic import TrafficAggregate
 from ssdtools.traffic import read_file
 from ssdtools.grid import Grid
 
@@ -606,20 +607,20 @@ def plot_aircraft_types(traffic,
          
     # converteer naar list
     if not isinstance(traffic, list): traffic = [traffic]
-    if labels is not None :
-        if not isinstance(labels, list): labels = [labels]
+    if not isinstance(labels, list): labels = [labels]
     
     # df for storing results with unique index   
     df = (pd.DataFrame(data=weight_classes.values(), columns=['mtow'])
             .drop_duplicates()
             .set_index('mtow'))
     
-    for i, trf in enumerate(traffic):
+    for trf, label in zip(traffic, labels):
         # Read traffic
-        if isinstance(trf, str):
-            trf = read_file(trf, **traffic_kwargs)
-        else:
+        ###TODO gaat dit altijd goed?
+        if isinstance(trf, TrafficAggregate):
             trf = trf.data
+        else:
+            trf = read_file(trf, **traffic_kwargs)
     
         # Realisatietraffic aanpassen
         if 'C_VVC' in trf:
@@ -629,24 +630,15 @@ def plot_aircraft_types(traffic,
                       .rename(columns={'C_VVC':'d_ac_cat'})
                       .assign(total=1))
                     
-        # Add weight and mtow class
-        trf['weight_class'] = trf['d_ac_cat'].str.get(0).astype(int)
-        trf['mtow'] = trf['weight_class'].map(weight_classes)
+        # mtow class
+        mtow = trf['d_ac_cat'].str.get(0).astype(int).map(weight_classes)
 
         # Group by mtow class
-        trf = trf.groupby(['mtow'])['total'].sum()
-        trf = 100 * trf / trf.sum()
+        p = trf.groupby(mtow)['total'].sum()
+        p = 100 * p / p.sum()
         
         # Store results
-        df = df.join(trf, how='left').fillna(0)
-        
-        # Name the result
-        if labels is None:
-            
-            label = f'traffic {i}'
-        else: 
-            label = labels[i]
-        df = df.rename(columns={'total': label})
+        df = df.join(p, how='left').fillna(0).rename(columns={'total': label})
 
     # Print table
     with pd.option_context('display.float_format', '{:,.1f}%'.format):    
