@@ -270,10 +270,12 @@ def plot_style(style='MER2020'):
                                       'alpha': 0.2,          # doorzichtigheid
                                                    }        
 
-        # patches, o.a. voor een barplot
+        # barplot
+        xParams['barplot'] = {'width': 0.6}
         plt.rc('patch', force_edgecolor=True,
-                        linewidth=0.2,
+                        linewidth=0.3,
                         edgecolor = 'white')
+        
         # heatmap
         ###TODO: Afhankelijk maken van reeks, zie hieronder
 #        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])

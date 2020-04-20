@@ -565,50 +565,99 @@ def plot_season_traffic(distribution,
         return fig, ax
 
 
-def plot_aircraft_types(traffic,
-                        traffic_kwargs={'sep':None, 'engine':'python'},
-                        weight_classes= {0: '< 6',
-                                         1: '6 - 40',
-                                         2: '6 - 40',
-                                         3: '40 - 60',
-                                         4: '60 - 160',
-                                         5: '60 - 160',
-                                         6: '160 - 230',
-                                         7: '230 - 300',
-                                         8: '> 300',
-                                         9: '> 300'},
-                        width=0.6,
-                        labels='handelsverkeer',
-                        xlabel='maximum startgewicht in tonnen',
-                        rot=0,
-                        ylabel='aandeel in de vloot',
-                        ylim=(0,60),
-                        ystep=None,
-                        ncol=None,
-                        fname='',
-                        figsize=(8.27, 2.76),
-                        dpi=600,
-                        **kwargs):
+def plot_bar(table=None,
+             xlabel=None,
+             ylabel=None,
+             ncol=None,
+             fname='',
+             figsize=(8.27, 2.76),
+             dpi=600,
+             **kwargs):
     """
-    A function to create a fleetmix plot. 
+    A function to create a barplot. 
 
-    :param Traffic.??? traffic
-    :param dict taffic_kwargs
-    :param float width: barwidth
+    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
     :param str xlabel: label for the x-axis
-    :param float rot: label rotation x-axis
     :param str ylabel: label for the y-axis
-    :param float|None ystep: step value for the y-axis
     :param str fname: Name for the file, default is '' and no fig will be saved
     :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='', return a Matplotlib figure and axes.
+    """
+        
+    # plot format
+    plot_format = branding.xParams['barplot']     # general settings
+    plot_format.update(edgecolor='none', rot=0)   # plot specific
+    plot_format.update(kwargs)                    # user input                                   
+
+    # plot
+    ax = table.plot.bar(figsize=figsize,
+                        **plot_format)
+
+    # geen verticale  gridlines
+    ax.xaxis.grid(which='major', color='None')   
+
+    # X-as
+    if xlabel is not None:
+        branding.set_xlabels(xlabel, ax=ax)
+    else:
+        ax.set_xlabel('') # verberg as-label
+        
+    # Y-as
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d%%'))
+    if ylabel is not None:
+        branding.set_ylabels(ylabel, ax=ax)
+
+    # legend
+    if ncol is None: ncol = len(table.columns)
+    leg = ax.legend(ncol=ncol,
+                    handletextpad=-0.5,
+                    **branding.xParams['legend'])
+
+    for patch in leg.get_patches():  # Maak de patches vierkant
+        patch.set_height(5)
+        patch.set_width(5)
+        patch.set_y(-1)              # Vertikaal uitlijnen
+        
+    # save figure
+    fig = plt.gcf()
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
+        return fig, ax
+
+def table_aircraft_types(traffic,
+                         traffic_kwargs={'sep':None, 'engine':'python'},
+                         labels='handelsverkeer',
+                         weight_classes= {0: '< 6',
+                                          1: '6 - 40',
+                                          2: '6 - 40',
+                                          3: '40 - 60',
+                                          4: '60 - 160',
+                                          5: '60 - 160',
+                                          6: '160 - 230',
+                                          7: '230 - 300',
+                                          8: '> 300',
+                                          9: '> 300'}):
+    """
+    Create a table with the number of aircraft per weight class. The weight classes are based on the VVC-code.
+    The table can be used as input for plot_aircraft_types 
+
+    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
+    :param dict taffic_kwargs: kwargs for reading traffic data
+    :param str labels: List with strings to identify the traffics 
+    :param dict weight_classes: Text per VVC weight class to aggregate the traffic
+    :return: return a pd.DataFrame.
     """
          
     # converteer naar list
     if not isinstance(traffic, list): traffic = [traffic]
     if not isinstance(labels, list): labels = [labels]
     
+    if len(traffic) != len(labels):
+           print('Error: Traffic and labels do not have equal dimensions')
+ 
     # df for storing results with unique index   
     df = (pd.DataFrame(data=weight_classes.values(), columns=['mtow'])
             .drop_duplicates()
@@ -625,7 +674,8 @@ def plot_aircraft_types(traffic,
         # Realisatietraffic aanpassen
         if 'C_VVC' in trf:
             if trf['C_VVC'].isna().any():
-                print("Missing VVC's in traffic:", trf['C_VVC'].isna().sum())
+                missing = trf['C_VVC'].isna().sum()
+                print(f"Info: {missing} missing VVC's in traffic '{label}'")
             trf = (trf.dropna(subset=['C_VVC'])
                       .rename(columns={'C_VVC':'d_ac_cat'})
                       .assign(total=1))
@@ -644,46 +694,65 @@ def plot_aircraft_types(traffic,
     with pd.option_context('display.float_format', '{:,.1f}%'.format):    
         print(df.reset_index().to_string(index=False))
 
-    # plot    
-    ax = df.plot.bar(figsize=figsize,
-                     width=width,
-                     edgecolor='none',
-                     ylim=ylim,
-                     rot=rot,
-                     **kwargs)
+    return df
 
-    # geen verticale  gridlines
-    ax.xaxis.grid(which='major', color='None')   
 
-    # X-as
-    if xlabel is not None:
-        branding.set_xlabels(xlabel, ax=ax)
-    else:
-        ax.set_xlabel('') # verberg as-label
-        
-    # Y-as
-    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d%%'))
-    if ylabel is not None:
-        branding.set_ylabels(ylabel, ax=ax)
+def plot_aircraft_types(table=None,
+                        traffic=None,
+                        traffic_kwargs={'sep':None, 'engine':'python'},
+                        labels='handelsverkeer',
+                        weight_classes= {0: '< 6',
+                                         1: '6 - 40',
+                                         2: '6 - 40',
+                                         3: '40 - 60',
+                                         4: '60 - 160',
+                                         5: '60 - 160',
+                                         6: '160 - 230',
+                                         7: '230 - 300',
+                                         8: '> 300',
+                                         9: '> 300'},
+                        xlabel='maximum startgewicht in tonnen',
+                        ylabel='aandeel in de vloot',
+                        ylim=(0,60),
+                        fname='',
+                        figsize=(8.27, 2.76),
+                        dpi=600,
+                        **kwargs):
+    """
+    A function to create a fleetmix plot. 
 
-    # legend
-    if ncol is None: ncol = len(traffic)
-    leg = ax.legend(ncol=ncol,
-                    handletextpad=-0.5,
-                    **branding.xParams['legend'])
-
-    for patch in leg.get_patches():  # Maak de patches vierkant
-        patch.set_height(5)
-        patch.set_width(5)
-        patch.set_y(-1)              # Vertikaal uitlijnen
-        
-    # save figure
-    fig = plt.gcf()
-    if fname:
-        fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
-    else:
-        return fig, ax
+    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
+    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
+    :param dict taffic_kwargs: kwargs for reading traffic data
+    :param str labels: List with strings to identify the traffics, ignorred if table is used as input 
+    :param dict weight_classes: Text per VVC weight class to aggregate the traffic
+    :param str xlabel: label for the x-axis
+    :param str ylabel: label for the y-axis
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='', return a Matplotlib figure and axes.
+    """
+    
+    if table is None:
+        table = table_aircraft_types(traffic=traffic,
+                                     traffic_kwargs=traffic_kwargs,
+                                     weight_classes=weight_classes,
+                                     labels=labels)    
+    # plot
+    return plot_bar(table,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    ylim=ylim,
+                    figsize=figsize,
+                    dpi=dpi,
+                    fname=fname,
+                    **kwargs)
+                        
+                                
+                                
+                                
+                                
 
 
 class BracketPlot(object):
