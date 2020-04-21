@@ -1653,7 +1653,7 @@ def plot_runway_usage(traffic,
 def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
-                   contours=[48, 58],
+                   db=[48, 58],
                    fname=None,
                    dpi=600,
                    prognose_dir = './data/'
@@ -1679,15 +1679,60 @@ def plot_noise_bba(grids,
     # Add the place names
     plot.add_place_names(prognose_dir + 'plaatsnamen.csv')
 
-    if len(contours) == 2: 
+    if len(db) == 2: 
         # Add the 58dB contour
-        plot.add_contours(contours[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = '58 Lden')
+        plot.add_contours(db[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = '58 Lden')
 
     # Add the 48dB contour
-    plot.add_contours(contours[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = '48 Lden')
+    plot.add_contours(db[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = '48 Lden')
 
     # Show plot
     if fname:
         plot.save(fname, dpi=dpi)
     else:
-        plot.show() 
+        return fig, ax 
+
+def plot_noise_diff(grid=None,
+                    other_grid=None,
+                    db=[48,58],
+                    fname=None,
+                    dpi=600,
+                    ):
+    
+    # Create a figure
+    plot = GridPlot(grid,other_grid=other_grid,figsize = (30 / 2.54, 30 / 2.54))
+
+    # Add the background
+    plot.add_background('data/Schiphol_RD900dpi.png')
+
+    # Add a scale
+    plot.add_scale()
+
+    # Add the terrain
+    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
+
+    # Add the place names
+    plot.add_place_names('data/plaatsnamen.csv')
+
+    # Add the heatmap
+    plot.add_comparison_heatmap(other_grid,vmin=-3,vmax=3,
+                                # colormap=matplotlib.cm.get_cmap('RdYlGn_r'),
+                                # positive_scale=True
+                                )
+    
+    # Add the 48dB contour
+    plot.add_contours(db[0], default['kleuren']['schemergroen'], 
+                      default['kleuren']['wolkengrijs_1'],
+                      label = 'GP2020',
+                      other_label = 'GP2020 + maatschappelijk verkeer')
+    
+    if len(db)==2:
+        plot.add_contours(db[1], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'])
+    
+    plot.add_colorbar()
+    
+    # Show plot
+    if fname:
+        plot.save(fname, dpi=dpi)
+    else:
+        return fig, ax 
