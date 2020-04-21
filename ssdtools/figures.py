@@ -20,11 +20,7 @@ from ssdtools.traffic import read_file
 from ssdtools.grid import Grid
 
 
-def Formatter_1000sep0d(x, pos):
-    'The two args are the value and tick position'
-    return '{:,.0f}'.format(x).replace(',', '.')
 
-    
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
     Soften the colormap by applying a linear transition to zero at the front of the colormap.
@@ -490,65 +486,12 @@ class GridPlot(object):
         return self.fig.show()
 
 
-def table_season_traffic(traffic,
-                         traffic_kwargs={'sep':None, 'engine':'python'},
-                         labels=['winter', 'zomer'],
-                         index={'L':'landingen',
-                                'T':'starts'},
-                         columns={'D':'dag',
-                                  'E':'avond',
-                                  'N':'nacht',
-                                  'EM':'vroege ochtend'}):
-    """
-    Create a table with traffic per season. The table can be used as input for plot_season_traffic
-    
-    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
-    :param dict taffic_kwargs: kwargs for reading traffic data
-    :param str labels: List with strings to identify the traffics 
-    :param dict index: dict for renaming the index used for the ticklabels
-    :param dict columns: dict for renaming the columns used for legend labels
-    :return: return a pd.DataFrame.
-    """
- 
-    # converteer naar list
-    if not isinstance(traffic, list): traffic = [traffic]
-    if not isinstance(labels, list): labels = [labels]
-    
-    if len(traffic) != len(labels):
-        print('Error: Traffic and labels do not have equal dimensions')
-            
-    # List to store results
-    results = []
-    
-    for trf, label in zip(traffic, labels):
-        # Read traffic
-        if isinstance(trf, str):
-            trf = Traffic.read_daisy_phase_file(trf, **traffic_kwargs)
-        
-        # Get the day (D), evening (E), night (N) distribution
-        results.append(trf.get_denem_distribution(separate_by='d_lt').round(-2).T)
-            
-    # Store results
-    df = pd.concat(results, keys=labels)
-    
-    # Rename the columns and index
-    df = df.rename(index=index, columns=columns)
-
-    # Print table
-    with pd.option_context('display.float_format', '{:.0f}'.format):    
-        print(df)
-
-    return df
-    
-    
-def plot_season_traffic(table=None,
-                        traffic=None,
-                        traffic_kwargs={'sep':None, 'engine':'python'},
-                        labels=None,
+def plot_season_traffic(distribution,
                         xlabel='vliegtuigbewegingen',
                         xlim=(0,160000),
-                        tickformat=Formatter_1000sep0d,
-                        ncol=None,
+                        xstep=None,
+                        width=0.6,
+                        ncol=4,
                         dpi=600,
                         fname='',
                         figsize=(8.27, 2.76),
@@ -556,16 +499,14 @@ def plot_season_traffic(table=None,
     """
     A function to create a traffic per season plot. Can also be used to plot other grouped horizontal stacked bar
     charts.
-    
-    :param pd.DataFrame table: a dataframe containing the numbers to visualise. The dataframe should have a
+
+    :param pd.DataFrame distribution: a dataframe containing the numbers to visualise. The dataframe should have a
     2-level multiindex, where the first level is the seasons and the second level is the type of operation. The columns
     are used as labels for the data.
-    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
-    :param dict taffic_kwargs: kwargs for reading traffic data
-    :param str labels: List with strings to identify the traffics 
     :param str xlabel: label for the x-axis
-    :param set xlim: range for the x-axis
-    :param str|function tickformat: format string or function for ticklabels    
+    :param str ylabel: label for the y-axis
+    :param float|None xstep: step value for the x-axis
+    :param float width: barwidth
     :param int ncol: number of columns in legend
     :param int dpi: dpi for saving figure to file, default is 600
     :param str fname: Name for the file, default is '' and no fig will be saved
@@ -573,159 +514,39 @@ def plot_season_traffic(table=None,
     :return: if fname='', return a Matplotlib figure and axes.
     """
     
-    if table is None:
-        table = table_season_traffic(traffic=traffic,
-                                     traffic_kwargs=traffic_kwargs,
-                                     labels=labels)   
+    def NumberFormatter(x, pos):
+        'The two args are the value and tick position'
+        return '{:,.0f}'.format(x).replace(',', '.')
+    
     # plot
-    return plot_barh(table,
-                     stacked=True,
-                     xlabel=xlabel,
-                     xlim=xlim,
-                     tickformat=tickformat,
-                     figsize=figsize,
-                     dpi=dpi,
-                     fname=fname,
-                     **kwargs)
+    ax = distribution.plot.barh(stacked=True,
+                                figsize=figsize,
+                                width=width,
+                                edgecolor='none',
+                                xlim=xlim,
+                                **kwargs)
             
-
-def plot_bar(table=None,
-             xlabel=None,
-             ylabel=None,
-             tickformat=None,
-             ncol=None,
-             fname='',
-             figsize=(8.27, 2.76),
-             dpi=600,
-             **kwargs):
-    """
-    A function to create a barplot. 
-
-    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
-    :param str xlabel: label for the x-axis
-    :param str ylabel: label for the y-axis
-    :param str|function tickformat: format string or function for ticklabels
-    :param int ncol: number of columns in legend
-    :param str fname: Name for the file, default is '' and no fig will be saved
-    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
-    :param int dpi: dpi for saving figure to file, default is 600
-    :return: if fname='', return a Matplotlib figure and axes.
-    """
-        
-    # plot format
-    plot_format = branding.xParams['barplot']     # general settings
-    plot_format.update(edgecolor='none', rot=0)   # plot specific
-    plot_format.update(kwargs)                    # user input                                   
-
-    # plot
-    ax = table.plot.bar(figsize=figsize,
-                        **plot_format)
-
-    # geen verticale  gridlines
-    ax.xaxis.grid(which='major', color='None')   
-
     # X-as
-    if len(table.index.names) == 2:
-        ax.set_xticklabels(table.index.get_level_values(1))
-        branding.set_xlabels(table.index.get_level_values(0).unique(), ax=ax)
-    elif xlabel is not None:
-        branding.set_xlabels(xlabel, ax=ax)
-    else:
-        ax.set_xlabel('') # verberg as-label
-        
-    # Y-as
-    if tickformat is not None:
-        if isinstance(tickformat, str):
-            ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(tickformat))
-        elif callable(tickformat):
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(tickformat))
-        else:
-            print('Ignore unknown tickformat')
-    
-    if ylabel is not None:
-        branding.set_ylabels(ylabel, ax=ax)
-
-    # legend
-    if ncol is None: ncol = len(table.columns)
-    leg = ax.legend(ncol=ncol,
-                    handletextpad=-0.5,
-                    **branding.xParams['legend'])
-
-    for patch in leg.get_patches():  # Maak de patches vierkant
-        patch.set_height(5)
-        patch.set_width(5)
-        patch.set_y(-1)              # Vertikaal uitlijnen
-        
-    # save figure
-    fig = plt.gcf()
-    if fname:
-        fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
-    else:
-        return fig, ax
-
-
-def plot_barh(table=None,
-              xlabel=None,
-              ylabel=None,
-              tickformat=None,
-              ncol=None,
-              fname='',
-              figsize=(8.27, 2.76),
-              dpi=600,
-              **kwargs):
-    """
-    A function to create a barh-plot. 
-
-    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
-    :param str xlabel: label for the x-axis
-    :param str ylabel: label for the y-axis
-    :param str|function tickformat: format string or function for ticklabels
-    :param int ncol: number of columns in legend
-    :param str fname: Name for the file, default is '' and no fig will be saved
-    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
-    :param int dpi: dpi for saving figure to file, default is 600
-    :return: if fname='', return a Matplotlib figure and axes.
-    """
-        
-    # plot format
-    plot_format = branding.xParams['barplot']     # general settings
-    plot_format.update(edgecolor='none', rot=0)   # plot specific
-    plot_format.update(kwargs)                    # user input                                   
-
-    # plot
-    ax = table.plot.barh(figsize=figsize,
-                         **plot_format)
-
-    # geen horizontale  gridlines
-    ax.yaxis.grid(which='major', color='None')        
-
-    # X-as
-    if tickformat is not None:
-        if isinstance(tickformat, str):
-            ax.xaxis.set_major_formatter(ticker.FormatStrFormatter(tickformat))
-        elif callable(tickformat):
-            ax.xaxis.set_major_formatter(ticker.FuncFormatter(tickformat))
-        else:
-            print('Ignore unknown tickformat')
-
     if xlabel is not None:
         branding.set_xlabels(xlabel, ax=ax)
     else:
         ax.set_xlabel('') # verberg as-label
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
+    if xstep is not None:
+        ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
         
     # Y-as
     ax.invert_yaxis()
-    if len(table.index.names) == 2:
-        ax.set_yticklabels(table.index.get_level_values(1),
-                           va='center',
-                           rotation='vertical')
-        branding.set_ylabels(table.index.get_level_values(0).unique()[::-1], ax=ax)
-    elif ylabel is not None:
-        branding.set_ylabels(ylabel, ax=ax)
+    ax.set_yticklabels(distribution.index.get_level_values(1),
+                       va='center',
+                       rotation='vertical')
+    branding.set_ylabels(distribution.index.get_level_values(0).unique()[::-1],
+                         ax=ax)
+
+    # geen horizontale  gridlines
+    ax.yaxis.grid(which='major', color='None')        
 
     # legend
-    if ncol is None: ncol = len(table.columns)
     leg = ax.legend(ncol=ncol,
                     handletextpad=-0.5,
                     **branding.xParams['legend'])
@@ -734,7 +555,7 @@ def plot_barh(table=None,
         patch.set_height(5)
         patch.set_width(5)
         patch.set_y(-1)              # Vertikaal uitlijnen
-        
+
     # save figure
     fig = plt.gcf()
     if fname:
@@ -744,37 +565,50 @@ def plot_barh(table=None,
         return fig, ax
 
 
-def table_aircraft_types(traffic,
-                         traffic_kwargs={'sep':None, 'engine':'python'},
-                         labels='handelsverkeer',
-                         weight_classes= {0: '< 6',
-                                          1: '6 - 40',
-                                          2: '6 - 40',
-                                          3: '40 - 60',
-                                          4: '60 - 160',
-                                          5: '60 - 160',
-                                          6: '160 - 230',
-                                          7: '230 - 300',
-                                          8: '> 300',
-                                          9: '> 300'}):
+def plot_aircraft_types(traffic,
+                        traffic_kwargs={'sep':None, 'engine':'python'},
+                        weight_classes= {0: '< 6',
+                                         1: '6 - 40',
+                                         2: '6 - 40',
+                                         3: '40 - 60',
+                                         4: '60 - 160',
+                                         5: '60 - 160',
+                                         6: '160 - 230',
+                                         7: '230 - 300',
+                                         8: '> 300',
+                                         9: '> 300'},
+                        width=0.6,
+                        labels='handelsverkeer',
+                        xlabel='maximum startgewicht in tonnen',
+                        rot=0,
+                        ylabel='aandeel in de vloot',
+                        ylim=(0,60),
+                        ystep=None,
+                        ncol=None,
+                        fname='',
+                        figsize=(8.27, 2.76),
+                        dpi=600,
+                        **kwargs):
     """
-    Create a table with the number of aircraft per weight class. The weight classes are based on the VVC-code.
-    The table can be used as input for plot_aircraft_types 
+    A function to create a fleetmix plot. 
 
-    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
-    :param dict taffic_kwargs: kwargs for reading traffic data
-    :param str labels: List with strings to identify the traffics 
-    :param dict weight_classes: Text per VVC weight class to aggregate the traffic
-    :return: return a pd.DataFrame.
+    :param Traffic.??? traffic
+    :param dict taffic_kwargs
+    :param float width: barwidth
+    :param str xlabel: label for the x-axis
+    :param float rot: label rotation x-axis
+    :param str ylabel: label for the y-axis
+    :param float|None ystep: step value for the y-axis
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='', return a Matplotlib figure and axes.
     """
          
     # converteer naar list
     if not isinstance(traffic, list): traffic = [traffic]
     if not isinstance(labels, list): labels = [labels]
     
-    if len(traffic) != len(labels):
-           print('Error: Traffic and labels do not have equal dimensions')
- 
     # df for storing results with unique index   
     df = (pd.DataFrame(data=weight_classes.values(), columns=['mtow'])
             .drop_duplicates()
@@ -791,8 +625,7 @@ def table_aircraft_types(traffic,
         # Realisatietraffic aanpassen
         if 'C_VVC' in trf:
             if trf['C_VVC'].isna().any():
-                missing = trf['C_VVC'].isna().sum()
-                print(f"Info: {missing} missing VVC's in traffic '{label}'")
+                print("Missing VVC's in traffic:", trf['C_VVC'].isna().sum())
             trf = (trf.dropna(subset=['C_VVC'])
                       .rename(columns={'C_VVC':'d_ac_cat'})
                       .assign(total=1))
@@ -811,64 +644,46 @@ def table_aircraft_types(traffic,
     with pd.option_context('display.float_format', '{:,.1f}%'.format):    
         print(df.reset_index().to_string(index=False))
 
-    return df
+    # plot    
+    ax = df.plot.bar(figsize=figsize,
+                     width=width,
+                     edgecolor='none',
+                     ylim=ylim,
+                     rot=rot,
+                     **kwargs)
 
+    # geen verticale  gridlines
+    ax.xaxis.grid(which='major', color='None')   
 
-def plot_aircraft_types(table=None,
-                        traffic=None,
-                        traffic_kwargs={'sep':None, 'engine':'python'},
-                        labels='handelsverkeer',
-                        weight_classes= {0: '< 6',
-                                         1: '6 - 40',
-                                         2: '6 - 40',
-                                         3: '40 - 60',
-                                         4: '60 - 160',
-                                         5: '60 - 160',
-                                         6: '160 - 230',
-                                         7: '230 - 300',
-                                         8: '> 300',
-                                         9: '> 300'},
-                        xlabel='maximum startgewicht in tonnen',
-                        ylabel='aandeel in de vloot',
-                        tickformat='{x:.0f}%',
-                        ylim=(0,60),
-                        fname='',
-                        figsize=(8.27, 2.76),
-                        dpi=600,
-                        **kwargs):
-    """
-    A function to create a fleetmix plot. 
+    # X-as
+    if xlabel is not None:
+        branding.set_xlabels(xlabel, ax=ax)
+    else:
+        ax.set_xlabel('') # verberg as-label
+        
+    # Y-as
+    ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%d%%'))
+    if ylabel is not None:
+        branding.set_ylabels(ylabel, ax=ax)
 
-    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
-    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
-    :param dict taffic_kwargs: kwargs for reading traffic data
-    :param str labels: List with strings to identify the traffics, ignorred if table is used as input 
-    :param dict weight_classes: Text per VVC weight class to aggregate the traffic
-    :param str xlabel: label for the x-axis
-    :param str ylabel: label for the y-axis
-    :param str|function tickformat: format string or function for ticklabels
-    :param set ylim: range for the y-axis
-    :param str fname: Name for the file, default is '' and no fig will be saved
-    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
-    :param int dpi: dpi for saving figure to file, default is 600
-    :return: if fname='', return a Matplotlib figure and axes.
-    """
-    
-    if table is None:
-        table = table_aircraft_types(traffic=traffic,
-                                     traffic_kwargs=traffic_kwargs,
-                                     weight_classes=weight_classes,
-                                     labels=labels)    
-    # plot
-    return plot_bar(table,
-                    xlabel=xlabel,
-                    ylabel=ylabel,
-                    ylim=ylim,
-                    tickformat=tickformat,
-                    figsize=figsize,
-                    dpi=dpi,
-                    fname=fname,
-                    **kwargs)
+    # legend
+    if ncol is None: ncol = len(traffic)
+    leg = ax.legend(ncol=ncol,
+                    handletextpad=-0.5,
+                    **branding.xParams['legend'])
+
+    for patch in leg.get_patches():  # Maak de patches vierkant
+        patch.set_height(5)
+        patch.set_width(5)
+        patch.set_y(-1)              # Vertikaal uitlijnen
+        
+    # save figure
+    fig = plt.gcf()
+    if fname:
+        fig.savefig(fname, dpi=dpi)
+        plt.close(fig)
+    else:
+        return fig, ax
 
 
 class BracketPlot(object):
@@ -1650,6 +1465,32 @@ def plot_runway_usage(traffic,
     else:
         return fig, (ax1, ax2)
 
+def plot_noise_init(grid,
+                    other_grid=None,
+                    figsize = (30 / 2.54, 30 / 2.54),
+                    ):
+    
+    # Create a figure
+    plot = GridPlot(grid,
+                    other_grid=other_grid,
+                    figsize = (30 / 2.54, 30 / 2.54)
+                    )
+
+    # Add the background
+    plot.add_background('data/Schiphol_RD900dpi.png')
+
+    # Add a scale
+    plot.add_scale()
+
+    # Add the terrain
+    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
+
+    # Add the place names
+    plot.add_place_names('data/plaatsnamen.csv')
+    
+    return plot
+    
+
 def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
@@ -1663,21 +1504,9 @@ def plot_noise_bba(grids,
     # Get the Lden grid
     lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     grid = Grid.read_enviras(grids, pattern=lden_pattern).scale(scale_ga).scale(scale)
-
-    # Create a figure
-    plot = GridPlot(grid,figsize = (30 / 2.54, 30 / 2.54))
-
-    # Add the background
-    plot.add_background(prognose_dir + 'Schiphol_RD900dpi.png')
-
-    # Add a scale
-    plot.add_scale()
-
-    # Add the terrain
-    plot.add_terrain(prognose_dir + '2013-spl-luchtvaartterrein.shp')
-
-    # Add the place names
-    plot.add_place_names(prognose_dir + 'plaatsnamen.csv')
+    
+    # initialize plot
+    plot = plot_noise_init(grid)
 
     if len(db) == 2: 
         # Add the 58dB contour
@@ -1713,21 +1542,9 @@ def plot_noise_diff(grid=None,
         envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
         grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
         other_grid              = grids.statistics()['mean']
-        
-    # Create a figure
-    plot = GridPlot(grid,other_grid=other_grid,figsize = (30 / 2.54, 30 / 2.54))
-
-    # Add the background
-    plot.add_background('data/Schiphol_RD900dpi.png')
-
-    # Add a scale
-    plot.add_scale()
-
-    # Add the terrain
-    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
-
-    # Add the place names
-    plot.add_place_names('data/plaatsnamen.csv')
+            
+    # initialize plot
+    plot = plot_noise_init(grid, other_grid=other_grid)
 
     # Add the heatmap
     plot.add_comparison_heatmap(other_grid,vmin=-3,vmax=3,
