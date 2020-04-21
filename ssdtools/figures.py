@@ -1699,6 +1699,21 @@ def plot_noise_diff(grid=None,
                     dpi=600,
                     ):
     
+    ###TODO: dit onderbrengen in traffic.read_file()
+    if isinstance(grid, str) & grid.endswith('.dat'):
+        grid = Grid.read_envira(grid)
+    elif isinstance(grid, str):
+        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+        grids                   = Grid.read_enviras(grid, pattern=envira_pattern)
+        grid                    = grids.statistics()['mean']
+        
+    if isinstance(other_grid, str) & other_grid.endswith('.dat'):
+        other_grid = Grid.read_envira(other_grid)
+    elif isinstance(other_grid, str):
+        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+        grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
+        other_grid              = grids.statistics()['mean']
+        
     # Create a figure
     plot = GridPlot(grid,other_grid=other_grid,figsize = (30 / 2.54, 30 / 2.54))
 
