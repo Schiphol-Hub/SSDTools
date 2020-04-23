@@ -1076,68 +1076,79 @@ def get_text_bbox(handle, ax=None, fig=None):
     return handle.get_window_extent().inverse_transformed(ax.transData)
 
      
-def plot_history(history,
-                 history_kwargs = {'sheet_name': 'realisatie'},
-                 x='jaar',
-                 y='verkeer',
-                 xlabel='jaar',
-                 ylabel='vliegtuigbewegingen',
-                 xstep=1,
-                 ystep=None,
-                 ncol=None, ###Todo: via xParams
-                 clip_on=False,
-                 dpi=600,
-                 fname='',                 
-                 figsize=(8.27, 2.76),
-                 **kwargs):
+def plot_line(table,
+              x,
+              y,
+              xlabel=None,
+              ylabel=None,
+              xtickformat=None,
+              ytickformat=None,
+              xstep=None,
+              ystep=None,
+              ncol=None, ###Todo: via xParams
+              clip_on=False,
+              fname='',                 
+              figsize=(8.27, 2.76),
+              dpi=600,
+              **kwargs):
     """
-    :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
-    If it is a string then the file will be inported in a pd.DataFrame.
-    :param dict history_kwargs: optional arguments for read_file
-    :param int|str x: the column name of the data to visualise, defaults to 'jaar'.
-    :param int|str y: the column name of the data to visualise, defaults to 'verkeer'.
+    :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
+    :param int|str x: the column name of the data to visualise
+    :param int|str y: the column name of the data to visualise
     :param str xlabel: label for the x-axis
     :param str ylabel: label for the y-axis
-    :param float|None xstep: step value for the x-axis
-    :param float|None ystep: step value for the y-axis
+    :param str|function xtickformat: format string or function for ticklabels
+    :param str|function ytickformat: format string or function for ticklabels
+    ###:param float|None xstep: step value for the x-axis
+    ###:param float|None ystep: step value for the y-axis
     :param int ncol: number of columns in legend
     :param boolean clip_on: clipping on plot area, default False    
-    :param int dpi: dpi for saving figure to file, default is 600
     :param str fname: Name for the file, default is '' and no fig will be saved
     :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='', return a Matplotlib figure and axes.
     """
     
-    def NumberFormatter(x, pos):
-        'The two args are the value and tick position'
-        return '{:,.0f}'.format(x).replace(',', '.')
     
-    # Import history data in dataframe
-    if isinstance(history, str):
-        history = read_file(history, **history_kwargs)
-    
-    # Plot the history
-    ax = history.plot(x=x,
-                      y=y,
-                      figsize=figsize,
-                      clip_on=clip_on,
-                      **kwargs)
+    # Plot
+    ax = table.plot(x=x,
+                    y=y,
+                    figsize=figsize,
+                    clip_on=clip_on,
+                    **kwargs)
 
     # X-as
-    if xlabel is not None:
+    if xtickformat is not None:
+        if isinstance(xtickformat, str):
+            ax.xaxis.set_major_formatter(ticker.StrMethodFormatter(xtickformat))
+        elif callable(xtickformat):
+            ax.xaxis.set_major_formatter(ticker.FuncFormatter(xtickformat))
+        else:
+            print('Ignore unknown xtickformat')
+
+    if len(table.index.names) == 2:
+        ax.set_xticklabels(table.index.get_level_values(1))
+        branding.set_xlabels(table.index.get_level_values(0).unique(), ax=ax)
+    elif xlabel is not None:
         branding.set_xlabels(xlabel, ax=ax)
     else:
         ax.set_xlabel('') # verberg as-label
 
-    ###TODO: Ed geef opmaak mee in de invoer van functie
-    ax.xaxis.set_major_formatter(ticker.StrMethodFormatter('{x:.0f}'))
     if xstep is not None:
         ax.xaxis.set_major_locator(ticker.MultipleLocator(xstep))
 
     # Y-as
+    if ytickformat is not None:
+        if isinstance(ytickformat, str):
+            ax.yaxis.set_major_formatter(ticker.StrMethodFormatter(ytickformat))
+        elif callable(ytickformat):
+            ax.yaxis.set_major_formatter(ticker.FuncFormatter(ytickformat))
+        else:
+            print('Ignore unknown tickformat')
+
     if ylabel is not None:
         branding.set_ylabels(ylabel, ax=ax)
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(NumberFormatter))
+
     if ystep is not None:
         ax.yaxis.set_major_locator(ticker.MultipleLocator(ystep))
 
@@ -1153,6 +1164,66 @@ def plot_history(history,
     else:
         return fig, ax
 
+
+def plot_history(history, 
+                 history_kwargs = {'sheet_name': 'realisatie'},
+                 x='jaar',
+                 y='verkeer',
+                 label='realisatie',
+                 xlabel='jaar',
+                 ylabel='vliegtuigbewegingen',
+                 xtickformat='{x:.0f}',
+                 ytickformat=Formatter_1000sep0d,
+                 xstep=1,
+                 ystep=None,
+                 ncol=None, ###Todo: via xParams
+                 clip_on=False,                   
+                 dpi=600,
+                 fname='',                 
+                 figsize=(8.27, 2.76),
+                 **kwargs):
+
+    """
+    :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
+    If it is a string then the file will be inported in a pd.DataFrame.
+    :param dict history_kwargs: optional arguments for read_file
+    :param int|str x: the column name of the data to visualise, defaults to 'jaar'.
+    :param int|str y: the column name of the data to visualise, defaults to 'verkeer'.
+    :param str label: label for the legend
+    :param str xlabel: label for the x-axis
+    :param str ylabel: label for the y-axis
+    :param float|None xstep: step value for the x-axis
+    :param float|None ystep: step value for the y-axis
+    :param int ncol: number of columns in legend
+    :param boolean clip_on: clipping on plot area, default False    
+    :param int dpi: dpi for saving figure to file, default is 600
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :return: if fname='', return a Matplotlib figure and axes.
+    """
+
+    # Import history data in dataframe
+    if isinstance(history, str):
+        history = read_file(history, **history_kwargs)
+
+    # Plot
+    return plot_line(table=history,
+                     x=x,
+                     y=y,
+                     label=label,
+                     xlabel=xlabel,
+                     ylabel=ylabel,
+                     xtickformat=xtickformat,
+                     ytickformat=ytickformat,
+                     xstep=xstep,
+                     ystep=ystep,
+                     ncol=ncol, ###Todo: via xParams
+                     clip_on=clip_on,
+                     fname=fname,                 
+                     figsize=figsize,
+                     **kwargs)
+
+
 def plot_prediction(history, 
                     prediction=None,
                     stats=None,
@@ -1162,6 +1233,8 @@ def plot_prediction(history,
                     labels=['realisatie', 'prognose'],
                     xlabel='jaar',
                     ylabel='vliegtuigbewegingen',
+                    xtickformat='{x:.0f}',
+                    ytickformat=Formatter_1000sep0d,
                     xstep=1,
                     ystep=None,
                     ncol=None, ###Todo: via xParams
@@ -1200,12 +1273,13 @@ def plot_prediction(history,
 
     # Plot the history
     fig, ax = plot_history(history=history,
-                           history_kwargs=history_kwargs,
                            x=x,
                            y=y,
                            label=labels[0],
                            xlabel=xlabel,
                            ylabel=ylabel,
+                           xtickformat=xtickformat,
+                           ytickformat=ytickformat,
                            xstep=xstep,
                            ystep=ystep,
                            ncol=ncol, ###Todo: via xParams
@@ -1214,7 +1288,7 @@ def plot_prediction(history,
                            figsize=figsize,
                            zorder=3, # plot on top
                            **kwargs)
-    
+
     # Describe the prediction for each year
     if stats is None:
         stats = prediction.groupby(x)[y].describe()
