@@ -986,9 +986,12 @@ class TrafficAggregate(object):
         
 
         # check for nans
-        for engine in DAISYtraffic.loc[DAISYtraffic['dfttype'].isnull(),'MTT_ENGINE_TYPE']:
-            print('WARNING: missing engine type table: '+ engine)
-                    
+        # for engine in DAISYtraffic.loc[DAISYtraffic['dfttype'].isnull(),'MTT_ENGINE_TYPE']:
+        #     print('WARNING: missing engine type table: '+ engine)
+        missing = DAISYtraffic.loc[DAISYtraffic['dfttype'].isnull(),'MTT_ENGINE_TYPE']
+        if len(missing):
+            print('WARNING: missing engine type table: ' + missing.unique())
+        
         #%% Add info from aircraft types
         DAISYtraffic = DAISYtraffic.merge(ACtypes,
                                 left_on='icao_aircraft',
