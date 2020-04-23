@@ -28,7 +28,6 @@ def Formatter_1000sep0d(x, pos):
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
     Soften the colormap by applying a linear transition to zero at the front of the colormap.
-
     # # # # # # # # # < 1
     #   ----------- # < alpha
     #  /            #
@@ -38,7 +37,6 @@ def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     0   |           1
         |
     transition_width
-
     :param ColorMap colormap: the colormap to soften.
     :param float transition_width: the width (as percentage) of the transition, should be between 0 and 1.
     :param float alpha: the maximum alpha. Should have a value between 0 and 1.
@@ -64,7 +62,6 @@ def soften_colormap_center(colormap, alpha=1.):
     """
     Soften the colormap by applying a linear transition from 1 to 0 at the first half and from 0 to 1 at the second
     half.
-
     # # # # # # < 1
     # \     / # < alpha
     #  \   /  #
@@ -72,7 +69,6 @@ def soften_colormap_center(colormap, alpha=1.):
     # # # # # # < 0
     ^    ^    ^
     0   0.5   1
-
     :param ColorMap colormap: the colormap to soften.
     :param float alpha: the maximum alpha. Should have a value between 0 and 1.
     :rtype: ColorMap
@@ -125,7 +121,6 @@ class GridPlot(object):
     def create_figure(self):
         """
         Initialize a new contour plot.
-
         :return: the figure and axis handles.
         """
 
@@ -149,7 +144,6 @@ class GridPlot(object):
     def add_background(self, background):
         """
         Add the background map to the figure.
-
         :param str|np.ndarray background: path to the background file or background image as NumPy array.
         """
         if isinstance(background, str):
@@ -159,11 +153,9 @@ class GridPlot(object):
     def add_place_names(self, place_names, color=(0.0, 0.3, 0.3)):
         """
         Add the place names to the map.
-
         :param str|pd.DataFrame place_names: path to the place name file or a data frame containing the place names with
         corresponding coordinates.
         :param tuple color: the color of the text.
-
         """
         if isinstance(place_names, str):
             self.place_names = pd.read_csv(place_names, comment='#')
@@ -174,7 +166,6 @@ class GridPlot(object):
 
     def add_terrain(self, terrain):
         """
-
         :param str|GeoDataFrame terrain: path to the terrain file or a Pandas DataFrame with a geometry column.
         """
         if isinstance(terrain, str):
@@ -192,7 +183,6 @@ class GridPlot(object):
 
     def add_scale(self, ticks=None, color=(0.0, 0.3, 0.3)):
         """
-
         :param list(float) ticks: the ticks to use as scale, in km.
         :param tuple color: the color of the scale.
         """
@@ -235,7 +225,6 @@ class GridPlot(object):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
         will be shown.
-
         :param float level: the noise level of the contour to plot.
         :param primary_color: color for the main contour.
         :param secondary_color: color for the secondary contours (only used for multigrids).
@@ -333,7 +322,6 @@ class GridPlot(object):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, all contours of the
         individual grids will be shown.
-
         :param float level: the noise level of the contour to plot.
         :param primary_color: color for the main contour.
         :param secondary_color: color for the secondary contours (only used for multigrids).
@@ -380,7 +368,6 @@ class GridPlot(object):
     def add_heatmap(self, colormap=matplotlib.cm.get_cmap('jet'), soften_colormap=True, alpha=0.4, refine=1, refine_factor=20, **kwargs):
         """
         Show a grid by creating a heatmap.
-
         :param ColorMap colormap: the colormap to apply.
         :param bool soften_colormap: soften the colormap by making the edge transparent.
         :param float alpha: the maximum alpha. Should have a value between 0 and 1.
@@ -414,7 +401,6 @@ class GridPlot(object):
                                alpha=1.0, method='energetic',positive_scale=False, refine_factor=20, **kwargs):
         """
         Compare two grids by creating a heatmap.
-
         :param Grid other_grid: the noise grid to compare.
         :param ColorMap colormap: the colormap to apply.
         :param bool soften_colormap: soften the colormap by making the center transparent.
@@ -600,7 +586,6 @@ def plot_bar(table=None,
              **kwargs):
     """
     A function to create a barplot. 
-
     :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
     :param str xlabel: label for the x-axis
     :param str ylabel: label for the y-axis
@@ -676,7 +661,6 @@ def plot_barh(table=None,
               **kwargs):
     """
     A function to create a barh-plot. 
-
     :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
     :param str xlabel: label for the x-axis
     :param str ylabel: label for the y-axis
@@ -760,7 +744,6 @@ def table_aircraft_types(traffic,
     """
     Create a table with the number of aircraft per weight class. The weight classes are based on the VVC-code.
     The table can be used as input for plot_aircraft_types 
-
     :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
     :param dict taffic_kwargs: kwargs for reading traffic data
     :param str labels: List with strings to identify the traffics 
@@ -838,7 +821,6 @@ def plot_aircraft_types(table=None,
                         **kwargs):
     """
     A function to create a fleetmix plot. 
-
     :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
     :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
     :param dict taffic_kwargs: kwargs for reading traffic data
@@ -899,7 +881,6 @@ class BracketPlot(object):
     def create_figure(self):
         """
         Initialize a new bracket plot.
-
         :return: the figure and axis handles.
         """
 
@@ -1344,7 +1325,6 @@ def plot_prediction(history,
 def plot_prediction2(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
                     prediction_fill_kwargs=None, history_plot_kwargs=None,doc29_factor=None):
     """
-
     :param pd.DataFrame history: the historic dataset to visualise, should contain the specified column_name as the data
     and a 'year' column.
     :param pd.DataFrame prediction: the predicted values, should contain the specified column_name as the data and a
@@ -1724,6 +1704,32 @@ def plot_runway_usage(traffic,
     else:
         return fig, (ax1, ax2)
 
+def plot_noise_init(grid,
+                    other_grid=None,
+                    figsize = (30 / 2.54, 30 / 2.54),
+                    ):
+    
+    # Create a figure
+    plot = GridPlot(grid,
+                    other_grid=other_grid,
+                    figsize = (30 / 2.54, 30 / 2.54)
+                    )
+
+    # Add the background
+    plot.add_background('data/Schiphol_RD900dpi.png')
+
+    # Add a scale
+    plot.add_scale()
+
+    # Add the terrain
+    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
+
+    # Add the place names
+    plot.add_place_names('data/plaatsnamen.csv')
+    
+    return plot
+    
+
 def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
@@ -1737,21 +1743,9 @@ def plot_noise_bba(grids,
     # Get the Lden grid
     lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     grid = Grid.read_enviras(grids, pattern=lden_pattern).scale(scale_ga).scale(scale)
-
-    # Create a figure
-    plot = GridPlot(grid,figsize = (30 / 2.54, 30 / 2.54))
-
-    # Add the background
-    plot.add_background(prognose_dir + 'Schiphol_RD900dpi.png')
-
-    # Add a scale
-    plot.add_scale()
-
-    # Add the terrain
-    plot.add_terrain(prognose_dir + '2013-spl-luchtvaartterrein.shp')
-
-    # Add the place names
-    plot.add_place_names(prognose_dir + 'plaatsnamen.csv')
+    
+    # initialize plot
+    plot = plot_noise_init(grid)
 
     if len(db) == 2: 
         # Add the 58dB contour
@@ -1773,20 +1767,23 @@ def plot_noise_diff(grid=None,
                     dpi=600,
                     ):
     
-    # Create a figure
-    plot = GridPlot(grid,other_grid=other_grid,figsize = (30 / 2.54, 30 / 2.54))
-
-    # Add the background
-    plot.add_background('data/Schiphol_RD900dpi.png')
-
-    # Add a scale
-    plot.add_scale()
-
-    # Add the terrain
-    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
-
-    # Add the place names
-    plot.add_place_names('data/plaatsnamen.csv')
+    ###TODO: dit onderbrengen in traffic.read_file()
+    if isinstance(grid, str) & grid.endswith('.dat'):
+        grid = Grid.read_envira(grid)
+    elif isinstance(grid, str):
+        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+        grids                   = Grid.read_enviras(grid, pattern=envira_pattern)
+        grid                    = grids.statistics()['mean']
+        
+    if isinstance(other_grid, str) & other_grid.endswith('.dat'):
+        other_grid = Grid.read_envira(other_grid)
+    elif isinstance(other_grid, str):
+        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+        grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
+        other_grid              = grids.statistics()['mean']
+            
+    # initialize plot
+    plot = plot_noise_init(grid, other_grid=other_grid)
 
     # Add the heatmap
     plot.add_comparison_heatmap(other_grid,vmin=-3,vmax=3,

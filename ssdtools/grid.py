@@ -6,7 +6,7 @@ import textwrap
 import numpy as np
 import pandas as pd
 
-# import shapefile
+import shapefile
 ###TODO Vincent, zonder deze module werkt de toolbox niet meer, 
 ###              misschien het script/demodule opnemen in de ssdtools?
 
