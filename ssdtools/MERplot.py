@@ -18,6 +18,7 @@ from matplotlib.gridspec import GridSpec
 from ssdtools import branding ###TODO Is dit nodig
 from ssdtools.traffic import read_file
 from ssdtools.figures import get_cycler_color, update_legend_position
+from ssdtools.figures import plot_bar
 
 
 # -----------------------------------------------------------------------------
@@ -204,8 +205,10 @@ def plot_concentraties(inpFile,
                        xticklabels=None,
                        ylim=[0,25],
                        ncol=2,
+                       figsize=(8.27, 2.76),
                        fname='',
-                       dpi=600):
+                       dpi=600,
+                       **kwargs):
     '''Plot concentraties'''
 
 
@@ -215,62 +218,23 @@ def plot_concentraties(inpFile,
     # rename columns
     if labels is not None:
         df = df.rename(columns=dict(zip(y, labels)))
-        y = labels
-
+    
+    # Stel index in op combinatie van stelsel en zichtjaar 
+    df['scenario'] = df['stelsel'] + '\n' + df['zichtjaar'].map(str)
+    df = df.set_index(keys='scenario')
+    
     # plot
-    ax = df.plot.bar(y=y,
-                     stacked=True,
-                     figsize=(21/2.54, 7/2.54), # figsize is in inches
-                     width=0.4,
-                     edgecolor='none',
-                     ylim=ylim)
-
-    # margins
-    plt.subplots_adjust(bottom=0.2)
-
-    # geen verticale  gridlines
-    ax.xaxis.grid(which='major', color='None')
-
-    # assen
-    ax.axes.tick_params(axis='both', which='both', labelrotation=0)
-
-    # X-as
-    if xticklabels is not None:
-        ax.set_xticklabels(xticklabels)
-    else:
-        ax.set_xticklabels(df['zichtjaar'].map(str) + '\n' + df['stelsel'])
-    branding.set_xlabels(xlabels, ax=ax)
-
-    # Y-as
-    branding.set_ylabels(ylabel, ax=ax)
-
-    # scheidingslijntje tussen subplots
-    ax.axvline(sum(ax.get_xlim())/2,
-               marker='',
-               color='white',
-               linewidth=2,
-               zorder=0)
-
-    # legend
-    if ncol is None: ncol = len(y)
-    handles, labels = ax.get_legend_handles_labels()
-    leg = ax.legend(handles[::-1], labels[::-1],
+    return plot_bar(df,
+                    y=labels,
+                    stacked=True,
+                    xlabel=xlabels,
+                    ylabel=ylabel,
+                    ylim=ylim,
                     ncol=ncol,
-                    handletextpad=-0.5,
-                    **branding.xParams['legend'])
-
-    for patch in leg.get_patches():  # Maak de patches vierkant
-        patch.set_height(5)
-        patch.set_width(5)
-        patch.set_y(-1)              # Vertikaal uitlijnen
-
-    # save figure
-    fig = plt.gcf()  # alternatief fig = ax.get_figure()
-    if fname:
-        fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
-    else:
-        return fig, ax
+                    figsize=figsize,
+                    dpi=dpi,
+                    fname=fname,
+                    **kwargs)
 
 
 # -----------------------------------------------------------------------------
