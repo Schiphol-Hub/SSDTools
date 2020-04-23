@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from matplotlib import ticker
-from cycler import cycler
 from imageio import imread
-from matplotlib import colors, colorbar, lines
+from matplotlib import colors, colorbar
 from descartes import PolygonPatch
 from geopandas import GeoDataFrame
 
