@@ -1726,6 +1726,15 @@ def plot_noise_init(grid,
                     figsize = (30 / 2.54, 30 / 2.54),
                     ):
     
+    """
+    A function to initialize a GridPlot to show noise contours. Used by plot_noise_bba() and plot_noise_diff().
+    
+    :param Grid grid: the main noise grid. Can be a single or MultiGrid.
+    :param Grid other_grid: optional noise grid to compare main noise grid with.
+    :param set figsize: Figsize in inches, default (30 / 2.54, 30 / 2.54).
+    :return: initialized GridPlot object.
+    """
+    
     # Create a figure
     plot = GridPlot(grid,
                     other_grid=other_grid,
@@ -1750,12 +1759,21 @@ def plot_noise_init(grid,
 def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
-                   db=[48, 58],
+                   decibel=[48, 58],
                    fname=None,
                    dpi=600,
-                   prognose_dir = './data/'
                    ):
-    ###TODO: beschrijven parameters en uitbreiden functionaliteit naar individuele contouren, verschilplots, bba
+    """
+    Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
+    
+    :param str|Grid grids: either a folder location containing envira-files, or a MultiGrid object
+    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
+    :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
+    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='' saved image, else return a Matplotlib figure and axes.
+    """
 
     # Get the Lden grid
     lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
@@ -1764,12 +1782,12 @@ def plot_noise_bba(grids,
     # initialize plot
     plot = plot_noise_init(grid)
 
-    if len(db) == 2: 
+    if len(decibel) == 2: 
         # Add the 58dB contour
-        plot.add_contours(db[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = '58 Lden')
+        plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = decibel[1] + ' Lden')
 
     # Add the 48dB contour
-    plot.add_contours(db[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = '48 Lden')
+    plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = decibel[0] + ' Lden')
 
     # Show plot
     if fname:
@@ -1779,25 +1797,40 @@ def plot_noise_bba(grids,
 
 def plot_noise_diff(grid=None,
                     other_grid=None,
-                    db=[48,58],
+                    scale_ga=1.025,
+                    decibel=[48,58],
                     fname=None,
                     dpi=600,
                     ):
     
+    """
+    Create a difference plot showing two noise contours including a heatmap.
+    
+    :param str|Grid grid: either a folder location containing envira-files, or a MultiGrid object
+    :param str|Grid other_grid: either a folder location containing envira-files, or a MultiGrid object
+    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
+    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='' saved image, else return a Matplotlib figure and axes.
+    """
+    
     ###TODO: dit onderbrengen in traffic.read_file()
+    envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    
+    # read main grid
     if isinstance(grid, str) & grid.endswith('.dat'):
-        grid = Grid.read_envira(grid)
+        grid = Grid.read_envira(grid).scale(scale_ga)
     elif isinstance(grid, str):
-        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
         grids                   = Grid.read_enviras(grid, pattern=envira_pattern)
-        grid                    = grids.statistics()['mean']
+        grid                    = grids.statistics()['mean'].scale(scale_ga)
         
+    # read other_grid to compare with
     if isinstance(other_grid, str) & other_grid.endswith('.dat'):
-        other_grid = Grid.read_envira(other_grid)
+        other_grid = Grid.read_envira(other_grid).scale(scale_ga)
     elif isinstance(other_grid, str):
-        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
         grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
-        other_grid              = grids.statistics()['mean']
+        other_grid              = grids.statistics()['mean'].scale(scale_ga)
             
     # initialize plot
     plot = plot_noise_init(grid, other_grid=other_grid)
@@ -1809,13 +1842,14 @@ def plot_noise_diff(grid=None,
                                 )
     
     # Add the 48dB contour
-    plot.add_contours(db[0], default['kleuren']['schemergroen'], 
+    plot.add_contours(decibel[0], default['kleuren']['schemergroen'], 
                       default['kleuren']['wolkengrijs_1'],
                       label = 'GP2020',
                       other_label = 'GP2020 + maatschappelijk verkeer')
     
-    if len(db)==2:
-        plot.add_contours(db[1], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'])
+    # 
+    if len(decibel)==2:
+        plot.add_contours(decibel[1], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'])
     
     plot.add_colorbar()
     
