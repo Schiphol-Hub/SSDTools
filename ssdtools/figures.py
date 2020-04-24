@@ -1799,6 +1799,7 @@ def plot_noise_diff(grid=None,
                     other_grid=None,
                     scale_ga=1.025,
                     decibel=[48,58],
+                    labels=['Scenario 1','Scenario 2'],
                     fname=None,
                     dpi=600,
                     ):
@@ -1810,6 +1811,7 @@ def plot_noise_diff(grid=None,
     :param str|Grid other_grid: either a folder location containing envira-files, or a MultiGrid object
     :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
     :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str labels: List with strings to identify the scenarios. 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
@@ -1841,16 +1843,13 @@ def plot_noise_diff(grid=None,
                                 # positive_scale=True
                                 )
     
-    # Add the 48dB contour
-    plot.add_contours(decibel[0], default['kleuren']['schemergroen'], 
-                      default['kleuren']['wolkengrijs_1'],
-                      label = 'GP2020',
-                      other_label = 'GP2020 + maatschappelijk verkeer')
+    # add required contours
+    for db in decibel:
+        plot.add_contours(db, default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'],
+                          label = labels[0],
+                          other_label = labels[1])
     
-    # 
-    if len(decibel)==2:
-        plot.add_contours(decibel[1], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'])
-    
+    # add colorbar
     plot.add_colorbar()
     
     # Show plot
