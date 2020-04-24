@@ -16,7 +16,7 @@ from ssdtools.branding import default
 from ssdtools.traffic import Traffic
 from ssdtools.traffic import TrafficAggregate
 from ssdtools.traffic import read_file
-from ssdtools.grid import Grid
+from ssdtools.grid import Grid, read_grid
 
 
 def Formatter_1000sep0d(x, pos):
@@ -1769,7 +1769,6 @@ def plot_noise_init(grid,
     plot.add_place_names('data/plaatsnamen.csv')
     
     return plot
-    
 
 def plot_noise_bba(grids,
                    scale_ga=1.025,
@@ -1832,22 +1831,25 @@ def plot_noise_diff(grid=None,
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
     
-    ###TODO: dit onderbrengen in traffic.read_file()
-    envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    grid = read_grid(grid)
+    other_grid = read_grid(other_grid)
     
-    # read main grid
-    if isinstance(grid, str) & grid.endswith('.dat'):
-        grid = Grid.read_envira(grid).scale(scale_ga)
-    elif isinstance(grid, str):
-        grids                   = Grid.read_enviras(grid, pattern=envira_pattern)
-        grid                    = grids.statistics()['mean'].scale(scale_ga)
+    # pattern to check folder
+    # envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    
+    # #  read both grids
+    # for gr in [grid, other_grid]:
         
-    # read other_grid to compare with
-    if isinstance(other_grid, str) & other_grid.endswith('.dat'):
-        other_grid = Grid.read_envira(other_grid).scale(scale_ga)
-    elif isinstance(other_grid, str):
-        grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
-        other_grid              = grids.statistics()['mean'].scale(scale_ga)
+    #     # read single grid
+    #     if isinstance(gr, str) & gr.endswith(('.dat', '.txt')):
+    #         gr = Grid.read_envira(gr).scale(scale_ga)
+        
+    #     # return mean noise grid if folder location is given
+    #     elif isinstance(gr, str):                
+    #         grs = Grid.read_enviras(gr, pattern=envira_pattern)
+    #         gr = grs.statistics()['mean']
+            
+    #     grid 
             
     # initialize plot
     plot = plot_noise_init(grid, other_grid=other_grid)
