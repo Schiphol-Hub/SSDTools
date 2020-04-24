@@ -1857,3 +1857,61 @@ def plot_noise_diff(grid=None,
         plot.save(fname, dpi=dpi)
     else:
         return fig, ax 
+
+def plot_iaf_sec(traffic,
+                 fname='fig/figure_24.svg'):
+    
+    """
+    Create a plot for the sector and routes
+    
+    :param str|TrafficAggregate traffic: traffic data containing information about route and movements in total 
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :return: return a svg-file.
+    """
+    
+    # if traffic is string, read file, else keep traffic as TrafficAggregate
+    if isinstance(traffic, str):
+        traffic = Traffic.read_daisy_mean_file(traffic)
+    
+    # add sector to traffic
+    routesector = pd.read_csv('data/RouteSector.txt',sep='\t')
+    traffic.add_sector(routesector)
+    
+    # get distribution
+    sector = traffic.get_sector_distribution()
+        
+    # Normalise the results
+    sids = ['1','2','3','4','5']
+    stars = ['ARTIP','RIVER','SUGOL']
+    sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
+    sector[stars] = 100 * sector[stars] / sector[stars].sum(axis=0)
+    sector = round(sector,0)
+    
+    data=pd.DataFrame(sector)
+        
+    data = data.rename(columns={'total':'Value'})
+    data['Length']= data['Value']*7
+    
+    # write xml-files
+    input_file = open('data/FigSectorisatie_template.svg')
+    xmlcontents = input_file.read()
+    input_file.close()
+    xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(2)", str(data.at['2','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(3)", str(data.at['3','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(4)", str(data.at['4','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(5)", str(data.at['5','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.R(1)", str(data.at['1','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(2)", str(data.at['2','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(3)", str(data.at['3','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(4)", str(data.at['4','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(5)", str(data.at['5','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.p(1)", str(data.at['ARTIP','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.p(2)", str(data.at['RIVER','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.p(3)", str(data.at['SUGOL','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.R(1)", str(data.at['ARTIP','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.R(2)", str(data.at['RIVER','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.R(3)", str(data.at['SUGOL','Length']))
+    output_file = open(fname,"w")
+    output_file.write(xmlcontents)
+    output_file.close()
