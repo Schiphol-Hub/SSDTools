@@ -1494,9 +1494,24 @@ def plot_runway_usage(traffic,
                       numbers=False,
                       fname=None,
                       dpi=600):
-    '''Plot het baangebruik'''
-    ###TODO: beschrijven parameters
-
+    """
+    Plot runway usage per relevant runway
+    
+    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing landing/type, runway, DEN and nubmer of movements
+    :param str labels: List with strings to identify the scenarios. 
+    :param tuple den: period of day for which to plot runway usage. 
+    :param int n: number of runways to plot.
+    :param str runways: list of strings to indicate order of appearance of runways.
+    :param str ylabel: label for the y-axis.
+    :param int ylim: list of integers to indicate range for the y-axis
+    :param int dy: step size of y-axis
+    :param int reftraffic: indicatie reference scenario when comparing multiple scenario's
+    :param boolean numbers: if True indicatie scenario numbers, default False    
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: png-image if fname='', else return a Matplotlib figure and axes.
+    """
+    
     def NumberFormatter(x, pos):
         'The two args are the value and tick position'
         return '{:,.0f}'.format(x).replace(',', '.')
@@ -1892,6 +1907,7 @@ def plot_iaf_sec(traffic,
     data = data.rename(columns={'total':'Value'})
     data['Length']= data['Value']*7
     
+    ### TODO: option to write to png
     # write xml-files
     input_file = open('data/FigSectorisatie_template.svg')
     xmlcontents = input_file.read()
