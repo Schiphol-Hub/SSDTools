@@ -16,7 +16,7 @@ from ssdtools.branding import default
 from ssdtools.traffic import Traffic
 from ssdtools.traffic import TrafficAggregate
 from ssdtools.traffic import read_file
-from ssdtools.grid import Grid
+from ssdtools.grid import Grid, read_grid
 
 
 def Formatter_1000sep0d(x, pos):
@@ -1494,9 +1494,24 @@ def plot_runway_usage(traffic,
                       numbers=False,
                       fname=None,
                       dpi=600):
-    '''Plot het baangebruik'''
-    ###TODO: beschrijven parameters
-
+    """
+    Plot runway usage per relevant runway
+    
+    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing landing/type, runway, DEN and nubmer of movements
+    :param str labels: List with strings to identify the scenarios. 
+    :param tuple den: period of day for which to plot runway usage. 
+    :param int n: number of runways to plot.
+    :param str runways: list of strings to indicate order of appearance of runways.
+    :param str ylabel: label for the y-axis.
+    :param int ylim: list of integers to indicate range for the y-axis
+    :param int dy: step size of y-axis
+    :param int reftraffic: indicatie reference scenario when comparing multiple scenario's
+    :param boolean numbers: if True indicatie scenario numbers, default False    
+    :param str fname: Name for the file, default is '' and no fig will be saved
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: png-image if fname='', else return a Matplotlib figure and axes.
+    """
+    
     def NumberFormatter(x, pos):
         'The two args are the value and tick position'
         return '{:,.0f}'.format(x).replace(',', '.')
@@ -1726,6 +1741,15 @@ def plot_noise_init(grid,
                     figsize = (30 / 2.54, 30 / 2.54),
                     ):
     
+    """
+    A function to initialize a GridPlot to show noise contours. Used by plot_noise_bba() and plot_noise_diff().
+    
+    :param Grid grid: the main noise grid. Can be a single or MultiGrid.
+    :param Grid other_grid: optional noise grid to compare main noise grid with.
+    :param set figsize: Figsize in inches, default (30 / 2.54, 30 / 2.54).
+    :return: initialized GridPlot object.
+    """
+    
     # Create a figure
     plot = GridPlot(grid,
                     other_grid=other_grid,
@@ -1745,17 +1769,25 @@ def plot_noise_init(grid,
     plot.add_place_names('data/plaatsnamen.csv')
     
     return plot
-    
 
 def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
-                   db=[48, 58],
+                   decibel=[48, 58],
                    fname=None,
                    dpi=600,
-                   prognose_dir = './data/'
                    ):
-    ###TODO: beschrijven parameters en uitbreiden functionaliteit naar individuele contouren, verschilplots, bba
+    """
+    Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
+    
+    :param str|Grid grids: either a folder location containing envira-files, or a MultiGrid object
+    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
+    :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
+    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='' saved image, else return a Matplotlib figure and axes.
+    """
 
     # Get the Lden grid
     lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
@@ -1764,12 +1796,12 @@ def plot_noise_bba(grids,
     # initialize plot
     plot = plot_noise_init(grid)
 
-    if len(db) == 2: 
+    if len(decibel) == 2: 
         # Add the 58dB contour
-        plot.add_contours(db[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = '58 Lden')
+        plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = decibel[1] + ' Lden')
 
     # Add the 48dB contour
-    plot.add_contours(db[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = '48 Lden')
+    plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = decibel[0] + ' Lden')
 
     # Show plot
     if fname:
@@ -1779,25 +1811,45 @@ def plot_noise_bba(grids,
 
 def plot_noise_diff(grid=None,
                     other_grid=None,
-                    db=[48,58],
+                    scale_ga=1.025,
+                    decibel=[48,58],
+                    labels=['Scenario 1','Scenario 2'],
                     fname=None,
                     dpi=600,
                     ):
     
-    ###TODO: dit onderbrengen in traffic.read_file()
-    if isinstance(grid, str) & grid.endswith('.dat'):
-        grid = Grid.read_envira(grid)
-    elif isinstance(grid, str):
-        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-        grids                   = Grid.read_enviras(grid, pattern=envira_pattern)
-        grid                    = grids.statistics()['mean']
+    """
+    Create a difference plot showing two noise contours including a heatmap.
+    
+    :param str|Grid grid: either a folder location containing envira-files, or a MultiGrid object
+    :param str|Grid other_grid: either a folder location containing envira-files, or a MultiGrid object
+    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
+    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str labels: List with strings to identify the scenarios. 
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='' saved image, else return a Matplotlib figure and axes.
+    """
+    
+    grid = read_grid(grid)
+    other_grid = read_grid(other_grid)
+    
+    # pattern to check folder
+    # envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    
+    # #  read both grids
+    # for gr in [grid, other_grid]:
         
-    if isinstance(other_grid, str) & other_grid.endswith('.dat'):
-        other_grid = Grid.read_envira(other_grid)
-    elif isinstance(other_grid, str):
-        envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-        grids                   = Grid.read_enviras(other_grid, pattern=envira_pattern)
-        other_grid              = grids.statistics()['mean']
+    #     # read single grid
+    #     if isinstance(gr, str) & gr.endswith(('.dat', '.txt')):
+    #         gr = Grid.read_envira(gr).scale(scale_ga)
+        
+    #     # return mean noise grid if folder location is given
+    #     elif isinstance(gr, str):                
+    #         grs = Grid.read_enviras(gr, pattern=envira_pattern)
+    #         gr = grs.statistics()['mean']
+            
+    #     grid 
             
     # initialize plot
     plot = plot_noise_init(grid, other_grid=other_grid)
@@ -1808,15 +1860,13 @@ def plot_noise_diff(grid=None,
                                 # positive_scale=True
                                 )
     
-    # Add the 48dB contour
-    plot.add_contours(db[0], default['kleuren']['schemergroen'], 
-                      default['kleuren']['wolkengrijs_1'],
-                      label = 'GP2020',
-                      other_label = 'GP2020 + maatschappelijk verkeer')
+    # add required contours
+    for db in decibel:
+        plot.add_contours(db, default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'],
+                          label = labels[0],
+                          other_label = labels[1])
     
-    if len(db)==2:
-        plot.add_contours(db[1], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'])
-    
+    # add colorbar
     plot.add_colorbar()
     
     # Show plot
@@ -1824,3 +1874,62 @@ def plot_noise_diff(grid=None,
         plot.save(fname, dpi=dpi)
     else:
         return fig, ax 
+
+def plot_iaf_sec(traffic,
+                 fname='fig/figure_24.svg'):
+    
+    """
+    Create a plot for the sector and routes
+    
+    :param str|TrafficAggregate traffic: traffic data containing information about route and movements in total 
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :return: return a svg-file.
+    """
+    
+    # if traffic is string, read file, else keep traffic as TrafficAggregate
+    if isinstance(traffic, str):
+        traffic = Traffic.read_daisy_mean_file(traffic)
+    
+    # add sector to traffic
+    routesector = pd.read_csv('data/RouteSector.txt',sep='\t')
+    traffic.add_sector(routesector)
+    
+    # get distribution
+    sector = traffic.get_sector_distribution()
+        
+    # Normalise the results
+    sids = ['1','2','3','4','5']
+    stars = ['ARTIP','RIVER','SUGOL']
+    sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
+    sector[stars] = 100 * sector[stars] / sector[stars].sum(axis=0)
+    sector = round(sector,0)
+    
+    data=pd.DataFrame(sector)
+        
+    data = data.rename(columns={'total':'Value'})
+    data['Length']= data['Value']*7
+    
+    ### TODO: option to write to png
+    # write xml-files
+    input_file = open('data/FigSectorisatie_template.svg')
+    xmlcontents = input_file.read()
+    input_file.close()
+    xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(2)", str(data.at['2','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(3)", str(data.at['3','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(4)", str(data.at['4','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.p(5)", str(data.at['5','Value']))
+    xmlcontents = xmlcontents.replace("sectorT.R(1)", str(data.at['1','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(2)", str(data.at['2','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(3)", str(data.at['3','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(4)", str(data.at['4','Length']))
+    xmlcontents = xmlcontents.replace("sectorT.R(5)", str(data.at['5','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.p(1)", str(data.at['ARTIP','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.p(2)", str(data.at['RIVER','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.p(3)", str(data.at['SUGOL','Value']))
+    xmlcontents = xmlcontents.replace("sectorL.R(1)", str(data.at['ARTIP','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.R(2)", str(data.at['RIVER','Length']))
+    xmlcontents = xmlcontents.replace("sectorL.R(3)", str(data.at['SUGOL','Length']))
+    output_file = open(fname,"w")
+    output_file.write(xmlcontents)
+    output_file.close()

@@ -19,6 +19,30 @@ gwc = {'doc29_2005': [13600, 166500, 14600, 45000],
        'doc29_2015': [14000, 180000, 14800, 48500],
        'doc29_2018': [12000, 186000, 12800, 50000]}
 
+def read_grid(grid):
+    """
+    Import and read dat-, txt- or folders with envira-bestanden into a grid
+    
+    :param str|Grid grid: string with folder location with multiple envira-files, or text/dat-file
+    :return: Grid object.
+    """
+        
+    envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    
+    # read single grid
+    if isinstance(grid, str) & grid.endswith(('.dat', '.txt')):
+        read_grid = Grid.read_envira(grid)#.scale(scale_ga)
+        
+    # return mean noise grid if folder location is given
+    elif isinstance(grid, str):                
+        grids = Grid.read_enviras(grid, pattern=envira_pattern)
+        read_grid = grids.statistics()['mean']
+        
+    elif isinstance(grid,Grid):
+        read_grid = grid
+        
+    # return grid
+    return read_grid    
 
 def extract_year_from_file_name(file_name):
     """
