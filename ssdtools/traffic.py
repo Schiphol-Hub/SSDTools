@@ -848,25 +848,32 @@ class TrafficAggregate(object):
         f_APU       = settings[4]
 
         DAISYtraffic = self.data
-        DAISYtraffic = DAISYtraffic.groupby(['d_type', 'MTT_ENGINE_TYPE'])['total'].sum().reset_index()
-
-        # convert to LTO's
-        DAISYtraffic['LTO'] = DAISYtraffic['total']/2            
 
         # ICAO or IATA type
         if len(DAISYtraffic.loc[0,'d_type'])==3:
             aircraft_type = 'iata_aircraft'
         else:
             aircraft_type = 'icao_aircraft'
+        
+        # Aggregate traffic
+        columns = [c for c in DAISYtraffic.columns if c in ['d_type', 'MTT_ENGINE_TYPE']]
+        DAISYtraffic = DAISYtraffic.groupby(columns)['total'].sum().reset_index()
  
-        # Add MTOW for ICAO or IATA type
-        ac_cat = ac_cat.loc[:,['iata_aircraft','icao_aircraft','mtow']]
+        # Add MTOW and motor for ICAO or IATA type
+        ac_cat = ac_cat.loc[:,['iata_aircraft','icao_aircraft','mtow', 'motor']]
         # drop duplicate codes
         ###TODO: eerste wordt bewaard, alternatief max, min, mean etc.
         ac_cat = ac_cat.drop_duplicates(subset=[aircraft_type])
         DAISYtraffic = DAISYtraffic.merge(ac_cat,left_on='d_type',
                                           right_on=aircraft_type,
                                           how='left')
+        if 'MTT_ENGINE_TYPE' in DAISYtraffic:
+            DAISYtraffic = DAISYtraffic.drop(columns='motor')
+        else:
+            DAISYtraffic = DAISYtraffic.rename(columns={'motor': 'MTT_ENGINE_TYPE'})
+            
+        # convert to LTO's
+        DAISYtraffic['LTO'] = DAISYtraffic['total']/2            
 
         #%% traffic vanuit TAF verrijken met motornamen uit TIS
         ###TODO: Alleen als iata_codes worden gebruikt?
@@ -925,11 +932,11 @@ class TrafficAggregate(object):
 
         # print total MTOW
         mtow = sum(DAISYtraffic['total']*DAISYtraffic['mtow'])/1000
-        print(f'Total MTOW = {mtow:.1f} ton')
+        print(f'\nTotal MTOW = {mtow:.1f} ton')
                                 
         
         # drop columns
-        DAISYtraffic = DAISYtraffic.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
+        # DAISYtraffic = DAISYtraffic.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
             
 
         
