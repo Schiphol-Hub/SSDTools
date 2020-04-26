@@ -847,33 +847,41 @@ class TrafficAggregate(object):
         f_APU400hz  = settings[3]
         f_APU       = settings[4]
 
-        DAISYtraffic = self.data
+        trf = self.data
 
         # ICAO or IATA type
-        if len(DAISYtraffic.loc[0,'d_type'])==3:
+        if len(trf.loc[0,'d_type'])==3:
             aircraft_type = 'iata_aircraft'
         else:
             aircraft_type = 'icao_aircraft'
+
+        # To keep NaN: convert it to string
+        trf['d_type'] = trf['d_type'].astype(str)
         
-        # Aggregate traffic
-        columns = [c for c in DAISYtraffic.columns if c in ['d_type', 'MTT_ENGINE_TYPE']]
-        DAISYtraffic = DAISYtraffic.groupby(columns)['total'].sum().reset_index()
+        # Aggregate traffic: keep aircraft and engine type
+        columns = [c for c in trf.columns if c in ['d_type', 'MTT_ENGINE_TYPE']]
+        trf = trf.groupby(columns)['total'].sum().reset_index()
+
+        # Create missing column to fill from aircraft categories
+        if 'MTT_ENGINE_TYPE' not in trf:
+            trf['MTT_ENGINE_TYPE'] = np.nan
  
-        # Add MTOW and motor for ICAO or IATA type
+        # Add MTOW from or aircraft categories
         ac_cat = ac_cat.loc[:,['iata_aircraft','icao_aircraft','mtow', 'motor']]
         # drop duplicate codes
         ###TODO: eerste wordt bewaard, alternatief max, min, mean etc.
         ac_cat = ac_cat.drop_duplicates(subset=[aircraft_type])
-        DAISYtraffic = DAISYtraffic.merge(ac_cat,left_on='d_type',
-                                          right_on=aircraft_type,
-                                          how='left')
-        if 'MTT_ENGINE_TYPE' in DAISYtraffic:
-            DAISYtraffic = DAISYtraffic.drop(columns='motor')
-        else:
-            DAISYtraffic = DAISYtraffic.rename(columns={'motor': 'MTT_ENGINE_TYPE'})
+        trf = trf.merge(ac_cat,
+                        left_on='d_type',
+                        right_on=aircraft_type,
+                        how='left')
+
+        # Add engine if missing in MTT_ENGINE_TYPE
+        trf['MTT_ENGINE_TYPE'] = trf['MTT_ENGINE_TYPE'].where(trf['MTT_ENGINE_TYPE'].notnull(), trf['motor'])
+        trf = trf.drop(columns='motor')
             
         # convert to LTO's
-        DAISYtraffic['LTO'] = DAISYtraffic['total']/2            
+        trf['LTO'] = trf['total']/2            
 
         #%% traffic vanuit TAF verrijken met motornamen uit TIS
         ###TODO: Alleen als iata_codes worden gebruikt?
@@ -882,23 +890,23 @@ class TrafficAggregate(object):
             reference_traffic = reference_traffic.sort_values(by='total',ascending=False).drop_duplicates(subset=['d_type'])
             
             # add motornamen to traffic
-            DAISYtraffic    = DAISYtraffic.merge(reference_traffic, 
-                                                 left_on='icao_aircraft',
-                                                 right_on='d_type',
-                                                 how='left')
+            trf = trf.merge(reference_traffic, 
+                            left_on='icao_aircraft',
+                            right_on='d_type',
+                            how='left')
 
         ###TODO: Alleen als iata_codes worden gebruikt?
         if new_engine and aircraft_type == 'iata_aircraft':  
             # if empty columns --> new engine type.
-            if any(DAISYtraffic['MTT_ENGINE_TYPE'].isnull()):
+            if any(trf['MTT_ENGINE_TYPE'].isnull()):
                 # check if new engines can be added
-                DAISYtraffic = self.mergeAndReplace(DAISYtraffic,new_engine,
-                                                    'icao_aircraft',
-                                                    'icao_aircraft',
-                                                    'MTT_ENGINE_TYPE',
-                                                    'engine_type')
+                trf = self.mergeAndReplace(trf, new_engine,
+                                           'icao_aircraft',
+                                           'icao_aircraft',
+                                           'MTT_ENGINE_TYPE',
+                                           'engine_type')
                 
-                for engine,ac in zip(DAISYtraffic['MTT_ENGINE_TYPE'],DAISYtraffic['icao_aircraft']):
+                for engine,ac in zip(trf['MTT_ENGINE_TYPE'],trf['icao_aircraft']):
                     if pd.isnull(engine):
                         print('Add missing engine to the following ICAO type: '+ str(ac))
 
@@ -906,23 +914,23 @@ class TrafficAggregate(object):
         ###TODO: Echt alleen bij ICAO-codes?
         if aircraft_type == 'icao_aircraft':             
             # check for nans
-            for aircraft in DAISYtraffic.loc[DAISYtraffic['icao_aircraft'].isnull(),'d_type']:
+            for aircraft in trf.loc[trf['icao_aircraft'].isnull(),'d_type']:
                 print('WARNING: missing aircraft type in aircraft categories table: '+ aircraft)
-                total = DAISYtraffic.loc[DAISYtraffic['d_type']==aircraft,'total']
-                print('WARNING: will delete: '+ str(total.iloc[0]) + ' flight(s)')
+                total = trf.loc[trf['d_type']==aircraft,'total'].sum()
+                print(f'WARNING: will delete {total:.0f} flight(s)')
              
             # compute correction factor missing mtow
-            t = DAISYtraffic['total'].sum()
-            t_noMTOW = DAISYtraffic.loc[DAISYtraffic['mtow'].eq(0),'total'].sum()
+            t = trf['total'].sum()
+            t_noMTOW = trf.loc[trf['mtow'].eq(0),'total'].sum()
             cfmtow = t/(t-t_noMTOW)
             print('Correction factor for missing mtow in ac cat table =' + str(round(cfmtow,4)))
 
             # compute correction factor missing ac cat
-            t_noACCAT = DAISYtraffic.loc[DAISYtraffic['icao_aircraft'].isnull(),'total'].sum()
+            t_noACCAT = trf.loc[trf['icao_aircraft'].isnull(),'total'].sum()
             cf = t/(t-t_noACCAT)
             print('Correction factor for missing aircraft in ac cat table =' + str(round(cf,4)))
             # drop columns with aircraft that don't exist in the database 
-            DAISYtraffic = DAISYtraffic.dropna(subset=['icao_aircraft'])
+            trf = trf.dropna(subset=['icao_aircraft'])
             
         else:
             # correctionfactor for missing data
@@ -931,15 +939,9 @@ class TrafficAggregate(object):
 
 
         # print total MTOW
-        mtow = sum(DAISYtraffic['total']*DAISYtraffic['mtow'])/1000
+        mtow = sum(trf['total']*trf['mtow'])/1000
         print(f'\nTotal MTOW = {mtow:.1f} ton')
-                                
-        
-        # drop columns
-        # DAISYtraffic = DAISYtraffic.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
-            
-
-        
+                                        
         # Add CO2 as pollutant
         modes = ['approach','idle','takeoff','climbout']
         for mode in modes:
@@ -962,7 +964,7 @@ class TrafficAggregate(object):
         ET = ET.reset_index()
                 
         # make case insensitive and trim trailing space
-        DAISYtraffic['MTT_ENGINE_TYPE'] = DAISYtraffic['MTT_ENGINE_TYPE'].str.lower().str.strip()
+        trf['MTT_ENGINE_TYPE'] = trf['MTT_ENGINE_TYPE'].str.lower().str.strip()
         ET['_type'] = ET['_type'].str.lower().str.strip()
         
         # drop duplicates
@@ -973,68 +975,66 @@ class TrafficAggregate(object):
             ET = ET.drop_duplicates(['_type'])
             
         # first merge on default types
-        DAISYtraffic = DAISYtraffic.merge(ET,
-                                left_on='MTT_ENGINE_TYPE',
-                                right_on='_type',
-                                how='left')
+        trf = trf.merge(ET,
+                        left_on='MTT_ENGINE_TYPE',
+                        right_on='_type',
+                        how='left')
         
-
         # check for nans
-        for engine in DAISYtraffic.loc[DAISYtraffic['_type'].isnull(),'MTT_ENGINE_TYPE']:
+        for engine in trf.loc[trf['_type'].isnull(),'MTT_ENGINE_TYPE']:
             print('WARNING: missing engine type table: '+ engine)
         
         #%% Add info from aircraft types
-        DAISYtraffic = DAISYtraffic.merge(ACtypes,
-                                left_on='icao_aircraft',
-                                right_on='icao',
-                                how='left')
+        trf = trf.merge(ACtypes,
+                        left_on='icao_aircraft',
+                        right_on='icao',
+                        how='left')
         
-#        return DAISYtraffic
         # check for missing engines and find replacement type
-        DAISYtraffic.loc[(DAISYtraffic['_type'].isnull()) & (DAISYtraffic['mtow'] >5.7),'MTT_ENGINE_TYPE']= 'rb211-524b series package 1'
-        DAISYtraffic.loc[(DAISYtraffic['_type'].isnull()) & (DAISYtraffic['mtow'] <5.7) & (DAISYtraffic['tim'] == 'TP') ,'MTT_ENGINE_TYPE']= '<5700 tp'
-        DAISYtraffic.loc[(DAISYtraffic['_type'].isnull()) & (DAISYtraffic['mtow'] <5.7) & (DAISYtraffic['tim'] == 'P') ,'MTT_ENGINE_TYPE']= '< 5700 p'
+        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] >5.7),'MTT_ENGINE_TYPE']= 'rb211-524b series package 1'
+        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'TP') ,'MTT_ENGINE_TYPE']= '<5700 tp'
+        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'P') ,'MTT_ENGINE_TYPE']= '< 5700 p'
         
         # drop columns and remerge
-        DAISYtraffic    = DAISYtraffic.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
-        DAISYtraffic    = DAISYtraffic.merge(ET,
-                                             left_on='MTT_ENGINE_TYPE',
-                                             right_on='_type',
-                                             how='left')
+        trf    = trf.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
+        trf    = trf.merge(ET,
+                           left_on='MTT_ENGINE_TYPE',
+                           right_on='_type',
+                           how='left')
         
     
         # check for nans
-        for engine in DAISYtraffic.loc[DAISYtraffic['_type'].isnull(),'MTT_ENGINE_TYPE']:
+        for engine in trf.loc[trf['_type'].isnull(),'MTT_ENGINE_TYPE']:
             print('WARNING:\nAfter replacing, missing engine type table: '+ engine)
             # check for nans
-            total = DAISYtraffic.loc[DAISYtraffic['MTT_ENGINE_TYPE']==engine,'LTO']
+            total = trf.loc[trf['MTT_ENGINE_TYPE']==engine,'LTO']
             print('Will delete: '+ str(total.iloc[0]*2) + ' flight(s)')
     
         # drop flights that don't exist in the database    
-        DAISYtraffic = DAISYtraffic.dropna(subset=['_type'])
+        trf = trf.dropna(subset=['_type'])
         
         #%% Add info from aircraft types
-        DAISYtraffic = DAISYtraffic.merge(ACtypes,
-                                left_on='icao_aircraft',
-                                right_on='icao',
-                                how='left')
+        trf = trf.merge(ACtypes,
+                        left_on='icao_aircraft',
+                        right_on='icao',
+                        how='left')
         
         # check for nans
-        for aircraft in DAISYtraffic.loc[DAISYtraffic['icao'].isnull(),'icao_aircraft']:
+        for aircraft in trf.loc[trf['icao'].isnull(),'icao_aircraft']:
             print('WARNING: after replacing, missing engine type table: '+ aircraft)
             
         #%% Add info from TIM times
-        DAISYtraffic = DAISYtraffic.merge(TIM,
-                                left_on='tim',
-                                right_on='code',
-                                how='left')
+        trf = trf.merge(TIM,
+                        left_on='tim',
+                        right_on='code',
+                        how='left')
         
         # TIM correction
         no = [2,3,4]
         correction = [f_1ipv2,f_2ipv3,f_3ipv4]
         for n,c in zip(no,correction):
-            ids = (DAISYtraffic['engines']==n)
-            DAISYtraffic.loc[ids,'idle'] = DAISYtraffic.loc[ids,'idle']-c*(DAISYtraffic.loc[ids,'idle']/2-3*60)*1/n
+            ids = (trf['engines']==n)
+            trf.loc[ids,'idle'] = trf.loc[ids,'idle']-c*(trf.loc[ids,'idle']/2-3*60)*1/n
         
         
         #%% now compute emissies
@@ -1047,57 +1047,57 @@ class TrafficAggregate(object):
         for stof in stoffen:
             
             #%% LTO
-            DAISYtraffic[stof+'_lto'] = 0
+            trf[stof+'_lto'] = 0
             for mode in modes:
                 # compute uitstoot per stof, per mode
-                DAISYtraffic[stof+'_lto_'+mode] = DAISYtraffic['fuel_'+mode]*DAISYtraffic[stof+'_'+mode]*DAISYtraffic[mode]
+                trf[stof+'_lto_'+mode] = trf['fuel_'+mode]*trf[stof+'_'+mode]*trf[mode]
 
                 # sommeer over de modes
-                DAISYtraffic[stof+'_lto'] = DAISYtraffic[stof+'_lto']+DAISYtraffic[stof+'_lto_'+mode]
+                trf[stof+'_lto'] = trf[stof+'_lto']+trf[stof+'_lto_'+mode]
             
             # vermenigvuldig met het aantal motoren en LTO's
-            DAISYtraffic[stof+'_lto'] = DAISYtraffic['LTO']*DAISYtraffic[stof+'_lto']*DAISYtraffic['engines']
+            trf[stof+'_lto'] = trf['LTO']*trf[stof+'_lto']*trf['engines']
             
             # sommeer over alle vluchten
-            output.loc[stof,'LTO [t]'] = round(sum(DAISYtraffic[stof+'_lto'])/1000000 ,3)      
+            output.loc[stof,'LTO [t]'] = round(sum(trf[stof+'_lto'])/1000000 ,3)      
         
             #%% APU
         
             # APU +400 HZ
-            DAISYtraffic[stof+'_APU400hz']   = (DAISYtraffic[stof+'_noload']*DAISYtraffic['fuel_noload']+
-                                           0.5*DAISYtraffic[stof+'_airco']*DAISYtraffic['fuel_airco']+
-                                           DAISYtraffic[stof+'_jetstart']*DAISYtraffic['fuel_jetstart'])
+            trf[stof+'_APU400hz'] = (trf[stof+'_noload']*trf['fuel_noload']+
+                                     0.5*trf[stof+'_airco']*trf['fuel_airco']+
+                                     trf[stof+'_jetstart']*trf['fuel_jetstart'])
             # sommeer over alle vluchten
-            output.loc[stof,'APU400hz [t]'] = round(f_APU400hz*sum(DAISYtraffic['LTO']*DAISYtraffic[stof+'_APU400hz'])/1000000,3)
+            output.loc[stof,'APU400hz [t]'] = round(f_APU400hz*sum(trf['LTO']*trf[stof+'_APU400hz'])/1000000,3)
             
             # APU
-            DAISYtraffic[stof+'_APU']        = (DAISYtraffic[stof+'_noload']*DAISYtraffic['fuel_noload']+
-                                           DAISYtraffic[stof+'_power']*DAISYtraffic['fuel_power']+
-                                           0.5*DAISYtraffic[stof+'_airco']*DAISYtraffic['fuel_airco']+ 
-                                           DAISYtraffic[stof+'_jetstart']*DAISYtraffic['fuel_jetstart'])
+            trf[stof+'_APU'] = (trf[stof+'_noload']*trf['fuel_noload']+
+                                trf[stof+'_power']*trf['fuel_power']+
+                                0.5*trf[stof+'_airco']*trf['fuel_airco']+ 
+                                trf[stof+'_jetstart']*trf['fuel_jetstart'])
             # sommeer over alle vluchten
-            output.loc[stof,'APU [t]'] = round(f_APU*sum(DAISYtraffic['LTO']*DAISYtraffic[stof+'_APU'])/1000000,3)
+            output.loc[stof,'APU [t]'] = round(f_APU*sum(trf['LTO']*trf[stof+'_APU'])/1000000,3)
         
             #%% total
         
-            output.loc[stof,'Totaal [t]']           = output.loc[stof,'LTO [t]']+output.loc[stof,'APU400hz [t]']+output.loc[stof,'APU [t]']
+            output.loc[stof,'Totaal [t]'] = output.loc[stof,'LTO [t]']+output.loc[stof,'APU400hz [t]']+output.loc[stof,'APU [t]']
             
             # correction factor based on missing aircraft in ac cat table
             output.loc[stof,'Totaal [t]'] *= cf
             
-            output.loc[stof,'Totaal relatief [g/ton (MTOW)]']  = round(output.loc[stof,'Totaal [t]']*1000000/sum(DAISYtraffic['LTO']*DAISYtraffic['mtow']*2),3)  
+            output.loc[stof,'Totaal relatief [g/ton (MTOW)]']  = round(output.loc[stof,'Totaal [t]']*1000000/sum(trf['LTO']*trf['mtow']*2),3)  
             
             # correction factor based on missing mtow in ac cat table
             output.loc[stof,'Totaal relatief [g/ton (MTOW)]'] *= cfmtow
             
         # add total fuel
-        output  =   output.append((output.loc['co2',:]/3.15).rename('fuel'))
+        output = output.append((output.loc['co2',:]/3.15).rename('fuel'))
 
         # drop temp column '_type'
         ET = ET.drop(columns=['_type'])
-        DAISYtraffic = DAISYtraffic.drop(columns=['_type'])
+        trf = trf.drop(columns=['_type'])
         
-        return DAISYtraffic,output
+        return trf, output
     
 
 
