@@ -18,6 +18,297 @@ def read_file (filename, sep='\t', **kwargs):
     else:
          return filename
 
+def emission_model(trf,
+                   ET,
+                   TIM,
+                   ACtypes,
+                   ac_cat,
+                   f_1ipv2=0,
+                   f_3ipv4=0,
+                   f_2ipv3=0,
+                   f_APU400hz=0,
+                   f_APU=0.75,
+                   reference_traffic=None,
+                   new_engine=None):
+    """
+    Compute the emissionsoutput based on a daisy aggregate traffic
+
+    TODO: beschrijf invoer en result
+    """
+    def mergeAndReplace(self,df1,df2,merge_l,merge_r,rep_l,rep_r):
+        """
+        Replaces values in a dataframe. Used for the emissiemodel code
+        """
+        
+        df = df1.copy()
+        
+        # MERGE
+        df = df.merge(df2, 
+                      left_on=merge_l,
+                      right_on=merge_r,
+                      how='left')
+    
+        # copy values
+        df.loc[df[rep_l].isnull(),rep_l] = df.loc[~df[rep_r].isnull(),rep_r]
+        
+        # drop columns
+        df = df.drop(columns=rep_r)
+    
+        return df
+
+
+    # Fill missing columns with NaN
+    if 'engine_type' not in trf: trf['engine_type'] = np.nan
+    if 'mtow' not in trf: trf['mtow'] = np.nan
+
+
+    # ICAO or IATA type
+    if len(trf.loc[0,'ac_type'])==3:
+        aircraft_type = 'iata_aircraft'
+    else:
+        aircraft_type = 'icao_aircraft'
+
+ 
+    # Add info from aircraft categories
+    ac_cat = ac_cat.loc[:,['iata_aircraft','icao_aircraft','mtow', 'motor']]
+
+    # drop duplicate codes
+    ###TODO: eerste wordt bewaard, alternatief max, min, mean etc.
+    ac_cat = ac_cat.drop_duplicates(subset=[aircraft_type])
+    
+    # mtow wordt door de merge mtow_x en mtow_y
+    trf = trf.merge(ac_cat,
+                    left_on='ac_type',
+                    right_on=aircraft_type,
+                    how='left')
+
+    # Add engine if missing in trf
+    trf['engine_type'] = trf['engine_type'].fillna(trf['motor'])
+    trf = trf.drop(columns='motor')
+
+    # Add mtow if missing in trf
+    trf['mtow'] = trf['mtow_x'].fillna(trf['mtow_y'])
+    trf = trf.drop(columns=['mtow_x', 'mtow_y'])
+        
+    # convert to LTO's
+    trf['LTO'] = trf['total']/2            
+
+    #%% traffic vanuit TAF verrijken met motornamen uit TIS
+    ###TODO: Alleen als iata_codes worden gebruikt?
+    if reference_traffic and aircraft_type == 'iata_aircraft':             
+        # drop duplicates, but keep rows with most occurences
+        reference_traffic = reference_traffic.sort_values(by='total',ascending=False).drop_duplicates(subset=['ac_type'])
+        
+        # add motornamen to traffic
+        trf = trf.merge(reference_traffic, 
+                        left_on='icao_aircraft',
+                        right_on='ac_type',
+                        how='left')
+
+    ###TODO: Alleen als iata_codes worden gebruikt?
+    if new_engine and aircraft_type == 'iata_aircraft':  
+        # if empty columns --> new engine type.
+        if any(trf['engine_type'].isnull()):
+            # check if new engines can be added
+            trf = mergeAndReplace(trf, new_engine,
+                                       'icao_aircraft',
+                                       'icao_aircraft',
+                                       'engine_type',
+                                       'engine_type')
+            
+            for engine,ac in zip(trf['engine_type'],trf['icao_aircraft']):
+                if pd.isnull(engine):
+                    print('Add missing engine to the following ICAO type: '+ str(ac))
+
+        
+    ###TODO: Echt alleen bij ICAO-codes?
+    if aircraft_type == 'icao_aircraft':             
+        # check for nans
+        for aircraft in trf.loc[trf['icao_aircraft'].isnull(),'ac_type']:
+            print('WARNING: missing aircraft type in aircraft categories table: '+ aircraft)
+            total = trf.loc[trf['ac_type']==aircraft,'total'].sum()
+            print(f'WARNING: will delete {total:.0f} flight(s)')
+         
+        # compute correction factor missing mtow
+        t = trf['total'].sum()
+        t_noMTOW = trf.loc[trf['mtow'].eq(0),'total'].sum()
+        cfmtow = t/(t-t_noMTOW)
+        print('Correction factor for missing mtow in ac cat table =' + str(round(cfmtow,4)))
+
+        # compute correction factor missing ac cat
+        t_noACCAT = trf.loc[trf['icao_aircraft'].isnull(),'total'].sum()
+        cf = t/(t-t_noACCAT)
+        print('Correction factor for missing aircraft in ac cat table =' + str(round(cf,4)))
+        # drop columns with aircraft that don't exist in the database 
+        trf = trf.dropna(subset=['icao_aircraft'])
+        
+    else:
+        # correctionfactor for missing data
+        cf = 1      # missing engine?
+        cfmtow = 1  # missing mtow
+
+
+    # print total MTOW
+    mtow = sum(trf['total']*trf['mtow'])/1000
+    print(f'\nTotal MTOW = {mtow:.1f} ton')
+                                    
+    # Add CO2 as pollutant
+    modes = ['approach','idle','takeoff','climbout']
+    for mode in modes:
+        ET['co2_'+mode] = 3150
+        
+    modes = ['noload','power','airco','jetstart']
+    for mode in modes:
+        ACtypes['co2_'+mode] = 3150
+   
+    #%% Add info from engine types
+
+    # expand table
+    ET['_type'] = ET['type']
+    for i, typ in enumerate(ET['type'].str.split(';')):
+        if len(typ)>1:
+            for subtype in typ:
+                a = ET.iloc[i,:].copy()
+                a['_type'] = subtype
+                ET = ET.append(a)
+    ET = ET.reset_index()
+            
+    # make case insensitive and trim trailing space
+    trf['engine_type'] = trf['engine_type'].str.lower().str.strip()
+    ET['_type'] = ET['_type'].str.lower().str.strip()
+    
+    # drop duplicates
+    dups = ET['_type'].duplicated()
+    if dups.any():
+        for engine in ET.loc[dups, '_type'].unique():
+            print('WARNING: duplicate engine types in engine table', engine)
+        ET = ET.drop_duplicates(['_type'])
+        
+    # first merge on default types
+    trf = trf.merge(ET,
+                    left_on='engine_type',
+                    right_on='_type',
+                    how='left')
+    
+    # check for nans
+    for engine in trf.loc[trf['_type'].isnull(),'engine_type']:
+        print('WARNING: missing engine type table: '+ engine)
+    
+    #%% Add info from aircraft types
+    trf = trf.merge(ACtypes,
+                    left_on='icao_aircraft',
+                    right_on='icao',
+                    how='left')
+    
+    # check for missing engines and find replacement type
+    trf.loc[(trf['_type'].isnull()) & (trf['mtow'] >5.7),'engine_type']= 'rb211-524b series package 1'
+    trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'TP') ,'engine_type']= '<5700 tp'
+    trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'P') ,'engine_type']= '< 5700 p'
+    
+    # drop columns and remerge
+    trf    = trf.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','engine_type']]
+    trf    = trf.merge(ET,
+                       left_on='engine_type',
+                       right_on='_type',
+                       how='left')
+    
+
+    # check for nans
+    for engine in trf.loc[trf['_type'].isnull(),'engine_type']:
+        print('WARNING:\nAfter replacing, missing engine type table: '+ engine)
+        # check for nans
+        total = trf.loc[trf['engine_type']==engine,'LTO']
+        print('Will delete: '+ str(total.iloc[0]*2) + ' flight(s)')
+
+    # drop flights that don't exist in the database    
+    trf = trf.dropna(subset=['_type'])
+    
+    #%% Add info from aircraft types
+    trf = trf.merge(ACtypes,
+                    left_on='icao_aircraft',
+                    right_on='icao',
+                    how='left')
+    
+    # check for nans
+    for aircraft in trf.loc[trf['icao'].isnull(),'icao_aircraft']:
+        print('WARNING: after replacing, missing engine type table: '+ aircraft)
+        
+    #%% Add info from TIM times
+    trf = trf.merge(TIM,
+                    left_on='tim',
+                    right_on='code',
+                    how='left')
+    
+    # TIM correction
+    no = [2,3,4]
+    correction = [f_1ipv2,f_2ipv3,f_3ipv4]
+    for n,c in zip(no,correction):
+        ids = (trf['engines']==n)
+        trf.loc[ids,'idle'] = trf.loc[ids,'idle']-c*(trf.loc[ids,'idle']/2-3*60)*1/n
+    
+    
+    #%% now compute emissies
+    stoffen = ['co','nox','vos','so2','pm10','co2']
+    modes = ['approach','idle','takeoff','climbout']
+    
+    d = {'Stof': stoffen}
+    output = pd.DataFrame(data=d).set_index('Stof')
+    
+    for stof in stoffen:
+        
+        #%% LTO
+        trf[stof+'_lto'] = 0
+        for mode in modes:
+            # compute uitstoot per stof, per mode
+            trf[stof+'_lto_'+mode] = trf['fuel_'+mode]*trf[stof+'_'+mode]*trf[mode]
+
+            # sommeer over de modes
+            trf[stof+'_lto'] = trf[stof+'_lto']+trf[stof+'_lto_'+mode]
+        
+        # vermenigvuldig met het aantal motoren en LTO's
+        trf[stof+'_lto'] = trf['LTO']*trf[stof+'_lto']*trf['engines']
+        
+        # sommeer over alle vluchten
+        output.loc[stof,'LTO [t]'] = round(sum(trf[stof+'_lto'])/1000000 ,3)      
+    
+        #%% APU
+    
+        # APU +400 HZ
+        trf[stof+'_APU400hz'] = (trf[stof+'_noload']*trf['fuel_noload']+
+                                 0.5*trf[stof+'_airco']*trf['fuel_airco']+
+                                 trf[stof+'_jetstart']*trf['fuel_jetstart'])
+        # sommeer over alle vluchten
+        output.loc[stof,'APU400hz [t]'] = round(f_APU400hz*sum(trf['LTO']*trf[stof+'_APU400hz'])/1000000,3)
+        
+        # APU
+        trf[stof+'_APU'] = (trf[stof+'_noload']*trf['fuel_noload']+
+                            trf[stof+'_power']*trf['fuel_power']+
+                            0.5*trf[stof+'_airco']*trf['fuel_airco']+ 
+                            trf[stof+'_jetstart']*trf['fuel_jetstart'])
+        # sommeer over alle vluchten
+        output.loc[stof,'APU [t]'] = round(f_APU*sum(trf['LTO']*trf[stof+'_APU'])/1000000,3)
+    
+        #%% total
+    
+        output.loc[stof,'Totaal [t]'] = output.loc[stof,'LTO [t]']+output.loc[stof,'APU400hz [t]']+output.loc[stof,'APU [t]']
+        
+        # correction factor based on missing aircraft in ac cat table
+        output.loc[stof,'Totaal [t]'] *= cf
+        
+        output.loc[stof,'Totaal relatief [g/ton (MTOW)]']  = round(output.loc[stof,'Totaal [t]']*1000000/sum(trf['LTO']*trf['mtow']*2),3)  
+        
+        # correction factor based on missing mtow in ac cat table
+        output.loc[stof,'Totaal relatief [g/ton (MTOW)]'] *= cfmtow
+        
+    # add total fuel
+    output = output.append((output.loc['co2',:]/3.15).rename('fuel'))
+
+    # drop temp column '_type'
+    ET = ET.drop(columns=['_type'])
+    trf = trf.drop(columns=['_type'])
+    
+    return trf, output.reset_index()
+
 
 class Traffic(object):
     def __init__(self, data=None, date_column=None, class_column=None, id_column=None, den_column='DEN',
@@ -93,18 +384,6 @@ class Traffic(object):
         """
 
         return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.mean')
-
-    @classmethod
-    def read_daisy_emissions_file(cls, path, **kwargs):
-        """
-        A method to read daisy mean files for emissions.
-
-        :param str path: path to the file.
-        :return: daisy mean aggregate of traffic.
-        :rtype: TrafficAggregate
-        """
-
-        return TrafficAggregate(data=read_file(path, **kwargs), aggregate_type='daisy.emissions')
     
     @classmethod
     def read_daisy_HG_file(cls, path, **kwargs):
@@ -427,15 +706,41 @@ class Traffic(object):
 
         return arrivals, departures
     
-    def get_aircraft_for_emissiemodel(self):
+    def get_emissions(self,
+                      ET,
+                      TIM,
+                      ACtypes,
+                      ac_cat,
+                      f_1ipv2=0,
+                      f_3ipv4=0,
+                      f_2ipv3=0,
+                      f_APU400hz=0,
+                      f_APU=0.75,
+                      reference_traffic=None,
+                      new_engine=None):
 
-        
-        distribution=self.data.loc[:,[self.aircraft_column,self.engine_column]]
-        
-        distribution=distribution.groupby(distribution.columns.tolist()).size().reset_index().rename(columns={0:'total'})
-        distribution=distribution.rename(columns={"C_ac_type": "d_type", "C_engine_type": "MTT_ENGINE_TYPE"})
+        trf = self.data
 
-        return distribution
+        # Alleen ICAO aircraft code en engine? Dus geen MTOW
+        trf=self.data.loc[:,[self.aircraft_column,self.engine_column]]
+
+        ###TODO: Risico dat NaN worden gemist door de groupby        
+        trf=trf.groupby(trf.columns.tolist()).size().reset_index().rename(columns={0:'total'})
+        trf=trf.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
+
+        return emission_model(trf,
+                              ET, 
+                              TIM, 
+                              ACtypes, 
+                              ac_cat,
+                              f_1ipv2,
+                              f_3ipv4,
+                              f_2ipv3,
+                              f_APU400hz,
+                              f_APU, 
+                              reference_traffic,
+                              new_engine)
+
     
     def get_runway_usage_statistics(self, period):
         """
@@ -797,38 +1102,22 @@ class TrafficAggregate(object):
 
         # Return a bracket with reshaped data
         return Bracket(bracket_data.reset_index().pivot('d_lt', 'bracket', 'total'))
-
-    def mergeAndReplace(self,df1,df2,merge_l,merge_r,rep_l,rep_r):
-        """
-        Replaces values in a dataframe. Used for the emissiemodel code
-
-        """
-        
-        df = df1.copy()
-        
-        # MERGE
-        df = df.merge(df2, 
-                      left_on=merge_l,
-                      right_on=merge_r,
-                      how='left')
-    
-        # copy values
-        df.loc[df[rep_l].isnull(),rep_l] = df.loc[~df[rep_r].isnull(),rep_r]
-        
-        # drop columns
-        df = df.drop(columns=rep_r)
-    
-        return df
  
-    
-    def get_emissies(self,ET,TIM,ACtypes,ac_cat,settings,reference_traffic=None,new_engine=None):
-        """
-        Compute the emissionsoutput based on a daisy aggregate traffic
+    def get_emissions(self,
+                      ET,
+                      TIM,
+                      ACtypes,
+                      ac_cat,
+                      f_1ipv2=0,
+                      f_3ipv4=0,
+                      f_2ipv3=0,
+                      f_APU400hz=0,
+                      f_APU=0.75,
+                      reference_traffic=None,
+                      new_engine=None):
 
-        """
-        
         # Define the supported types
-        supported_types = ['daisy.emissions', 'casper']
+        supported_types = ['daisy.mean', 'casper']
 
         # Check if a different type is provided
         if self.type not in supported_types:
@@ -840,264 +1129,40 @@ class TrafficAggregate(object):
 
             raise TypeError('This method is only supported for traffic aggregates of type {}, but {} is given'.format(
                 supported_types_string, self.type))
-        
-        f_1ipv2     = settings[0]
-        f_3ipv4     = settings[1]
-        f_2ipv3     = settings[2]
-        f_APU400hz  = settings[3]
-        f_APU       = settings[4]
-
+    
         trf = self.data
 
-        # ICAO or IATA type
-        if len(trf.loc[0,'d_type'])==3:
-            aircraft_type = 'iata_aircraft'
-        else:
-            aircraft_type = 'icao_aircraft'
-
-        # To keep NaN: convert it to string
-        trf['d_type'] = trf['d_type'].astype(str)
-        
-        # Aggregate traffic: keep aircraft and engine type
-        columns = [c for c in trf.columns if c in ['d_type', 'MTT_ENGINE_TYPE']]
-        trf = trf.groupby(columns)['total'].sum().reset_index()
-
-        # Create missing column to fill from aircraft categories
-        if 'MTT_ENGINE_TYPE' not in trf:
-            trf['MTT_ENGINE_TYPE'] = np.nan
- 
-        # Add MTOW from or aircraft categories
-        ac_cat = ac_cat.loc[:,['iata_aircraft','icao_aircraft','mtow', 'motor']]
-        # drop duplicate codes
-        ###TODO: eerste wordt bewaard, alternatief max, min, mean etc.
-        ac_cat = ac_cat.drop_duplicates(subset=[aircraft_type])
-        trf = trf.merge(ac_cat,
-                        left_on='d_type',
-                        right_on=aircraft_type,
-                        how='left')
-
-        # Add engine if missing in MTT_ENGINE_TYPE
-        trf['MTT_ENGINE_TYPE'] = trf['MTT_ENGINE_TYPE'].where(trf['MTT_ENGINE_TYPE'].notnull(), trf['motor'])
-        trf = trf.drop(columns='motor')
+        if self.type == 'casper':
+            ###TODO: weight???
+            trf=self.data.loc[:,[self.aircraft_column,self.engine_column]]
             
-        # convert to LTO's
-        trf['LTO'] = trf['total']/2            
-
-        #%% traffic vanuit TAF verrijken met motornamen uit TIS
-        ###TODO: Alleen als iata_codes worden gebruikt?
-        if reference_traffic and aircraft_type == 'iata_aircraft':             
-            # drop duplicates, but keep rows with most occurences
-            reference_traffic = reference_traffic.sort_values(by='total',ascending=False).drop_duplicates(subset=['d_type'])
-            
-            # add motornamen to traffic
-            trf = trf.merge(reference_traffic, 
-                            left_on='icao_aircraft',
-                            right_on='d_type',
-                            how='left')
-
-        ###TODO: Alleen als iata_codes worden gebruikt?
-        if new_engine and aircraft_type == 'iata_aircraft':  
-            # if empty columns --> new engine type.
-            if any(trf['MTT_ENGINE_TYPE'].isnull()):
-                # check if new engines can be added
-                trf = self.mergeAndReplace(trf, new_engine,
-                                           'icao_aircraft',
-                                           'icao_aircraft',
-                                           'MTT_ENGINE_TYPE',
-                                           'engine_type')
-                
-                for engine,ac in zip(trf['MTT_ENGINE_TYPE'],trf['icao_aircraft']):
-                    if pd.isnull(engine):
-                        print('Add missing engine to the following ICAO type: '+ str(ac))
-
-            
-        ###TODO: Echt alleen bij ICAO-codes?
-        if aircraft_type == 'icao_aircraft':             
-            # check for nans
-            for aircraft in trf.loc[trf['icao_aircraft'].isnull(),'d_type']:
-                print('WARNING: missing aircraft type in aircraft categories table: '+ aircraft)
-                total = trf.loc[trf['d_type']==aircraft,'total'].sum()
-                print(f'WARNING: will delete {total:.0f} flight(s)')
-             
-            # compute correction factor missing mtow
-            t = trf['total'].sum()
-            t_noMTOW = trf.loc[trf['mtow'].eq(0),'total'].sum()
-            cfmtow = t/(t-t_noMTOW)
-            print('Correction factor for missing mtow in ac cat table =' + str(round(cfmtow,4)))
-
-            # compute correction factor missing ac cat
-            t_noACCAT = trf.loc[trf['icao_aircraft'].isnull(),'total'].sum()
-            cf = t/(t-t_noACCAT)
-            print('Correction factor for missing aircraft in ac cat table =' + str(round(cf,4)))
-            # drop columns with aircraft that don't exist in the database 
-            trf = trf.dropna(subset=['icao_aircraft'])
-            
-        else:
-            # correctionfactor for missing data
-            cf = 1      # missing engine?
-            cfmtow = 1  # missing mtow
-
-
-        # print total MTOW
-        mtow = sum(trf['total']*trf['mtow'])/1000
-        print(f'\nTotal MTOW = {mtow:.1f} ton')
-                                        
-        # Add CO2 as pollutant
-        modes = ['approach','idle','takeoff','climbout']
-        for mode in modes:
-            ET['co2_'+mode] = 3150
-            
-        modes = ['noload','power','airco','jetstart']
-        for mode in modes:
-            ACtypes['co2_'+mode] = 3150
-       
-        #%% Add info from engine types
-
-        # expand table
-        ET['_type'] = ET['type']
-        for i, typ in enumerate(ET['type'].str.split(';')):
-            if len(typ)>1:
-                for subtype in typ:
-                    a = ET.iloc[i,:].copy()
-                    a['_type'] = subtype
-                    ET = ET.append(a)
-        ET = ET.reset_index()
-                
-        # make case insensitive and trim trailing space
-        trf['MTT_ENGINE_TYPE'] = trf['MTT_ENGINE_TYPE'].str.lower().str.strip()
-        ET['_type'] = ET['_type'].str.lower().str.strip()
+            trf=trf.groupby(trf.columns.tolist()).size().reset_index().rename(columns={0:'total'})
+            trf=trf.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
+        elif self.type == 'daisy.mean':           
+            # To keep NaN: convert it to string
+            ###TODO: Ook voor engine en MTOW???
+            trf['d_type'] = trf['d_type'].astype(str)
         
-        # drop duplicates
-        dups = ET['_type'].duplicated()
-        if dups.any():
-            for engine in ET.loc[dups, '_type'].unique():
-                print('WARNING: duplicate engine types in engine table', engine)
-            ET = ET.drop_duplicates(['_type'])
-            
-        # first merge on default types
-        trf = trf.merge(ET,
-                        left_on='MTT_ENGINE_TYPE',
-                        right_on='_type',
-                        how='left')
-        
-        # check for nans
-        for engine in trf.loc[trf['_type'].isnull(),'MTT_ENGINE_TYPE']:
-            print('WARNING: missing engine type table: '+ engine)
-        
-        #%% Add info from aircraft types
-        trf = trf.merge(ACtypes,
-                        left_on='icao_aircraft',
-                        right_on='icao',
-                        how='left')
-        
-        # check for missing engines and find replacement type
-        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] >5.7),'MTT_ENGINE_TYPE']= 'rb211-524b series package 1'
-        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'TP') ,'MTT_ENGINE_TYPE']= '<5700 tp'
-        trf.loc[(trf['_type'].isnull()) & (trf['mtow'] <5.7) & (trf['tim'] == 'P') ,'MTT_ENGINE_TYPE']= '< 5700 p'
-        
-        # drop columns and remerge
-        trf    = trf.loc[:,['iata_aircraft','icao_aircraft','mtow','LTO','MTT_ENGINE_TYPE']]
-        trf    = trf.merge(ET,
-                           left_on='MTT_ENGINE_TYPE',
-                           right_on='_type',
-                           how='left')
-        
+            # Aggregate traffic: keep aircraft and engine type
+            ###TODO d_motor of MTT_engine_type en wat als ze beide voorkomen?
+            columns = [c for c in trf.columns if c in ['d_type', 'd_motor', 'MTT_engine_type', 'd_mtow']]
+            trf = trf.groupby(columns)['total'].sum().reset_index()
+
+            trf=trf.rename(columns={"d_type": "ac_type", "d_motor": "engine_type", 'MTT_engine_type': "engine_type"})
+
+        return emission_model(trf,
+                              ET, 
+                              TIM, 
+                              ACtypes, 
+                              ac_cat,
+                              f_1ipv2,
+                              f_3ipv4,
+                              f_2ipv3,
+                              f_APU400hz,
+                              f_APU, 
+                              reference_traffic,
+                              new_engine)
     
-        # check for nans
-        for engine in trf.loc[trf['_type'].isnull(),'MTT_ENGINE_TYPE']:
-            print('WARNING:\nAfter replacing, missing engine type table: '+ engine)
-            # check for nans
-            total = trf.loc[trf['MTT_ENGINE_TYPE']==engine,'LTO']
-            print('Will delete: '+ str(total.iloc[0]*2) + ' flight(s)')
-    
-        # drop flights that don't exist in the database    
-        trf = trf.dropna(subset=['_type'])
-        
-        #%% Add info from aircraft types
-        trf = trf.merge(ACtypes,
-                        left_on='icao_aircraft',
-                        right_on='icao',
-                        how='left')
-        
-        # check for nans
-        for aircraft in trf.loc[trf['icao'].isnull(),'icao_aircraft']:
-            print('WARNING: after replacing, missing engine type table: '+ aircraft)
-            
-        #%% Add info from TIM times
-        trf = trf.merge(TIM,
-                        left_on='tim',
-                        right_on='code',
-                        how='left')
-        
-        # TIM correction
-        no = [2,3,4]
-        correction = [f_1ipv2,f_2ipv3,f_3ipv4]
-        for n,c in zip(no,correction):
-            ids = (trf['engines']==n)
-            trf.loc[ids,'idle'] = trf.loc[ids,'idle']-c*(trf.loc[ids,'idle']/2-3*60)*1/n
-        
-        
-        #%% now compute emissies
-        stoffen = ['co','nox','vos','so2','pm10','co2']
-        modes = ['approach','idle','takeoff','climbout']
-        
-        d = {'Stof': stoffen}
-        output = pd.DataFrame(data=d).set_index('Stof')
-        
-        for stof in stoffen:
-            
-            #%% LTO
-            trf[stof+'_lto'] = 0
-            for mode in modes:
-                # compute uitstoot per stof, per mode
-                trf[stof+'_lto_'+mode] = trf['fuel_'+mode]*trf[stof+'_'+mode]*trf[mode]
-
-                # sommeer over de modes
-                trf[stof+'_lto'] = trf[stof+'_lto']+trf[stof+'_lto_'+mode]
-            
-            # vermenigvuldig met het aantal motoren en LTO's
-            trf[stof+'_lto'] = trf['LTO']*trf[stof+'_lto']*trf['engines']
-            
-            # sommeer over alle vluchten
-            output.loc[stof,'LTO [t]'] = round(sum(trf[stof+'_lto'])/1000000 ,3)      
-        
-            #%% APU
-        
-            # APU +400 HZ
-            trf[stof+'_APU400hz'] = (trf[stof+'_noload']*trf['fuel_noload']+
-                                     0.5*trf[stof+'_airco']*trf['fuel_airco']+
-                                     trf[stof+'_jetstart']*trf['fuel_jetstart'])
-            # sommeer over alle vluchten
-            output.loc[stof,'APU400hz [t]'] = round(f_APU400hz*sum(trf['LTO']*trf[stof+'_APU400hz'])/1000000,3)
-            
-            # APU
-            trf[stof+'_APU'] = (trf[stof+'_noload']*trf['fuel_noload']+
-                                trf[stof+'_power']*trf['fuel_power']+
-                                0.5*trf[stof+'_airco']*trf['fuel_airco']+ 
-                                trf[stof+'_jetstart']*trf['fuel_jetstart'])
-            # sommeer over alle vluchten
-            output.loc[stof,'APU [t]'] = round(f_APU*sum(trf['LTO']*trf[stof+'_APU'])/1000000,3)
-        
-            #%% total
-        
-            output.loc[stof,'Totaal [t]'] = output.loc[stof,'LTO [t]']+output.loc[stof,'APU400hz [t]']+output.loc[stof,'APU [t]']
-            
-            # correction factor based on missing aircraft in ac cat table
-            output.loc[stof,'Totaal [t]'] *= cf
-            
-            output.loc[stof,'Totaal relatief [g/ton (MTOW)]']  = round(output.loc[stof,'Totaal [t]']*1000000/sum(trf['LTO']*trf['mtow']*2),3)  
-            
-            # correction factor based on missing mtow in ac cat table
-            output.loc[stof,'Totaal relatief [g/ton (MTOW)]'] *= cfmtow
-            
-        # add total fuel
-        output = output.append((output.loc['co2',:]/3.15).rename('fuel'))
-
-        # drop temp column '_type'
-        ET = ET.drop(columns=['_type'])
-        trf = trf.drop(columns=['_type'])
-        
-        return trf, output
     
 
 
