@@ -275,10 +275,7 @@ class GridPlot(object):
                                Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
 
             self.ax.legend(legend_elements, ['58 Lden', '48 Lden'], loc='upper left',fontsize=12)
-            
-
-            
-            
+                      
 
         # The input is a single grid, so only a single contour should be plotted
         else:
@@ -306,7 +303,9 @@ class GridPlot(object):
     
             h1,_ = cs1.legend_elements()
             h2,_ = cs2.legend_elements()
-            self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',fontsize=12)
+            self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
+            # self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
+            # self.ax.legend([h1[0], h2[0]], [label,other_label],**branding.xParams['legend'])
 #        legend_elements = [
 #                           Line2D([0], [0], color=default['kleuren']['schemerblauw']),
 #                           Line2D([0], [0], color=default['kleuren']['schemergroen']),
@@ -471,10 +470,10 @@ class GridPlot(object):
         contour_plot = self.contour_plot if contour_plot is None else contour_plot
 
         # Create new axis for the colorbar in the top-right corner. The sequence is left, bottom, width and height.
-        cax = self.fig.add_axes([0.8, 0.6, 0.05, 0.3]) if cax_position is None else self.fig.add_axes(cax_position)
+        cax = self.fig.add_axes([0.9, 0.67, 0.05, 0.3]) if cax_position is None else self.fig.add_axes(cax_position)
 
         # Add the colorbar
-        return colorbar.ColorbarBase(cax, cmap=contour_plot.get_cmap(), norm=colors.Normalize(*contour_plot.get_clim()))
+        return colorbar.ColorbarBase(cax, cmap=contour_plot.get_cmap(), norm=colors.Normalize(*contour_plot.get_clim())).ax.tick_params(labelsize=12)
 
     def select(self):
         plt.figure(self.id)
@@ -1930,6 +1929,20 @@ def plot_iaf_sec(traffic,
     xmlcontents = xmlcontents.replace("sectorL.R(1)", str(data.at['ARTIP','Length']))
     xmlcontents = xmlcontents.replace("sectorL.R(2)", str(data.at['RIVER','Length']))
     xmlcontents = xmlcontents.replace("sectorL.R(3)", str(data.at['SUGOL','Length']))
+    
+    
+    # colors Nederland
+    xmlcontents = xmlcontents.replace("#1B60DB", "#BFBDCC")
+    
+    # colors landen
+    xmlcontents = xmlcontents.replace("#94B0EA", "#F2F1F4")
+
+    # colors landingen
+    xmlcontents = xmlcontents.replace("#6552A8", get_cycler_color(3))
+    
+    # colors starts
+    xmlcontents = xmlcontents.replace("#141251", get_cycler_color(1))
+    
     output_file = open(fname,"w")
     output_file.write(xmlcontents)
     output_file.close()
