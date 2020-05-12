@@ -1923,7 +1923,8 @@ def plot_iaf_sec(traffic,
         traffic = Traffic.read_daisy_mean_file(traffic)
     
     # add sector to traffic
-    routesector = pd.read_csv('data/RouteSector.txt',sep='\t')
+    dir = os.path.dirname(__file__)
+    routesector = pd.read_csv(dir + '/branding/RouteSector.txt',sep='\t')
     traffic.add_sector(routesector)
     
     # get distribution
@@ -1943,7 +1944,7 @@ def plot_iaf_sec(traffic,
     
     ### TODO: option to write to png
     # write xml-files
-    input_file = open('data/FigSectorisatie_template.svg')
+    input_file = open(dir + '/branding/FigSectorisatie_template.svg')
     xmlcontents = input_file.read()
     input_file.close()
     xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
