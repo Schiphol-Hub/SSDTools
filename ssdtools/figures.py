@@ -1801,10 +1801,12 @@ def plot_noise_bba(grids,
 
     if len(decibel) == 2: 
         # Add the 58dB contour
-        plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = str(decibel[1]) + ' Lden')
+        # plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = str(decibel[1]) + ' Lden')
+        plot.add_contours(decibel[1], get_cycler_color(0), get_cycler_color(1), label = str(decibel[1]) + ' Lden')
 
     # Add the 48dB contour
-    plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = str(decibel[0]) + ' Lden')
+    # plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = str(decibel[0]) + ' Lden')
+    plot.add_contours(decibel[0], get_cycler_color(0), get_cycler_color(1), label = str(decibel[0]) + ' Lden')
 
     # Show plot
     if fname:
@@ -1865,7 +1867,8 @@ def plot_noise_diff(grid=None,
     
     # add required contours
     for db in decibel:
-        plot.add_contours(db, default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'],
+        # plot.add_contours(db, default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'],
+        plot.add_contours(db, get_cycler_color(0), get_cycler_color(1),                          
                           label = labels[0],
                           other_label = labels[1])
     
