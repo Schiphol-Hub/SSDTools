@@ -2,6 +2,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -322,6 +323,7 @@ class GridPlot(object):
 #                                         '100-199 vluchten',
 #                                         '200+ vluchten'],
 #                loc='upper left',fontsize=12,title='Aantal vluchten boven 60dB(A)')
+        plt.rcParams['lines.marker']=None
         return 
 
 
@@ -1755,17 +1757,19 @@ def plot_noise_init(grid,
                     figsize = (30 / 2.54, 30 / 2.54)
                     )
 
+    dir = os.path.dirname(__file__)
+
     # Add the background
-    plot.add_background('data/Schiphol_RD900dpi.png')
+    plot.add_background(dir + '/branding/Schiphol_RD900dpi.png')
 
     # Add a scale
     plot.add_scale()
 
     # Add the terrain
-    plot.add_terrain('data/2013-spl-luchtvaartterrein.shp')
+    plot.add_terrain(dir + '/branding/2013-spl-luchtvaartterrein.shp')
 
     # Add the place names
-    plot.add_place_names('data/plaatsnamen.csv')
+    plot.add_place_names(dir + '/branding/plaatsnamen.csv')
     
     return plot
 
@@ -1797,10 +1801,10 @@ def plot_noise_bba(grids,
 
     if len(decibel) == 2: 
         # Add the 58dB contour
-        plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = decibel[1] + ' Lden')
+        plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = str(decibel[1]) + ' Lden')
 
     # Add the 48dB contour
-    plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = decibel[0] + ' Lden')
+    plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = str(decibel[0]) + ' Lden')
 
     # Show plot
     if fname:

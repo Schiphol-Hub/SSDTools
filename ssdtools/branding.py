@@ -138,7 +138,7 @@ def plot_style(style='MER2020'):
         
         # legend
         plt.rc('legend',
-               markerscale=0.8,
+                markerscale=0.8,
                fontsize=6,
                frameon=False,
                borderaxespad=0)

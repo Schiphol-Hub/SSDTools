@@ -1,0 +1,285 @@
+name,place,population,x,y
+Amsterdam,city,825080.0,121386,487324
+Amsterdam,city_block,,125700,480800
+-Zuidoost,city_block,,125944,480200
+Den Haag,city,515076.0,81252,455181
+Utrecht,city,335089.0,135984,456339
+Almere,city,197318.0,143092,487412
+Haarlem,city,157058.0,104053,489227
+Leiden,city,150000.0,93090,463908
+Alkmaar,city,107176.0,111885,516162
+#Karpers,city_block,,94385,466438
+Hilversum,town,84573.0,140593,470769
+Purmerend,town,78751.0,126093,501728
+Hoofddorp,town,74304.0,105904,479671
+Zaandam,town,72036.0,117105,495114
+Alphen aan den Rijn,town,72000.0,104947,460934
+Hoorn,town,70000.0,133777,518467
+Zeist,town,60272.0,144079,455699
+Heerhugowaard,town,50896.0,117484,519664
+Woerden,town,48402.0,121015,455504
+IJmuiden,town,48300.0,102249,496904
+Huizen,town,41434.0,146169,478705
+Beverwijk,town,40095.0,105636,500237
+Voorburg,town,39640.0,84288,454062
+Maarssen,town,39000.0,131236,461200
+Bussum,town,32587.0,140500,476625            # was 139682,476625
+Nieuw-Vennep,town,31342.0,102729,475938
+Aalsmeer,town,29000.0,112261,475514
+Leidschendam,town,28000.0,86974,455787
+Uithoorn,town,28000.0,116608,472714
+Diemen,town,26891.0,125944,483889
+#Leiderdorp,town,26400.0,96628,464080
+Heemstede,town,26060.0,102840,485279
+Wassenaar,town,25800.0,87508,462057
+Noordwijk,town,25400.0,90727,472977
+#Voorschoten,town,23000.0,90590,460341
+Lisse,town,22300.0,98729,474717
+Oegstgeest,town,22000.0,92541,466760
+Volendam,town,22000.0,133347,501011
+Hillegom,town,20500.0,100169,478550
+Bodegraven,town,19000.0,111399,455206
+Bilthoven,town,17500.0,142498,460110
+Zandvoort,town,16600.0,96675,487396
+Mijdrecht,town,16000.0,119292,468786
+De Bilt,town,15000.0,140717,457961
+Weesp,town,15000.0,131075,480314
+Katwijk,town,14000.0,88512,468490
+Boskoop,town,13780.0,105358,454242
+Laren,town,11342.0,143953,474297
+Wormerveer,town,11225.0,114283,501009
+Bergen,town,10000.0,109057,520238
+Castricum,town,10000.0,106328,507135
+Edam,town,10000.0,132539,502747
+Heiloo,town,10000.0,109251,512889
+Monnickendam,town,10000.0,131218,496648
+Landsmeer,town,9577.0,122959,493790
+Amstelveen,town,,118139,479536
+Nieuwkoop,village,26000.0,113180,462611
+Bloemendaal,village,22000.0,102776,490922
+Nieuwveen,village,18000.0,111860,467799
+#Naarden,village,17000.0,139730,478666
+Velserbroek,village,16000.0,105556,494400         # was 105556,494017
+Noordwijkerhout,village,15500.0,93790,475360
+Voorhout,village,15000.0,93605,471085
+Breukelen,village,14600.0,128695,464937
+#Rijnsburg,village,14500.0,90169,467220
+Badhoevedorp,village,12508.0,113923,483610
+Bovenkarspel,village,11000.0,145711,523509
+Santpoort-Noord,village,10100.0,104193,493800     # was 104193,494203
+#Oostzaan,village,9260.0,120195,494677
+Ter Aar,village,9000.0,108624,464374
+#Blaricum,village,8962.0,145235,476064
+#Eemnes,village,8843.0,146317,473918
+Abcoude,village,8700.0,126594,475889
+#Vinkeveen,village,8300.0,123901,469728
+#Harmelen,village,8292.0,125995,455995
+Zwanenburg,village,7701.0,111186,487972
+#Limmen,village,7000.0,107986,509590
+#Kortenhoef,village,6780.0,136025,472661
+Kudelstaart,village,6700.0,111453,471993
+#Hazerswoude-Dorp,village,5767.0,100476,456745
+Bennebroek,village,5100.0,100889,481908
+#Wilnis,village,5100.0,121625,467586
+#Akersloot,village,5060.0,110572,508234
+#Duivendrecht,village,5000.0,124267,482564
+#Egmond aan Zee,village,5000.0,103591,515137
+Krommenie,village,5000.0,112822,501400         #112822,501021
+#Nieuw Loosdrecht,village,5000.0,137828,468064
+#Ouderkerk aan de Amstel,village,5000.0,122869,478685
+Sassenheim,village,5000.0,95600,470500         # was 95725,471087
+#Uitgeest,village,5000.0,108982,504940
+#Velsen-Noord,village,5000.0,104005,498810
+#Velsen-Zuid,village,5000.0,104992,497174
+#Warmond,village,5000.0,94774,468654
+#Wijk aan Zee,village,5000.0,101110,500979
+#Woerdense Verlaat,village,5000.0,119185,463081
+#Wormer,village,5000.0,115960,501336
+#Zuid-Scharwoude,village,5000.0,115925,522845
+#Middenbeemster,village,4632.0,122945,506914
+#Vijfhuizen,village,4601.0,106695,485000
+#Zoeterwoude,village,4300.0,94134,460102
+#Venhuizen,village,4268.0,142346,519481
+Rijsenhout,village,4080.0,108880,474607
+#Blokker,village,4035.0,134889,519376
+Leimuiden,village,4000.0,106161,470898
+#De Kwakel,village,3900.0,114430,472477
+#Valkenburg,village,3900.0,89437,466298
+#Kamerik,village,3811.0,121184,458231
+#Woubrugge,village,3500.0,103830,464870
+#Lisserbroek,village,3472.0,99422,474603
+#Kockengen,village,3300.0,125046,462360
+#Zwaag,village,3131.0,133921,520184
+#Spaarndam,village,3000.0,107020,491897
+#Zuidoostbeemster,village,2907.0,124840,503168
+#Ursem,village,2670.0,121402,515690
+#Vleuten,village,2500.0,129400,457746
+#Broek in Waterland,village,2388.0,128378,493931
+#Nibbixwoud,village,2365.0,132874,522600
+#Halfweg,village,2360.0,111936,488493
+#De Zilk,village,2300.0,97432,479713
+#Vogelenzang,village,2300.0,99707,481549
+#Zegveld,village,2300.0,117244,458836
+#Ilpendam,village,1887.0,125395,497716
+#Marken,village,1810.0,135943,496717
+#Stompetoren,village,1794.0,116575,513964
+#Westwoud,village,1785.0,137723,522074
+#Zwaanshoek,village,1765.0,102601,480660
+#Oosterblokker,village,1536.0,136859,520224
+#Hollandsche Rading,village,1500.0,140646,465583
+#Spierdijk,village,1480.0,124920,518206
+#Hem,village,1478.0,141209,519276
+#Wijdenes,village,1344.0,139436,516382
+#Rijnsaterwoude,village,1280.0,106033,467933
+#Nieuwer ter Aa,village,1200.0,127038,467127
+#Abbenes,village,1154.0,100635,472098
+#Driehuis,village,1150.0,104101,495907
+#Cruquius,village,1041.0,103855,483437
+#'s-Graveland,village,1000.0,136861,472282
+#Aarlanderveen,village,1000.0,109829,461609
+#Ankeveen,village,1000.0,135353,475489
+#Assendelft,village,1000.0,111505,498822
+#Avenhorn,village,1000.0,125342,514574
+#Baambrugge,village,1000.0,127932,473357
+#Beets,village,1000.0,127247,511258
+#Benthuizen,village,1000.0,97008,454703
+#Berkhout,village,1000.0,128573,517043
+#Bosch en Duin,village,1000.0,144779,458147
+#Broek op Langedijk,village,1000.0,115497,521014
+#De Goorn,village,1000.0,125103,515661
+#De Rijp,village,1000.0,118166,507614
+#De Woude,village,1000.0,113339,506725
+#Driehuizen,village,1000.0,115617,510232
+#Egmond aan den Hoef,village,1000.0,105252,515109
+#Egmond-Binnen,village,1000.0,105500,512389
+#Gelderswoude,village,1000.0,96161,456057
+#Graft,village,1000.0,117357,508339
+#Groenekan,village,1000.0,138848,459501
+#Grootebroek,village,1000.0,144102,523347
+#Grootschermer,village,1000.0,118585,510711
+#Hazerswoude-Rijndijk,village,1000.0,100562,460172
+#Hensbroek,village,1000.0,120994,519124
+#Hoogkarspel,village,1000.0,140761,523021
+#Hoogmade,village,1000.0,100022,464872
+#Huis ter Heide,village,1000.0,146237,458438
+#Jisp,village,1000.0,118505,502359
+#Koedijk,village,1000.0,112254,520493
+#Koudekerk aan den Rijn,village,1000.0,100473,460717
+#Lage Vuursche,village,1000.0,143724,465697
+#Loenen aan de Vecht,village,1000.0,130008,469144
+#Lutjebroek,village,1000.0,142839,523461
+#Maartensdijk,village,1000.0,140338,463383
+#Middelie,village,1000.0,129695,505669
+#Muiden,village,1000.0,133174,482555
+#Muiderberg,village,1000.0,136931,482018
+#Nederhorst den Berg,village,1000.0,131637,475139
+#Nieuwersluis,village,1000.0,129058,467685
+#Nigtevecht,village,1000.0,130543,476428
+#Noordbeemster,village,1000.0,124194,510316
+#Noorddorp,village,1000.0,104909,504237
+#Noordeinde,village,1000.0,117611,509511
+#Obdam,village,1000.0,122620,521074
+#Oost-Graftdijk,village,1000.0,116467,506431
+#Oosthuizen,village,1000.0,128306,509142
+#Oterleek,village,1000.0,117583,516716
+#Oud-Ade,village,1000.0,98851,467352
+#Oud-Zuilen,village,1000.0,133254,460044
+#Oude Wetering,village,1000.0,104311,469916
+#Oudendijk,village,1000.0,126465,512736
+Roelofarendsveen,village,1000.0,103339,468551
+#Schardam,village,1000.0,129944,512143
+#Schellinkhout,village,1000.0,137056,516351
+#Schermerhorn,village,1000.0,121253,512732
+#Sint Pancras,village,1000.0,113897,518487
+#Spanbroek,village,1000.0,126203,523467
+#Spijkerboor,village,1000.0,117433,505782
+#Tienhoven,village,1000.0,134112,464491
+#Vreeland,village,1000.0,130746,471419
+#West-Graftdijk,village,1000.0,114902,507575
+#West-Knollendam,village,1000.0,113944,503539
+#Westbroek,village,1000.0,137131,462522
+#Wijdewormer,village,1000.0,121393,501507
+#Wognum,village,1000.0,130488,521579
+#Zevenhoven,village,1000.0,113441,465996
+#Zwammerdam,village,1000.0,109863,457715
+#Beinsdorp,village,970.0,100942,477917
+#Rijpwetering,village,913.0,99934,467574
+#Lijnden,village,861.0,112313,485028
+#Den Ilp,village,836.0,122434,496178
+#Kwadijk,village,793.0,127675,504476
+#Warder,village,770.0,130849,508539
+#Westbeemster,village,768.0,121911,509830
+#Nieuwe Wetering,village,700.0,102457,469333
+#Zuidschermer,village,600.0,113821,510906
+#Aalsmeerderbrug,village,500.0,111488,476413
+#Oostknollendam,village,500.0,114598,503449
+#Zwaagdijk-West,village,500.0,132627,520956
+#Zuidermeer,village,480.0,127190,519693
+#Zunderdorp,village,463.0,126280,491104
+#Scharwoude,village,450.0,129681,515065
+#Buitenkaag,village,443.0,98490,470528
+#Purmerland,village,409.0,123667,499325
+#Watergang,village,405.0,125335,494708
+#Weteringbrug,village,367.0,104292,470735
+#Markenbinnen,village,330.0,113772,504634
+#Burgerveen,village,328.0,106762,472683
+#Kaag,village,320.0,98351,469786
+#Zuiderwoude,village,320.0,131068,493801
+#Wogmeer,village,280.0,122633,518209
+#Katwoude,village,233.0,131678,497850
+#Starnmeer,village,220.0,114776,506117
+#Uitdam,village,170.0,133475,492467
+#Hobrede,village,160.0,127391,506460
+#Zandwerven,village,140.0,125256,521765
+#Oosterleek,village,109.0,142173,516807
+#Schiphol,village,88.0,112375,480192
+#Schiphol-Rijk,village,22.0,111687,476904
+#'t Kruis,village,,118334,518305
+#Aagtdorp,village,,108809,522612
+#Aerdenhout,village,,100761,486420
+#Bakkum,village,,105316,508983
+#Bergen aan Zee,village,,103770,519469
+#Berkmeer,village,,122284,522309
+#Bobeldijk,village,,129079,518523
+#Boekel,village,,112049,511669
+#Bollendorp,village,,108126,511788
+#Boomhoek,village,,135089,466676
+#Castricum aan Zee,village,,102375,508045
+#De Meern,village,,130103,454710
+#Driemond,village,,129706,479761
+#Durgerdam,village,,127987,487860
+#Etersheim,village,,130250,510878
+#Grosthuizen,village,,127186,514544
+#Haarlemmerliede,village,,107377,489221
+Heemskerk,village,,106470,502767
+#Heemskerkerduin,village,,104420,502589
+#Het Woud,village,,105859,517794
+#Holysloot,village,,130409,491825
+#Horstermeer,village,,134276,473644
+#Kabel,village,,119187,519050
+#Kapel,village,,107610,510857
+#Koog aan de Zaan,village,,115577,497302
+#Limmerkoog,village,,108905,506338
+#Muyeveld,village,,133245,466391
+#Neck,village,,122901,502310
+#Nieuwerbrug aan den Rijn,village,,115570,454536
+#Noord-Bakkum,village,,105891,510279
+#Noordermeer,village,,127163,520883
+#Omval,village,,113470,515058
+#Oud-Loosdrecht,village,,134497,468791
+#Oud-Maarsseveen,village,,134551,463641
+#Overmeer,village,,131729,473922
+#Purmer,village,,130085,501712
+#Ransdorp,village,,128279,489615
+#Rinnegom,village,,105044,513896
+#Rustenburg,village,,120488,516436
+#Schiphol-Oost,village,,115643,480306
+#Stierop,village,,113173,505445
+#Stompwijk,village,,92277,456654
+#Wadway,village,,127442,522706
+#Weipoort,village,,95798,458685
+#Westeinde,village,,98407,456805
+#Westzaan,village,,113160,497587
+#Wilsveen,village,,89162,454498
+#Wimmenum,village,,105563,516783
+#Zevenhuizen,village,,98276,467805
