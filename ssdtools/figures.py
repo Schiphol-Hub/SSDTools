@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from scipy.spatial import distance
 
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
@@ -167,7 +168,7 @@ class GridPlot(object):
             self.place_names = pd.read_csv(place_names, comment='#')
 
         for index, row in self.place_names.iterrows():
-            self.ax.annotate(row['name'], xy=(row['x'], row['y']), size=6, color=color, horizontalalignment='center',
+            self.ax.annotate(row['name'], xy=(row['x'], row['y']), size=10, color=color, horizontalalignment='center',
                              verticalalignment='center')
 
     def add_terrain(self, terrain):
@@ -227,7 +228,7 @@ class GridPlot(object):
         # Format
         ax2.spines['bottom'].set_color(color)
         ax2.spines['bottom'].set_linewidth(0.5)
-        ax2.tick_params(axis='x', labelsize=6, colors=color, length=4, direction='in', width=0.5)
+        ax2.tick_params(axis='x', labelsize=10, colors=color, length=4, direction='in', width=0.5)
 
     def add_contours(self, level, primary_color=None, secondary_color=None,label='create label',other_label='create other label',refine_factor=20):
         """
@@ -271,11 +272,15 @@ class GridPlot(object):
             cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=[1, 1])
             cs_hi = self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
             cs_lo = self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
-            
-            legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
-                               Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
 
-            self.ax.legend(legend_elements, ['58 Lden', '48 Lden'], loc='upper left',fontsize=12)
+            
+            # legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
+            #                    Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
+            legend_elements = [Line2D([0], [0], color=primary_color),
+                               Line2D([0], [0], color=secondary_color)]
+            
+
+            self.ax.legend(legend_elements, [label, other_label], loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
                       
 
         # The input is a single grid, so only a single contour should be plotted
@@ -287,6 +292,7 @@ class GridPlot(object):
                                  levels=[level], 
                                  colors=primary_color, 
                                  linewidths=[1, 1])
+            cs = cs1
             
         if self.other is not None:
             shape_other = self.other.shape.copy().refine(refine_factor)
@@ -323,6 +329,24 @@ class GridPlot(object):
 #                                         '100-199 vluchten',
 #                                         '200+ vluchten'],
 #                loc='upper left',fontsize=12,title='Aantal vluchten boven 60dB(A)')
+        
+        ankerpoint = (115000, 508500)       
+        dxy=(7000, 3000)
+    
+        # Nearest datapunt
+        xy2 = [vertices for path in cs.collections[0].get_paths() for vertices in path.vertices]
+        p2 = xy2[distance.cdist([ankerpoint], xy2).argmin()]
+        textloc = p2 + dxy
+        
+        # ax.scatter(ankerpoint[0],ankerpoint[1], color='red', marker='o', s=3)
+        self.ax.scatter(p2[0],p2[1], 
+                   **branding.contourplot['MER']['annotatemarker'],
+                   zorder=10)
+        
+        text='{} dB(A)'.format(level)
+        self.ax.annotate(text, xy=p2, xytext=textloc,
+                    **branding.contourplot['MER']['annotate'])
+        
         plt.rcParams['lines.marker']=None
         return 
 
@@ -1777,6 +1801,7 @@ def plot_noise_bba(grids,
                    scale_ga=1.025,
                    scale=None,
                    decibel=[48, 58],
+                   label='Scenario 1',
                    fname=None,
                    dpi=600,
                    ):
@@ -1787,6 +1812,7 @@ def plot_noise_bba(grids,
     :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
     :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
     :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str labels: List with strings to identify the scenarios. 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
@@ -1802,11 +1828,11 @@ def plot_noise_bba(grids,
     if len(decibel) == 2: 
         # Add the 58dB contour
         # plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = str(decibel[1]) + ' Lden')
-        plot.add_contours(decibel[1], get_cycler_color(0), get_cycler_color(1), label = str(decibel[1]) + ' Lden')
+        plot.add_contours(decibel[1], primary_color=get_cycler_color(0), secondary_color=get_cycler_color(1), label = label + ' gemiddeld', other_label = label + ' bandbreedte')
 
     # Add the 48dB contour
     # plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = str(decibel[0]) + ' Lden')
-    plot.add_contours(decibel[0], get_cycler_color(0), get_cycler_color(1), label = str(decibel[0]) + ' Lden')
+    plot.add_contours(decibel[0], primary_color=get_cycler_color(0), secondary_color=get_cycler_color(1), label = label + ' gemiddeld', other_label = label + ' bandbreedte')
 
     # Show plot
     if fname:
