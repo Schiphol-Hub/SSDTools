@@ -1797,10 +1797,13 @@ def plot_noise_init(grid,
     
     return plot
 
-def plot_noise_bba(grids,
-                   scale_ga=1.025,
-                   scale=None,
+def plot_noise_bba(griddir,
+                   scale_ga=1.0, # Vind je 1.025 een logische default?
+                                 # ik zou liever 1.0 gebruiiken
+                   scale=1.0,    # Idem waarom niet 1.0?
+
                    decibel=[48, 58],
+                   noise='Lden',
                    label='Scenario 1',
                    fname=None,
                    dpi=600,
@@ -1808,38 +1811,63 @@ def plot_noise_bba(grids,
     """
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
     
-    :param str|Grid grids: either a folder location containing envira-files, or a MultiGrid object
+    :param str|Grid griddir: either a folder location containing envira-files, or a MultiGrid object
     :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
     :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
     :param int decibel: List with integers to clarify which dB-values to plot.
+    :param str noise: For Lden or Lnight grids 
     :param str labels: List with strings to identify the scenarios. 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
 
+    ###Todo Vincent ook voor Lnight?
+    
     # Get the Lden grid
-    lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-    grid = Grid.read_enviras(grids, pattern=lden_pattern).scale(scale_ga).scale(scale)
+    # Filename like "GP2019 - Lden y2016.dat"
+    ###Vincent:  
+    # lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    # Waarom niet   
+    lden_pattern = r'\w - ' + noise + r' y\d{4}\.dat'
+    # of als je de spaties en '-' niet verplicht wil maken
+    lden_pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat'
+    grid = Grid.read_enviras(griddir, pattern=lden_pattern).scale(scale_ga).scale(scale)
     
     # initialize plot
     plot = plot_noise_init(grid)
 
-    if len(decibel) == 2: 
-        # Add the 58dB contour
-        # plot.add_contours(decibel[1], default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'], label = str(decibel[1]) + ' Lden')
-        plot.add_contours(decibel[1], primary_color=get_cycler_color(0), secondary_color=get_cycler_color(1), label = label + ' gemiddeld', other_label = label + ' bandbreedte')
+    # Waarom niet zo?
+    for db in decibel:
+        plot.add_contours(db,
+                          primary_color=get_cycler_color(0),
+                          secondary_color=get_cycler_color(1),
+                          label=label+' gemiddeld',
+                          other_label=label+' bandbreedte')
 
-    # Add the 48dB contour
-    # plot.add_contours(decibel[0], default['kleuren']['schipholblauw'], default['kleuren']['middagblauw'], label = str(decibel[0]) + ' Lden')
-    plot.add_contours(decibel[0], primary_color=get_cycler_color(0), secondary_color=get_cycler_color(1), label = label + ' gemiddeld', other_label = label + ' bandbreedte')
+    # if len(decibel) == 2: 
+    #     # Add the 58dB contour
+    #     plot.add_contours(decibel[1],
+    #                       primary_color=get_cycler_color(0),
+    #                       secondary_color=get_cycler_color(1),
+    #                       label=label+' gemiddeld',
+    #                       other_label=label+' bandbreedte')
 
-    # Show plot
+    # # Add the 48dB contour
+    # plot.add_contours(decibel[0],
+    #                   primary_color=get_cycler_color(0),
+    #                   secondary_color=get_cycler_color(1),
+    #                   label=label+' gemiddeld',
+    #                   other_label=label+' bandbreedte')
+
+    # save figure
     if fname:
         plot.save(fname, dpi=dpi)
     else:
+        ###TODO: Vincent: fig en ax nog onbekend
         return fig, ax 
-
+    
+    
 def plot_noise_diff(grid=None,
                     other_grid=None,
                     scale_ga=1.025,
