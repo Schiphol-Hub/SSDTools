@@ -1908,6 +1908,9 @@ def plot_noise_diff(grid=None,
         return fig, ax 
 
 def plot_iaf_sec(traffic,
+                 ###TODO Vincent
+                 # routesector als variabele opnemen, lijkt mij ok als
+                 #             deze default naar de SSDtools verwijst
                  fname='fig/figure_24.svg'):
     
     """
@@ -1923,6 +1926,9 @@ def plot_iaf_sec(traffic,
         traffic = Traffic.read_daisy_mean_file(traffic)
     
     # add sector to traffic
+    ###TODO Vincent
+    #       1) Zie opmerking hierboven
+    #       2) ik vind de map /branding niet logisch, wat dacht je van /data
     dir = os.path.dirname(__file__)
     routesector = pd.read_csv(dir + '/branding/RouteSector.txt',sep='\t')
     traffic.add_sector(routesector)
@@ -1931,6 +1937,8 @@ def plot_iaf_sec(traffic,
     sector = traffic.get_sector_distribution()
         
     # Normalise the results
+    ###TODO Nu sids en stars hard-coded: kan dat niet worden opgenomen in de routesector.txt
+    #       bijvoorbeeld met een extra colom: LT
     sids = ['1','2','3','4','5']
     stars = ['ARTIP','RIVER','SUGOL']
     sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
@@ -1947,6 +1955,10 @@ def plot_iaf_sec(traffic,
     input_file = open(dir + '/branding/FigSectorisatie_template.svg')
     xmlcontents = input_file.read()
     input_file.close()
+    
+    ###TODO Leluk! 
+    #       Dat moet ook in één of twee regels kunnen,
+    #       eventueel de svg aanpassen als dat handiger is.
     xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
     xmlcontents = xmlcontents.replace("sectorT.p(2)", str(data.at['2','Value']))
     xmlcontents = xmlcontents.replace("sectorT.p(3)", str(data.at['3','Value']))
@@ -1966,15 +1978,21 @@ def plot_iaf_sec(traffic,
     
     
     # colors Nederland
+    #TODO Vincent: waarom pas je de svg zelf niet aan?
     xmlcontents = xmlcontents.replace("#1B60DB", "#BFBDCC")
     
     # colors landen
+    #TODO Vincent: waarom pas je de svg zelf niet aan?
     xmlcontents = xmlcontents.replace("#94B0EA", "#F2F1F4")
 
     # colors landingen
+    ###TODO Vincent, zoals besproken gebruik xParams
+    #       Dan zou ik in de svg daar ook markers voor gebruiken,
+    #       bijvoorbeeld $color_1$ en $color_2$
     xmlcontents = xmlcontents.replace("#6552A8", get_cycler_color(3))
     
     # colors starts
+    ###TODO Vincent idem
     xmlcontents = xmlcontents.replace("#141251", get_cycler_color(1))
     
     output_file = open(fname,"w")
