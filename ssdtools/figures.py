@@ -266,12 +266,13 @@ class GridPlot(object):
             colormap = colors.ListedColormap([secondary_color])
             area_mask = np.logical_or(dhi_grid.data < level, dlo_grid.data > level)
             area_grid = np.ma.array(mean_grid.data, mask=area_mask)
-            cp = plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
+            plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
 
             # Plot the contours of the statistics
-            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=[1, 1])
-            cs_hi = self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
-            cs_lo = self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
+            ###Ed-test
+            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1)       #[1, 1])
+            self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
+            self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
 
             
             # legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
@@ -286,13 +287,14 @@ class GridPlot(object):
         # The input is a single grid, so only a single contour should be plotted
         else:
             grid = self.grid.copy().resize(shape)
-            cs1 = self.ax.contour(x, 
+            cs = self.ax.contour(x, 
                                  y, 
                                  grid.data, 
                                  levels=[level], 
                                  colors=primary_color, 
-                                 linewidths=[1, 1])
-            cs = cs1
+                                 ###Ed-test
+                                 linewidths=1) #[1, 1])
+            # cs = cs1
             
         if self.other is not None:
             shape_other = self.other.shape.copy().refine(refine_factor)
@@ -350,7 +352,7 @@ class GridPlot(object):
         plt.rcParams['lines.marker']=None
         return 
 
-
+    ###TODO wat is het verschil met add_contours???
     def add_individual_contours(self, level, primary_color=None, secondary_color=None, refine_factor=20):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, all contours of the
@@ -385,17 +387,24 @@ class GridPlot(object):
 
             # Plot all individual contours
             for year_data in grid.data:
-                cs_year = self.ax.contour(x, y, year_data, levels=[level], colors=secondary_color, linewidths=[3, 3],
-                                          alpha=0.1)
+                ###Ed-test
+                self.ax.contour(x,
+                                y,
+                                year_data,
+                                levels=[level],
+                                colors=secondary_color,
+                                linewidths=3, #[3, 3],
+                                alpha=0.1)
 
             # Plot the contours of the statistics
-            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=[1, 1])
-            cs_hi = self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
-            cs_lo = self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=[0.5, 0.5])
+            ###Ed-test
+            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1) #[1, 1])
+            self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
+            self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
 
         # The input is a single grid, so only a single contour should be plotted
         else:
-            cs = self.ax.contour(x, y, grid.data, levels=[level], colors=primary_color, linewidths=[1, 1])
+            cs = self.ax.contour(x, y, grid.data, levels=[level], colors=primary_color, linewidths=1) #[1, 1])
 
         return cs
 
@@ -1785,7 +1794,7 @@ def plot_noise_init(grid,
 
     # Add the background
     plot.add_background(dir + '/branding/Schiphol_RD900dpi.png')
-
+    
     # Add a scale
     plot.add_scale()
 
@@ -1837,7 +1846,9 @@ def plot_noise_bba(griddir,
     # initialize plot
     plot = plot_noise_init(grid)
 
-    # Waarom niet zo?
+    # Waarom niet zo? 
+    ###TODO De naam add_contours suggereerd dat je meerder
+    #       contourwaarden als list mee mag geven
     for db in decibel:
         plot.add_contours(db,
                           primary_color=get_cycler_color(0),
@@ -1914,7 +1925,9 @@ def plot_noise_diff(grid=None,
     plot = plot_noise_init(grid, other_grid=other_grid)
 
     # Add the heatmap
-    plot.add_comparison_heatmap(other_grid,vmin=-3,vmax=3,
+    plot.add_comparison_heatmap(other_grid,
+                                vmin=-1.5,
+                                vmax=1.5,
                                 # colormap=matplotlib.cm.get_cmap('RdYlGn_r'),
                                 # positive_scale=True
                                 )
