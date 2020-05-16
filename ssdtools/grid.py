@@ -19,15 +19,16 @@ gwc = {'doc29_2005': [13600, 166500, 14600, 45000],
        'doc29_2015': [14000, 180000, 14800, 48500],
        'doc29_2018': [12000, 186000, 12800, 50000]}
 
-def read_grid(grid):
+def read_grid(grid, noise='Lden'):
     """
     Import and read dat-, txt- or folders with envira-bestanden into a grid
     
     :param str|Grid grid: string with folder location with multiple envira-files, or text/dat-file
+    :param str noise: 
     :return: Grid object.
     """
         
-    envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
+    envira_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     
     # read single grid
     if isinstance(grid, str) & grid.endswith(('.dat', '.txt')):

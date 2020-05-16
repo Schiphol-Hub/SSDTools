@@ -96,8 +96,19 @@ def soften_colormap_center(colormap, alpha=1.):
 
 
 class GridPlot(object):
-    def __init__(self, grid, other_grid=None, title=None, branding=None, figsize=None, xlim=None, ylim=None,
-                 background=None, schiphol_border=None, place_names=None, extent=None):
+    def __init__(self,
+                 grid,
+                 other_grid=None,
+                 title=None,
+                 branding=default,
+                 figsize=(21 / 2.54, 21 / 2.54),
+                 xlim=(80000, 140000),
+                 ylim=(455000, 515000),
+                 background='lib/Schiphol_RD900dpi.png',
+                 schiphol_border='lib/2013-spl-luchtvaartterrein.shp',
+                 place_names='lib/plaatsnamen.csv',
+                 scalebar=True,
+                 extent=[80000, 158750, 430000, 541375]):
 
         # Create an ID
         self.id = str(pd.Timestamp.utcnow())
@@ -108,18 +119,25 @@ class GridPlot(object):
 
         # Set the plotting options
         self.title = title
-        self.branding = default if branding is None else branding
-        self.figsize = (21 / 2.54, 21 / 2.54) if figsize is None else figsize
-        self.xlim = (80000, 140000) if xlim is None else xlim
-        self.ylim = (455000, 515000) if ylim is None else ylim
-        self.background = 'lib/Schiphol_RD900dpi.png' if background is None else background
-        self.schiphol_border = 'lib/2013-spl-luchtvaartterrein.shp' if schiphol_border is None else schiphol_border
-        self.place_names = 'lib/plaatsnamen.csv' if place_names is None else place_names
-        self.extent = [80000, 158750, 430000, 541375] if extent is None else extent
+        self.branding = default
+        self.figsize = figsize
+        self.xlim = xlim
+        self.ylim = ylim
+        self.background = background
+        self.schiphol_border = schiphol_border
+        self.place_names = place_names
+        self.extent = extent
 
         # Create a new figure
         self.fig, self.ax = self.create_figure()
 
+        # Add background, place names, schiphol border and scalebar
+        if background is not None: self.add_background()
+        if place_names is not None: self.add_place_names()
+        if schiphol_border is not None: self.add_schiphol_border()
+        if background is not None: self.add_background()
+        if scalebar: self.add_scalebar()
+        
         # Create a placeholder for contour plots
         self.contour_plot = None
 
@@ -147,49 +165,72 @@ class GridPlot(object):
 
         return fig, ax
 
-    def add_background(self, background):
+    def add_background(self, background=None):
         """
         Add the background map to the figure.
 
         :param str|np.ndarray background: path to the background file or background image as NumPy array.
         """
-        if isinstance(background, str):
-            self.background = imread(background)
-        self.ax.imshow(self.background, zorder=0, extent=self.extent)
+        self.background = self.background if background is None else background
 
-    def add_place_names(self, place_names, color=(0.0, 0.3, 0.3)):
+        if isinstance(self.background, str):
+            self.background = imread(self.background)
+        self.ax.imshow(self.background, zorder=0, extent=self.extent)
+        
+        return self
+
+    def add_place_names(self, place_names=None, color=(0.0, 0.3, 0.3)):
+        ###TODO color etc uit plot_style
         """
         Add the place names to the map.
         :param str|pd.DataFrame place_names: path to the place name file or a data frame containing the place names with
         corresponding coordinates.
         :param tuple color: the color of the text.
         """
+        place_names = self.place_names if place_names is None else place_names
+
         if isinstance(place_names, str):
-            self.place_names = pd.read_csv(place_names, comment='#')
+            place_names = pd.read_csv(place_names, comment='#')
 
-        for index, row in self.place_names.iterrows():
-            self.ax.annotate(row['name'], xy=(row['x'], row['y']), size=10, color=color, horizontalalignment='center',
+        for index, row in place_names.iterrows():
+            self.ax.annotate(row['name'],
+                             xy=(row['x'], row['y']),
+                             size=10,
+                             color=color,
+                             horizontalalignment='center',
                              verticalalignment='center')
-
-    def add_terrain(self, terrain):
+        return self
+        
+    def add_schiphol_border(self, schiphol_border=None):
+        ###TODO color etc uit plot_style
         """
 
-        :param str|GeoDataFrame terrain: path to the terrain file or a Pandas DataFrame with a geometry column.
+        :param str|GeoDataFrame schiphol_border: path to the schiphol_border file or a Pandas DataFrame with a geometry column.
         """
-        if isinstance(terrain, str):
-            self.schiphol_border = GeoDataFrame.from_file(terrain)
+        # if isinstance(self.background, str):
+        #     background = imread(self.background)
+        # else:
+        #     background = self.background
+
+        schiphol_border = self.schiphol_border if schiphol_border is None else schiphol_border
+        if isinstance(schiphol_border, str):
+            schiphol_border = GeoDataFrame.from_file(schiphol_border)
 
         fc = 'none'
         ec = (.0, .0, .0)
-        poly = self.schiphol_border['geometry'][0]
+        poly = schiphol_border['geometry'][0]
         patch = PolygonPatch(poly, fc=fc, ec=ec, lw=0.2, zorder=10)
         self.ax.add_patch(patch)
 
-        # todo: Is dit noodzakelijk?
-        im = self.ax.imshow(self.background, clip_path=patch, clip_on=True, zorder=9, extent=self.extent)
-        im.set_clip_path(patch)
+        # Show background inside the border
+        if self.background is not None:        
+            im = self.ax.imshow(self.background, clip_path=patch, clip_on=True, zorder=9, extent=self.extent)
+            im.set_clip_path(patch)
 
-    def add_scale(self, ticks=None, color=(0.0, 0.3, 0.3)):
+        return self
+    
+    def add_scalebar(self, ticks=None, color=(0.0, 0.3, 0.3)):
+        ###TODO color etc uit plot_style
         """
 
         :param list(float) ticks: the ticks to use as scale, in km.
@@ -216,6 +257,9 @@ class GridPlot(object):
         for loc in ['right', 'left', 'top']:
             ax2.spines[loc].set_color('none')
 
+        # geen verticale  gridlines
+        ax2.xaxis.grid(which='both', color='None')  
+
         # Remove Y-as
         ax2.yaxis.set_ticks([])
 
@@ -230,6 +274,8 @@ class GridPlot(object):
         ax2.spines['bottom'].set_linewidth(0.5)
         ax2.tick_params(axis='x', labelsize=10, colors=color, length=4, direction='in', width=0.5)
 
+        return self
+    
     def add_contours(self, level, primary_color=None, secondary_color=None,label='create label',other_label='create other label',refine_factor=20):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
@@ -1770,41 +1816,41 @@ def plot_runway_usage(traffic,
     else:
         return fig, (ax1, ax2)
 
-def plot_noise_init(grid,
-                    other_grid=None,
-                    figsize = (30 / 2.54, 30 / 2.54),
-                    ):
+# Vincent: deze functie is overbodig, is logischer in create_figure
+# def plot_noise_init(grid,
+#                     other_grid=None,
+#                     figsize = (30 / 2.54, 30 / 2.54),
+#                     ):
     
-    """
-    A function to initialize a GridPlot to show noise contours. Used by plot_noise_bba() and plot_noise_diff().
+#     """
+#     A function to initialize a GridPlot to show noise contours. Used by plot_noise_bba() and plot_noise_diff().
     
-    :param Grid grid: the main noise grid. Can be a single or MultiGrid.
-    :param Grid other_grid: optional noise grid to compare main noise grid with.
-    :param set figsize: Figsize in inches, default (30 / 2.54, 30 / 2.54).
-    :return: initialized GridPlot object.
-    """
+#     :param Grid grid: the main noise grid. Can be a single or MultiGrid.
+#     :param Grid other_grid: optional noise grid to compare main noise grid with.
+#     :param set figsize: Figsize in inches, default (30 / 2.54, 30 / 2.54).
+#     :return: initialized GridPlot object.
+#     """
     
-    # Create a figure
-    plot = GridPlot(grid,
-                    other_grid=other_grid,
-                    figsize = (30 / 2.54, 30 / 2.54)
-                    )
+#     # Create a figure
+#     plot = GridPlot(grid,
+#                     other_grid=other_grid,
+#                     figsize = figsize)
 
-    dir = os.path.dirname(__file__)
+#     dir = os.path.dirname(__file__)
 
-    # Add the background
-    plot.add_background(dir + '/branding/Schiphol_RD900dpi.png')
+#     # Add the background
+#     plot.add_background(dir + '/branding/Schiphol_RD900dpi.png')
     
-    # Add a scale
-    plot.add_scale()
+#     # Add a scale
+#     plot.add_scalebar()
 
-    # Add the terrain
-    plot.add_terrain(dir + '/branding/2013-spl-luchtvaartterrein.shp')
+#     # Add the schiphol_border
+#     plot.add_schiphol_border(dir + '/branding/2013-spl-luchtvaartterrein.shp')
 
-    # Add the place names
-    plot.add_place_names(dir + '/branding/plaatsnamen.csv')
+#     # Add the place names
+#     plot.add_place_names(dir + '/branding/plaatsnamen.csv')
     
-    return plot
+#     return plot
 
 def plot_noise_bba(griddir,
                    scale_ga=1.0, # Vind je 1.025 een logische default?
@@ -1816,7 +1862,7 @@ def plot_noise_bba(griddir,
                    label='Scenario 1',
                    fname=None,
                    dpi=600,
-                   ):
+                   **kwargs):
     """
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
     
@@ -1838,13 +1884,13 @@ def plot_noise_bba(griddir,
     ###Vincent:  
     # lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     # Waarom niet   
-    lden_pattern = r'\w - ' + noise + r' y\d{4}\.dat'
+    pattern = r'\w - ' + noise + r' y\d{4}\.dat$'
     # of als je de spaties en '-' niet verplicht wil maken
-    lden_pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat'
-    grid = Grid.read_enviras(griddir, pattern=lden_pattern).scale(scale_ga).scale(scale)
+    pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
+    grids = Grid.read_enviras(griddir, pattern=pattern).scale(scale_ga).scale(scale)
     
     # initialize plot
-    plot = plot_noise_init(grid)
+    plot = GridPlot(grids, **kwargs)
 
     # Waarom niet zo? 
     ###TODO De naam add_contours suggereerd dat je meerder
@@ -1874,19 +1920,19 @@ def plot_noise_bba(griddir,
     # save figure
     if fname:
         plot.save(fname, dpi=dpi)
+        plt.close(plot.fig)
     else:
-        ###TODO: Vincent: fig en ax nog onbekend
-        return fig, ax 
+        return plot.fig, plot.ax 
     
     
-def plot_noise_diff(grid=None,
-                    other_grid=None,
+def plot_noise_diff(grid,
+                    other_grid,
                     scale_ga=1.025,
                     decibel=[48,58],
                     labels=['Scenario 1','Scenario 2'],
                     fname=None,
                     dpi=600,
-                    ):
+                    **kwargs):
     
     """
     Create a difference plot showing two noise contours including a heatmap.
@@ -1901,7 +1947,7 @@ def plot_noise_diff(grid=None,
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
     
-    grid = read_grid(grid)
+    grids = read_grid(grid)
     other_grid = read_grid(other_grid)
     
     # pattern to check folder
@@ -1922,7 +1968,7 @@ def plot_noise_diff(grid=None,
     #     grid 
             
     # initialize plot
-    plot = plot_noise_init(grid, other_grid=other_grid)
+    plot = GridPlot(grids, other_grid=other_grid, **kwargs)
 
     # Add the heatmap
     plot.add_comparison_heatmap(other_grid,
@@ -1945,8 +1991,9 @@ def plot_noise_diff(grid=None,
     # Show plot
     if fname:
         plot.save(fname, dpi=dpi)
+        plt.close(plot.fig)
     else:
-        return fig, ax 
+        return plot.fig, plot.ax 
 
 def plot_iaf_sec(traffic,
                  ###TODO Vincent
