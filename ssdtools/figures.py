@@ -287,6 +287,10 @@ class GridPlot(object):
         :return:
         """
 
+        # Default colors
+        if primary_color is None: primary_color=get_cycler_color(0)
+        if secondary_color is None: secondary_color=get_cycler_color(1)
+        
         # Select this plot as active figure
         self.select()
 
@@ -1876,9 +1880,7 @@ def plot_noise_bba(griddir,
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
-
-    ###Todo Vincent ook voor Lnight?
-    
+   
     # Get the noise grids
     # Filename like "GP2019 - Lden y2016.dat"
     ###Vincent:  
@@ -1900,8 +1902,6 @@ def plot_noise_bba(griddir,
     #       contourwaarden als list mee mag geven
     for db in decibel:
         plot.add_contours(db,
-                          primary_color=get_cycler_color(0),
-                          secondary_color=get_cycler_color(1),
                           label=label+' gemiddeld',
                           other_label=label+' bandbreedte')
 
