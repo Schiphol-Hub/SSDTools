@@ -276,6 +276,94 @@ class GridPlot(object):
 
         return self
     
+
+    def add_bandwidth(self,
+                      levels=[48,58],
+                      mean='mm',          ###TODO selecteer mm, mean, median
+                      label=None,         ###TODO None=geen label
+                      other_label=None,   ###TODO idem
+                      primary_color=None,  
+                      secondary_color=None,
+                      refine_factor=20):
+        """
+        Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
+        will be shown.
+
+        :param float level: the noise level of the contour to plot.
+        :param primary_color: color for the main contour.
+        :param secondary_color: color for the secondary contours (only used for multigrids).
+        :return:
+        """
+
+        # Default colors
+        if primary_color is None: primary_color=get_cycler_color(0)
+        if secondary_color is None: secondary_color=get_cycler_color(1)
+        
+        # Select this plot as active figure
+        self.select()
+
+        # Refine the grid
+        ###TODO waarom is die copy nodig?
+        shape = self.grid.shape.copy().refine(refine_factor)
+        
+        # Extract the x and y coordinates
+        x = shape.get_x_coordinates()
+        y = shape.get_y_coordinates()
+
+        # Get the various statistics of the data
+        statistic_grids = self.grid.statistics()
+
+        # Extract the data of interest
+        mean_grid = statistic_grids['mean'].resize(shape)
+        dhi_grid = statistic_grids['dhi'].resize(shape)
+        dlo_grid = statistic_grids['dlo'].resize(shape)
+
+        # Plot the contour area
+        for level in levels:
+            colormap = colors.ListedColormap([secondary_color])
+            area_mask = np.logical_or(dhi_grid.data < level, dlo_grid.data > level)
+            area_grid = np.ma.array(mean_grid.data, mask=area_mask)
+            plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
+    
+            # Plot the contours of the statistics
+            ###Ed-test
+            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1)       #[1, 1])
+            self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
+            self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
+    
+            
+            # legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
+            #                    Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
+            legend_elements = [Line2D([0], [0], color=primary_color),
+                               Line2D([0], [0], color=secondary_color)]
+            
+    
+            self.ax.legend(legend_elements, [label, other_label], loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
+                          
+    
+            ###TODO Maak hier een functie van        
+            ankerpoint = (115000, 508500)       
+            dxy=(7000, 3000)
+        
+            # Nearest datapunt
+            xy2 = [vertices for path in cs.collections[0].get_paths() for vertices in path.vertices]
+            p2 = xy2[distance.cdist([ankerpoint], xy2).argmin()]
+            textloc = p2 + dxy
+            
+            # ax.scatter(ankerpoint[0],ankerpoint[1], color='red', marker='o', s=3)
+            self.ax.scatter(p2[0],p2[1], 
+                       **branding.contourplot['MER']['annotatemarker'],
+                       zorder=10)
+            
+            text='{} dB(A)'.format(level)
+            self.ax.annotate(text, xy=p2, xytext=textloc,
+                        **branding.contourplot['MER']['annotate'])
+            
+            plt.rcParams['lines.marker']=None
+        return 
+
+
+
     def add_contours(self, level, primary_color=None, secondary_color=None,label='create label',other_label='create other label',refine_factor=20):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
@@ -1861,11 +1949,12 @@ def plot_noise_bba(griddir,
                                  # ik zou liever 1.0 gebruiiken
                    scale=1.0,    # Idem waarom niet 1.0?
 
-                   decibel=[48, 58],
+                   levels=[48, 58],
                    noise='Lden',
                    label='Scenario 1',
                    fname=None,
                    dpi=600,
+                   ###TODO extra parameters voor bandwithplot
                    **kwargs):
     """
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
@@ -1873,7 +1962,7 @@ def plot_noise_bba(griddir,
     :param str|Grid griddir: either a folder location containing envira-files, or a MultiGrid object
     :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
     :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
-    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param int levels: List with integers to clarify which dB-values to plot.
     :param str noise: For Lden or Lnight grids 
     :param str labels: List with strings to identify the scenarios. 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
@@ -1900,11 +1989,16 @@ def plot_noise_bba(griddir,
     # Waarom niet zo? 
     ###TODO De naam add_contours suggereerd dat je meerder
     #       contourwaarden als list mee mag geven
-    for db in decibel:
-        plot.add_contours(db,
-                          label=label+' gemiddeld',
-                          other_label=label+' bandbreedte')
+    # for db in decibel:
+    #     plot.add_contours(db,
+    #                       label=label+' gemiddeld',
+    #                       other_label=label+' bandbreedte')
 
+    #Ed - update, liever zo:
+    plot.add_bandwidth(levels=levels,
+                      label=label+' gemiddeld',
+                      other_label=label+' bandbreedte')
+        
     # if len(decibel) == 2: 
     #     # Add the 58dB contour
     #     plot.add_contours(decibel[1],
