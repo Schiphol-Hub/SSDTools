@@ -144,7 +144,12 @@ class Grid(object):
         return cls(data=data, info=info, unit=unit)
 
     @classmethod
-    def read_enviras(cls, path, pattern='*.dat', year_extractor=extract_year_from_file_name,unequal_grids=None):
+    def read_enviras(cls, 
+                     path,
+                     noise='Lden',
+                     pattern=None,
+                     year_extractor=extract_year_from_file_name,
+                     unequal_grids=None):
         """
         Create a Grid object from multiple envira files.
 
@@ -154,8 +159,12 @@ class Grid(object):
         :rtype Grid
         """
 
+        # Pattern
+        if pattern is None:
+            pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
+            
         # Get the envira files
-        file_paths = [os.path.join(path, f) for f in os.listdir(path) if re.search(pattern, f)]
+        files = [os.path.join(path, f) for f in os.listdir(path) if re.search(pattern, f)]
 
         # Create info and data lists
         cls_info = []
@@ -163,12 +172,12 @@ class Grid(object):
         cls_years = []
 
         # Read the envira files
-        for file_path in file_paths:
+        for file in files:
             # Extract the data and header from the file
-            info, data = read_envira(file_path)
+            info, data = read_envira(file)
 
-            # Extract the year from the file path
-            year = year_extractor(file_path)
+            # Extract the year from the filename
+            year = year_extractor(file)
 
             # Put the extracted data in the lists
             cls_info.append(info)

@@ -1879,15 +1879,18 @@ def plot_noise_bba(griddir,
 
     ###Todo Vincent ook voor Lnight?
     
-    # Get the Lden grid
+    # Get the noise grids
     # Filename like "GP2019 - Lden y2016.dat"
     ###Vincent:  
     # lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
     # Waarom niet   
-    pattern = r'\w - ' + noise + r' y\d{4}\.dat$'
+    # pattern = r'\w - ' + noise + r' y\d{4}\.dat$'
     # of als je de spaties en '-' niet verplicht wil maken
-    pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
-    grids = Grid.read_enviras(griddir, pattern=pattern).scale(scale_ga).scale(scale)
+    # pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
+    # grids = Grid.read_enviras(griddir, pattern=pattern).scale(scale_ga).scale(scale)
+
+    # Of gebruik een slimme default in read_enviras
+    grids = Grid.read_enviras(griddir, noise=noise).scale(scale_ga).scale(scale)
     
     # initialize plot
     plot = GridPlot(grids, **kwargs)
