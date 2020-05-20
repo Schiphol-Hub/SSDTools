@@ -1,8 +1,10 @@
-import matplotlib
+import gc
+import os
+
 import numpy as np
 import pandas as pd
+import matplotlib    ###TODO is dit nodig?
 import matplotlib.pyplot as plt
-import os
 from scipy.spatial import distance
 
 from matplotlib.lines import Line2D
@@ -135,7 +137,6 @@ class GridPlot(object):
         if background is not None: self.add_background()
         if place_names is not None: self.add_place_names()
         if schiphol_border is not None: self.add_schiphol_border()
-        if background is not None: self.add_background()
         if scalebar: self.add_scalebar()
         
         # Create a placeholder for contour plots
@@ -171,12 +172,12 @@ class GridPlot(object):
 
         :param str|np.ndarray background: path to the background file or background image as NumPy array.
         """
-        self.background = self.background if background is None else background
-
-        if isinstance(self.background, str):
-            self.background = imread(self.background)
-        self.ax.imshow(self.background, zorder=0, extent=self.extent)
-        
+        background = self.background if background is None else background
+        if isinstance(background, str):
+            background = imread(background)
+            # self.background = Image.open(self.background)
+        self.ax.imshow(background, zorder=0, extent=self.extent)
+       
         return self
 
     def add_place_names(self, place_names=None, color=(0.0, 0.3, 0.3)):
@@ -201,17 +202,16 @@ class GridPlot(object):
                              verticalalignment='center')
         return self
         
-    def add_schiphol_border(self, schiphol_border=None):
+    def add_schiphol_border(self, schiphol_border=None, background=None):
         ###TODO color etc uit plot_style
         """
 
         :param str|GeoDataFrame schiphol_border: path to the schiphol_border file or a Pandas DataFrame with a geometry column.
         """
-        # if isinstance(self.background, str):
-        #     background = imread(self.background)
-        # else:
-        #     background = self.background
-
+        background = self.background if background is None else background
+        if isinstance(background, str):
+            background = imread(background)
+        
         schiphol_border = self.schiphol_border if schiphol_border is None else schiphol_border
         if isinstance(schiphol_border, str):
             schiphol_border = GeoDataFrame.from_file(schiphol_border)
@@ -223,8 +223,8 @@ class GridPlot(object):
         self.ax.add_patch(patch)
 
         # Show background inside the border
-        if self.background is not None:        
-            im = self.ax.imshow(self.background, clip_path=patch, clip_on=True, zorder=9, extent=self.extent)
+        if background is not None:
+            im = self.ax.imshow(background, clip_path=patch, clip_on=True, zorder=9, extent=self.extent)
             im.set_clip_path(patch)
 
         return self
@@ -284,7 +284,7 @@ class GridPlot(object):
                       other_label=None,   ###TODO idem
                       primary_color=None,  
                       secondary_color=None,
-                      refine_factor=20):
+                      refine_factor=10):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
         will be shown.
@@ -323,22 +323,26 @@ class GridPlot(object):
             colormap = colors.ListedColormap([secondary_color])
             area_mask = np.logical_or(dhi_grid.data < level, dlo_grid.data > level)
             area_grid = np.ma.array(mean_grid.data, mask=area_mask)
-            plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
-    
+            # plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
+            self.ax.contourf(x, y, area_grid, cmap=colormap, alpha=0.4)
+   
             # Plot the contours of the statistics
             ###Ed-test
             cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1)       #[1, 1])
             self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
             self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
     
-            
-            # legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
-            #                    Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
+            # Add legend
             legend_elements = [Line2D([0], [0], color=primary_color),
                                Line2D([0], [0], color=secondary_color)]
-            
-    
-            self.ax.legend(legend_elements, [label, other_label], loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
+            self.ax.legend(legend_elements, [label, other_label],
+                           loc='upper left',
+                           bbox_to_anchor=(0.05, 0.97),
+                           fontsize=12,
+                           frameon=True,
+                           framealpha=0.5,
+                           facecolor='white',
+                           edgecolor='black')
                           
     
             ###TODO Maak hier een functie van        
@@ -1908,50 +1912,13 @@ def plot_runway_usage(traffic,
     else:
         return fig, (ax1, ax2)
 
-# Vincent: deze functie is overbodig, is logischer in create_figure
-# def plot_noise_init(grid,
-#                     other_grid=None,
-#                     figsize = (30 / 2.54, 30 / 2.54),
-#                     ):
-    
-#     """
-#     A function to initialize a GridPlot to show noise contours. Used by plot_noise_bba() and plot_noise_diff().
-    
-#     :param Grid grid: the main noise grid. Can be a single or MultiGrid.
-#     :param Grid other_grid: optional noise grid to compare main noise grid with.
-#     :param set figsize: Figsize in inches, default (30 / 2.54, 30 / 2.54).
-#     :return: initialized GridPlot object.
-#     """
-    
-#     # Create a figure
-#     plot = GridPlot(grid,
-#                     other_grid=other_grid,
-#                     figsize = figsize)
-
-#     dir = os.path.dirname(__file__)
-
-#     # Add the background
-#     plot.add_background(dir + '/branding/Schiphol_RD900dpi.png')
-    
-#     # Add a scale
-#     plot.add_scalebar()
-
-#     # Add the schiphol_border
-#     plot.add_schiphol_border(dir + '/branding/2013-spl-luchtvaartterrein.shp')
-
-#     # Add the place names
-#     plot.add_place_names(dir + '/branding/plaatsnamen.csv')
-    
-#     return plot
 
 def plot_noise_bba(griddir,
-                   scale_ga=1.0, # Vind je 1.025 een logische default?
-                                 # ik zou liever 1.0 gebruiiken
-                   scale=1.0,    # Idem waarom niet 1.0?
-
+                   scale=1.0,
                    levels=[48, 58],
                    noise='Lden',
                    label='Scenario 1',
+                   figsize=(21/2.54, 21/2.54),
                    fname=None,
                    dpi=600,
                    ###TODO extra parameters voor bandwithplot
@@ -1960,64 +1927,34 @@ def plot_noise_bba(griddir,
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
     
     :param str|Grid griddir: either a folder location containing envira-files, or a MultiGrid object
-    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
-    :param float scale: (Optional) Scaling factor to accomodate for various factors, for example missing footprints
+    :param float scale: Scaling factor apllied to the noise grids
     :param int levels: List with integers to clarify which dB-values to plot.
     :param str noise: For Lden or Lnight grids 
-    :param str labels: List with strings to identify the scenarios. 
+    :param str label: Text to identify the scenario.
+    :param set figsize: Figsize in inches, default (21/2.54, 21/2.54)
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
    
     # Get the noise grids
-    # Filename like "GP2019 - Lden y2016.dat"
-    ###Vincent:  
-    # lden_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-    # Waarom niet   
-    # pattern = r'\w - ' + noise + r' y\d{4}\.dat$'
-    # of als je de spaties en '-' niet verplicht wil maken
-    # pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
-    # grids = Grid.read_enviras(griddir, pattern=pattern).scale(scale_ga).scale(scale)
-
-    # Of gebruik een slimme default in read_enviras
-    grids = Grid.read_enviras(griddir, noise=noise).scale(scale_ga).scale(scale)
+    grids = Grid.read_enviras(griddir, noise=noise).scale(scale)
     
     # initialize plot
-    plot = GridPlot(grids, **kwargs)
+    plot = GridPlot(grids, figsize=figsize, **kwargs)
 
     # Waarom niet zo? 
-    ###TODO De naam add_contours suggereerd dat je meerder
-    #       contourwaarden als list mee mag geven
-    # for db in decibel:
-    #     plot.add_contours(db,
-    #                       label=label+' gemiddeld',
-    #                       other_label=label+' bandbreedte')
-
-    #Ed - update, liever zo:
     plot.add_bandwidth(levels=levels,
                       label=label+' gemiddeld',
                       other_label=label+' bandbreedte')
         
-    # if len(decibel) == 2: 
-    #     # Add the 58dB contour
-    #     plot.add_contours(decibel[1],
-    #                       primary_color=get_cycler_color(0),
-    #                       secondary_color=get_cycler_color(1),
-    #                       label=label+' gemiddeld',
-    #                       other_label=label+' bandbreedte')
-
-    # # Add the 48dB contour
-    # plot.add_contours(decibel[0],
-    #                   primary_color=get_cycler_color(0),
-    #                   secondary_color=get_cycler_color(1),
-    #                   label=label+' gemiddeld',
-    #                   other_label=label+' bandbreedte')
-
     # save figure
     if fname:
         plot.save(fname, dpi=dpi)
         plt.close(plot.fig)
+
+        # Free memory
+        gc.collect()
     else:
         return plot.fig, plot.ax 
     
@@ -2089,6 +2026,9 @@ def plot_noise_diff(grid,
     if fname:
         plot.save(fname, dpi=dpi)
         plt.close(plot.fig)
+
+        # Free memory
+        gc.collect()
     else:
         return plot.fig, plot.ax 
 
