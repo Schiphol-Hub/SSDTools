@@ -27,6 +27,34 @@ def Formatter_1000sep0d(x, pos):
     'The two args are the value and tick position'
     return '{:,.0f}'.format(x).replace(',', '.')
 
+def contourlabels (ax,
+                   cs,
+                   ankerpoint=(110000, 495500),
+                   dxy=(7000, 3000)):
+###TODO beschrijving van de functie
+    
+    for i, level in enumerate(cs.levels):    
+
+        # Shift ankerpoint for level
+        d = (58 - level) * 200
+        ap = [ankerpoint[0]+d, ankerpoint[1]-d]
+        # ax.scatter(ap[0], ap[1], color='red', marker='o', s=3)
+        
+        # Nearest datapunt
+        xy2 = [vertices for path in cs.collections[i].get_paths() for vertices in path.vertices]
+        p2 = xy2[distance.cdist([ap],xy2).argmin()]
+        textloc = p2 + dxy
+        
+        ax.scatter(p2[0],p2[1], 
+                   **branding.xParams['contourlabelmarker'],
+                   zorder=10)
+        
+        ax.annotate(f'{level:.0f} dB(A)',
+                    xy=p2,
+                    xytext=textloc,
+                    **branding.xParams['contourlabel'])
+    return
+
     
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
@@ -180,7 +208,7 @@ class GridPlot(object):
        
         return self
 
-    def add_place_names(self, place_names=None, color=(0.0, 0.3, 0.3)):
+    def add_place_names(self, place_names=None):
         ###TODO color etc uit plot_style
         """
         Add the place names to the map.
@@ -196,10 +224,7 @@ class GridPlot(object):
         for index, row in place_names.iterrows():
             self.ax.annotate(row['name'],
                              xy=(row['x'], row['y']),
-                             size=10,
-                             color=color,
-                             horizontalalignment='center',
-                             verticalalignment='center')
+                             **branding.xParams['placenames'])
         return self
         
     def add_schiphol_border(self, schiphol_border=None, background=None):
@@ -279,7 +304,7 @@ class GridPlot(object):
 
     def add_bandwidth(self,
                       levels=[48,58],
-                      mean='mm',          ###TODO selecteer mm, mean, median
+                      mean='mean',
                       label=None,         ###TODO None=geen label
                       other_label=None,   ###TODO idem
                       primary_color=None,  
@@ -295,75 +320,53 @@ class GridPlot(object):
         :return:
         """
 
+        # Convert to list
+        if not isinstance(levels, list): levels = [levels]
+    
         # Default colors
         if primary_color is None: primary_color=get_cycler_color(0)
         if secondary_color is None: secondary_color=get_cycler_color(1)
         
-        # Select this plot as active figure
-        self.select()
-
-        # Refine the grid
-        ###TODO waarom is die copy nodig?
-        shape = self.grid.shape.copy().refine(refine_factor)
+        # Refine and get statistics
+        ###TODO waarom is die shape en copy nodig?
+        # shape = self.grid.shape.copy().refine(refine_factor)
+        grid = self.grid.refine(refine_factor).statistics()
         
         # Extract the x and y coordinates
-        x = shape.get_x_coordinates()
-        y = shape.get_y_coordinates()
-
-        # Get the various statistics of the data
-        statistic_grids = self.grid.statistics()
-
-        # Extract the data of interest
-        mean_grid = statistic_grids['mean'].resize(shape)
-        dhi_grid = statistic_grids['dhi'].resize(shape)
-        dlo_grid = statistic_grids['dlo'].resize(shape)
+        x = self.grid.shape.get_x_coordinates()
+        y = self.grid.shape.get_y_coordinates()
 
         # Plot the contour area
+        # Select this plot as active figure
+        self.select()
         for level in levels:
             colormap = colors.ListedColormap([secondary_color])
-            area_mask = np.logical_or(dhi_grid.data < level, dlo_grid.data > level)
-            area_grid = np.ma.array(mean_grid.data, mask=area_mask)
+            area_mask = np.logical_or(grid['dhi'].data < level, grid['dlo'].data > level)
+            area_grid = np.ma.array(grid[mean].data, mask=area_mask)
+            ###TODO meshgrid is niet nodig maar is het soms sneller?
             # plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
             self.ax.contourf(x, y, area_grid, cmap=colormap, alpha=0.4)
    
-            # Plot the contours of the statistics
-            ###Ed-test
-            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1)       #[1, 1])
-            self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
-            self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
+        # Plot the contours of the statistics
+        cs = self.ax.contour(x, y, grid[mean].data, levels=levels, colors=primary_color, linewidths=1)
+        self.ax.contour(x, y, grid['dhi'].data, levels=levels, colors=secondary_color, linewidths=0.5)
+        self.ax.contour(x, y, grid['dlo'].data, levels=levels, colors=secondary_color, linewidths=0.5)
     
-            # Add legend
-            legend_elements = [Line2D([0], [0], color=primary_color),
-                               Line2D([0], [0], color=secondary_color)]
-            self.ax.legend(legend_elements, [label, other_label],
-                           loc='upper left',
-                           bbox_to_anchor=(0.05, 0.97),
-                           fontsize=12,
-                           frameon=True,
-                           framealpha=0.5,
-                           facecolor='white',
-                           edgecolor='black')
-                          
-    
-            ###TODO Maak hier een functie van        
-            ankerpoint = (115000, 508500)       
-            dxy=(7000, 3000)
+        # Add contour labels           
+        contourlabels(ax=self.ax, cs=cs)
         
-            # Nearest datapunt
-            xy2 = [vertices for path in cs.collections[0].get_paths() for vertices in path.vertices]
-            p2 = xy2[distance.cdist([ankerpoint], xy2).argmin()]
-            textloc = p2 + dxy
-            
-            # ax.scatter(ankerpoint[0],ankerpoint[1], color='red', marker='o', s=3)
-            self.ax.scatter(p2[0],p2[1], 
-                       **branding.contourplot['MER']['annotatemarker'],
-                       zorder=10)
-            
-            text='{} dB(A)'.format(level)
-            self.ax.annotate(text, xy=p2, xytext=textloc,
-                        **branding.contourplot['MER']['annotate'])
-            
-            plt.rcParams['lines.marker']=None
+        # Add legend
+        legend_elements = [Line2D([0], [0], color=primary_color, marker='None'),
+                           Line2D([0], [0], color=secondary_color, marker='None')]
+        self.ax.legend(legend_elements, [label, other_label],
+                       loc='upper left',
+                       bbox_to_anchor=(0.05, 0.97),
+                       fontsize=12,
+                       frameon=True,
+                       framealpha=0.5,
+                       facecolor='white',
+                       edgecolor='black')
+                        
         return 
 
 

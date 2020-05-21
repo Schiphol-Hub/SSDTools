@@ -135,7 +135,27 @@ def plot_style(style='MER2020'):
 
         # x- en Y-as
         plt.rc('axes', xmargin=0, ymargin=0)
+
+        # contour labels
+        xParams['contourlabel'] = {'bbox': {'boxstyle': 'round4,pad=0.3',
+                                            'facecolor': (1.0, 1.0, 1.0, 0.4),
+                                            'edgecolor': '#141251', #(0, 0.45, 0.45, 1.0),
+                                            'linewidth': 0.5},
+                                   'arrowprops': {'arrowstyle': '-',
+                                                  'color': '#141251', #(0, 0.45, 0.45, 1.0),
+                                                  'linewidth': 0.5},
+                                   'color': '#141251', #'black',
+                                   'size': 6}
+
+        xParams['contourlabelmarker'] = {'color': '#141251', #(0, 0.45, 0.45, 1.0),
+                                         'marker': 'o',
+                                         's': 3}
         
+        # placenames
+        xParams['placenames'] = {'size': 4,
+                                 'color': '#141251',
+                                 'horizontalalignment': 'center',
+                                 'verticalalignment': 'center'}
         # legend
         plt.rc('legend',
                 markerscale=0.8,
