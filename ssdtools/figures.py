@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial import distance
 
 from matplotlib.lines import Line2D
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Patch, Rectangle
 from matplotlib import ticker
 from imageio import imread
 from matplotlib import colors, colorbar
@@ -254,12 +254,10 @@ class GridPlot(object):
 
         return self
     
-    def add_scalebar(self, ticks=None, color=(0.0, 0.3, 0.3)):
-        ###TODO color etc uit plot_style
+    def add_scalebar(self, ticks=None):
         """
 
         :param list(float) ticks: the ticks to use as scale, in km.
-        :param tuple color: the color of the scale.
         """
 
         # Scale, with xpos and ypos as position in fig-units
@@ -295,9 +293,9 @@ class GridPlot(object):
         ax2.set_xticklabels(labels)
 
         # Format
-        ax2.spines['bottom'].set_color(color)
+        ax2.spines['bottom'].set_color(get_cycler_color(0))
         ax2.spines['bottom'].set_linewidth(0.5)
-        ax2.tick_params(axis='x', labelsize=10, colors=color, length=4, direction='in', width=0.5)
+        ax2.tick_params(axis='x', labelsize=10, colors=get_cycler_color(0), length=4, direction='in', width=0.5)
 
         return self
     
@@ -305,18 +303,20 @@ class GridPlot(object):
     def add_bandwidth(self,
                       levels=[48,58],
                       mean='mean',
-                      label=None,         ###TODO None=geen label
-                      other_label=None,   ###TODO idem
-                      primary_color=None,  
-                      secondary_color=None,
+                      labels=['gemiddeld', 'weersinvloeden'],  ###TODO None=geen label
+                      contourcolors=None,
+                      alpha=0.4,
                       refine_factor=10):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
         will be shown.
 
-        :param float level: the noise level of the contour to plot.
-        :param primary_color: color for the main contour.
-        :param secondary_color: color for the secondary contours (only used for multigrids).
+        :param float levels: the noise level of the contour to plot.
+        :param str mean: Unit to use for the average noise levels
+        :param str labels: List labels for average noise level and bandwith in the legend
+        :param Matplotlib-colors contourcolors: List of two colors for the mean and area-contour. If None then first two colors from the default colorcycle are used
+        :param float alpha: Transparancy for bandwidth
+        :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation
         :return:
         """
 
@@ -324,8 +324,13 @@ class GridPlot(object):
         if not isinstance(levels, list): levels = [levels]
     
         # Default colors
-        if primary_color is None: primary_color=get_cycler_color(0)
-        if secondary_color is None: secondary_color=get_cycler_color(1)
+        if contourcolors is None:
+            contourcolors = [get_cycler_color(i) for i in range(2)]
+        
+        # Bandwidth color
+        # colormap = colors.ListedColormap([secondary_color])
+        colormap = colors.ListedColormap([contourcolors[1]])
+
         
         # Refine and get statistics
         ###TODO waarom is die shape en copy nodig?
@@ -339,8 +344,8 @@ class GridPlot(object):
         # Plot the contour area
         # Select this plot as active figure
         self.select()
+
         for level in levels:
-            colormap = colors.ListedColormap([secondary_color])
             area_mask = np.logical_or(grid['dhi'].data < level, grid['dlo'].data > level)
             area_grid = np.ma.array(grid[mean].data, mask=area_mask)
             ###TODO meshgrid is niet nodig maar is het soms sneller?
@@ -348,25 +353,26 @@ class GridPlot(object):
             self.ax.contourf(x, y, area_grid, cmap=colormap, alpha=0.4)
    
         # Plot the contours of the statistics
-        cs = self.ax.contour(x, y, grid[mean].data, levels=levels, colors=primary_color, linewidths=1)
-        self.ax.contour(x, y, grid['dhi'].data, levels=levels, colors=secondary_color, linewidths=0.5)
-        self.ax.contour(x, y, grid['dlo'].data, levels=levels, colors=secondary_color, linewidths=0.5)
+        cs = self.ax.contour(x, y, grid[mean].data, levels=levels, colors=contourcolors[0], linewidths=1)
+        self.ax.contour(x, y, grid['dhi'].data, levels=levels, colors=contourcolors[1], linewidths=0.5)
+        self.ax.contour(x, y, grid['dlo'].data, levels=levels, colors=contourcolors[1], linewidths=0.5)
     
         # Add contour labels           
         contourlabels(ax=self.ax, cs=cs)
         
         # Add legend
-        legend_elements = [Line2D([0], [0], color=primary_color, marker='None'),
-                           Line2D([0], [0], color=secondary_color, marker='None')]
-        self.ax.legend(legend_elements, [label, other_label],
-                       loc='upper left',
-                       bbox_to_anchor=(0.05, 0.97),
-                       fontsize=12,
-                       frameon=True,
-                       framealpha=0.5,
-                       facecolor='white',
-                       edgecolor='black')
-                        
+        if self.grid.unit == 'Lden':
+            legendtitle = r'Geluidbelasting $L_{den}$'
+        elif self.grid.unit == 'Lnight':
+            legendtitle = r'Geluidbelasting $L_{night}$'            
+        fc = colors.to_rgba(contourcolors[0], alpha=0.4)
+        legend_elements = [Line2D([0], [0], color=contourcolors[0], marker='None'),
+                           Patch(facecolor=fc, edgecolor=contourcolors[1], lw=0.5)]
+        self.ax.legend(legend_elements,
+                       labels,
+                       title=legendtitle,
+                       **branding.xParams['contourlegend']) 
+                       
         return 
 
 
@@ -1920,7 +1926,7 @@ def plot_noise_bba(griddir,
                    scale=1.0,
                    levels=[48, 58],
                    noise='Lden',
-                   label='Scenario 1',
+                   labels=['gemiddeld', 'weersinvloeden'],
                    figsize=(21/2.54, 21/2.54),
                    fname=None,
                    dpi=600,
@@ -1933,7 +1939,7 @@ def plot_noise_bba(griddir,
     :param float scale: Scaling factor apllied to the noise grids
     :param int levels: List with integers to clarify which dB-values to plot.
     :param str noise: For Lden or Lnight grids 
-    :param str label: Text to identify the scenario.
+    :param str labels: Text to identify the scenario.
     :param set figsize: Figsize in inches, default (21/2.54, 21/2.54)
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
@@ -1948,8 +1954,7 @@ def plot_noise_bba(griddir,
 
     # Waarom niet zo? 
     plot.add_bandwidth(levels=levels,
-                      label=label+' gemiddeld',
-                      other_label=label+' bandbreedte')
+                      labels=labels)
         
     # save figure
     if fname:

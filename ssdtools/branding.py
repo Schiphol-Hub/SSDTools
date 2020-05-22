@@ -156,15 +156,26 @@ def plot_style(style='MER2020'):
                                  'color': '#141251',
                                  'horizontalalignment': 'center',
                                  'verticalalignment': 'center'}
+    
         # legend
         plt.rc('legend',
-                markerscale=0.8,
+               markerscale=0.8,
                fontsize=6,
                frameon=False,
                borderaxespad=0)
         plt.rc('text', color='Black')
-        xParams['legend'] = dict(loc='lower right', bbox_to_anchor=(1, 1))
+        xParams['legend'] = dict(loc='lower right',
+                                 bbox_to_anchor=(1, 1))
         
+        # Legend for contourplot
+        xParams['contourlegend'] = dict(loc='upper left',
+                                        bbox_to_anchor=(0.05, 0.97),
+                                        fontsize=6,
+                                        title_fontsize=8,
+                                        frameon=True,
+                                        framealpha=0.5,
+                                        facecolor='white',
+                                        edgecolor='#141251')
         # margins
         plt.rc('figure.subplot', bottom=0.2)       
 
