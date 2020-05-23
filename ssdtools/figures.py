@@ -3,15 +3,17 @@ import os
 
 import numpy as np
 import pandas as pd
-import matplotlib    ###TODO is dit nodig?
-import matplotlib.pyplot as plt
 from scipy.spatial import distance
 
+import matplotlib    ###TODO is dit nodig?
+import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.colors import ListedColormap, to_rgba, Normalize
 from matplotlib.patches import Patch, Rectangle
 from matplotlib import ticker
+from matplotlib import colorbar
+
 from imageio import imread
-from matplotlib import colors, colorbar
 from descartes import PolygonPatch
 from geopandas import GeoDataFrame
 
@@ -88,7 +90,7 @@ def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     colormap_colors[transition_range, -1] *= np.linspace(0, 1, transition_range.shape[0])
 
     # Create new colormap
-    return colors.ListedColormap(colormap_colors)
+    return ListedColormap(colormap_colors)
 
 
 def soften_colormap_center(colormap, alpha=1.):
@@ -122,7 +124,7 @@ def soften_colormap_center(colormap, alpha=1.):
     colormap_colors[n_2:, -1] *= np.linspace(0, 1, colormap.N - n_2)
 
     # Create new colormap
-    return colors.ListedColormap(colormap_colors)
+    return ListedColormap(colormap_colors)
 
 
 class GridPlot(object):
@@ -304,7 +306,7 @@ class GridPlot(object):
                       levels=[48,58],
                       mean='mean',
                       labels=['gemiddeld', 'weersinvloeden'],  ###TODO None=geen label
-                      contourcolors=None,
+                      colors=None,
                       alpha=0.4,
                       refine_factor=10):
         """
@@ -312,9 +314,9 @@ class GridPlot(object):
         will be shown.
 
         :param float levels: the noise level of the contour to plot.
-        :param str mean: Unit to use for the average noise levels
+        :param str mean: Average grid type to use for the average noise levels
         :param str labels: List labels for average noise level and bandwith in the legend
-        :param Matplotlib-colors contourcolors: List of two colors for the mean and area-contour. If None then first two colors from the default colorcycle are used
+        :param Matplotlib-colors colors: List of two colors for the mean and area-contour. If None then first two colors from the default colorcycle are used
         :param float alpha: Transparancy for bandwidth
         :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation
         :return:
@@ -324,55 +326,47 @@ class GridPlot(object):
         if not isinstance(levels, list): levels = [levels]
     
         # Default colors
-        if contourcolors is None:
-            contourcolors = [get_cycler_color(i) for i in range(2)]
+        if colors is None:
+            colors = [get_cycler_color(i) for i in range(2)]
         
         # Bandwidth color
-        # colormap = colors.ListedColormap([secondary_color])
-        colormap = colors.ListedColormap([contourcolors[1]])
+        colormap = ListedColormap([colors[1]])
 
-        
-        # Refine and get statistics
-        ###TODO waarom is die shape en copy nodig?
-        # shape = self.grid.shape.copy().refine(refine_factor)
-        grid = self.grid.refine(refine_factor).statistics()
-        
+        # Get statistics and refine
+        mean = self.grid.statistics()[mean].refine(refine_factor)
+        dlo = self.grid.statistics()['dlo'].refine(refine_factor)
+        dhi = self.grid.statistics()['dhi'].refine(refine_factor)
+
         # Extract the x and y coordinates
-        x = self.grid.shape.get_x_coordinates()
-        y = self.grid.shape.get_y_coordinates()
-
-        # Plot the contour area
+        x = mean.shape.get_x_coordinates()
+        y = mean.shape.get_y_coordinates()
+        
         # Select this plot as active figure
         self.select()
 
         for level in levels:
-            area_mask = np.logical_or(grid['dhi'].data < level, grid['dlo'].data > level)
-            area_grid = np.ma.array(grid[mean].data, mask=area_mask)
+            # Plot the contour area
+            area_mask = np.logical_or(dhi.data < level, dlo.data > level)
+            area_grid = np.ma.array(mean.data, mask=area_mask)
             ###TODO meshgrid is niet nodig maar is het soms sneller?
             # plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
             self.ax.contourf(x, y, area_grid, cmap=colormap, alpha=0.4)
    
         # Plot the contours of the statistics
-        cs = self.ax.contour(x, y, grid[mean].data, levels=levels, colors=contourcolors[0], linewidths=1)
-        self.ax.contour(x, y, grid['dhi'].data, levels=levels, colors=contourcolors[1], linewidths=0.5)
-        self.ax.contour(x, y, grid['dlo'].data, levels=levels, colors=contourcolors[1], linewidths=0.5)
+        cs = self.ax.contour(x, y, mean.data, levels=levels, colors=colors[0], linewidths=1)
+        self.ax.contour(x, y, dhi.data, levels=levels, colors=colors[1], linewidths=0.5)
+        self.ax.contour(x, y, dlo.data, levels=levels, colors=colors[1], linewidths=0.5)
     
         # Add contour labels           
         contourlabels(ax=self.ax, cs=cs)
         
         # Add legend
-        if self.grid.unit == 'Lden':
-            legendtitle = r'Geluidbelasting $L_{den}$'
-        elif self.grid.unit == 'Lnight':
-            legendtitle = r'Geluidbelasting $L_{night}$'            
-        fc = colors.to_rgba(contourcolors[0], alpha=0.4)
-        legend_elements = [Line2D([0], [0], color=contourcolors[0], marker='None'),
-                           Patch(facecolor=fc, edgecolor=contourcolors[1], lw=0.5)]
-        self.ax.legend(legend_elements,
-                       labels,
-                       title=legendtitle,
-                       **branding.xParams['contourlegend']) 
-                       
+        cs1 = Line2D([], [], color=colors[0], marker='None')
+        cs2 = Patch(fc=to_rgba(colors[0], alpha=0.4), ec=colors[1], lw=0.5)
+        self.ax.legend(handles=[cs1, cs2],
+                        labels=labels,
+                        title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
+                        **branding.xParams['contourlegend'])                        
         return 
 
 
@@ -402,105 +396,36 @@ class GridPlot(object):
         x = shape.get_x_coordinates()
         y = shape.get_y_coordinates()
 
-        # If the grid is a multigrid, all noise levels should be plotted.
-        if isinstance(self.grid.data, list):
-
-            # Get the various statistics of the data
-            statistic_grids = self.grid.statistics()
-
-            # Extract the data of interest
-            mean_grid = statistic_grids['mean'].resize(shape)
-            dhi_grid = statistic_grids['dhi'].resize(shape)
-            dlo_grid = statistic_grids['dlo'].resize(shape)
-
-            # Plot the contour area
-            colormap = colors.ListedColormap([secondary_color])
-            area_mask = np.logical_or(dhi_grid.data < level, dlo_grid.data > level)
-            area_grid = np.ma.array(mean_grid.data, mask=area_mask)
-            plt.contourf(*np.meshgrid(x, y), area_grid, cmap=colormap, alpha=0.4)
-
-            # Plot the contours of the statistics
-            ###Ed-test
-            cs = self.ax.contour(x, y, mean_grid.data, levels=[level], colors=primary_color, linewidths=1)       #[1, 1])
-            self.ax.contour(x, y, dhi_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
-            self.ax.contour(x, y, dlo_grid.data, levels=[level], colors=secondary_color, linewidths=0.5) #[0.5, 0.5])
-
+        grid = self.grid.copy().resize(shape)
+        cs = self.ax.contour(x, 
+                             y, 
+                             grid.data, 
+                             levels=[level], 
+                             colors=primary_color, 
+                             linewidths=1)
+        # cs = cs1
             
-            # legend_elements = [Line2D([0], [0], color=default['kleuren']['schemergroen']),
-            #                    Line2D([0], [0], color=default['kleuren']['schipholblauw'])]
-            legend_elements = [Line2D([0], [0], color=primary_color),
-                               Line2D([0], [0], color=secondary_color)]
-            
-
-            self.ax.legend(legend_elements, [label, other_label], loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
-                      
-
-        # The input is a single grid, so only a single contour should be plotted
-        else:
-            grid = self.grid.copy().resize(shape)
-            cs = self.ax.contour(x, 
-                                 y, 
-                                 grid.data, 
-                                 levels=[level], 
-                                 colors=primary_color, 
-                                 ###Ed-test
-                                 linewidths=1) #[1, 1])
-            # cs = cs1
-            
-        if self.other is not None:
-            shape_other = self.other.shape.copy().refine(refine_factor)
+        # if self.other is not None:
+        #     shape_other = self.other.shape.copy().refine(refine_factor)
                     
-            # Extract the x and y coordinates
-            x = shape_other.get_x_coordinates()
-            y = shape_other.get_y_coordinates()
-            grid = self.other.copy().resize(shape_other)
-            cs2 = self.ax.contour(x, 
-                                 y, 
-                                 grid.data, 
-                                 levels=[level], 
-                                 colors=secondary_color, 
-                                 linewidths=[1, 1])
+        #     # Extract the x and y coordinates
+        #     x = shape_other.get_x_coordinates()
+        #     y = shape_other.get_y_coordinates()
+        #     grid = self.other.copy().resize(shape_other)
+        #     cs2 = self.ax.contour(x, 
+        #                          y, 
+        #                          grid.data, 
+        #                          levels=[level], 
+        #                          colors=secondary_color, 
+        #                          linewidths=[1, 1])
     
-            h1,_ = cs1.legend_elements()
-            h2,_ = cs2.legend_elements()
-            self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
-            # self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
-            # self.ax.legend([h1[0], h2[0]], [label,other_label],**branding.xParams['legend'])
-#        legend_elements = [
-#                           Line2D([0], [0], color=default['kleuren']['schemerblauw']),
-#                           Line2D([0], [0], color=default['kleuren']['schemergroen']),
-#                           Line2D([0], [0], color=default['kleuren']['middagblauw']),
-#                           Line2D([0], [0], color=default['kleuren']['schipholblauw']),
-#                           Line2D([0], [0], color=default['kleuren']['middaglichtblauw']),
-#                           Line2D([0], [0], color=default['kleuren']['wolkengrijs_1'])
-#                           ]
-#
-#        self.ax.legend(legend_elements, ['1-4 vluchten', 
-#                                         '5-9 vluchten', 
-#                                         '10-49 vluchten', 
-#                                         '50-99 vluchten', 
-#                                         '100-199 vluchten',
-#                                         '200+ vluchten'],
-#                loc='upper left',fontsize=12,title='Aantal vluchten boven 60dB(A)')
+        #     h1,_ = cs1.legend_elements()
+        #     h2,_ = cs2.legend_elements()
+        #     self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
         
-        ankerpoint = (115000, 508500)       
-        dxy=(7000, 3000)
-    
-        # Nearest datapunt
-        xy2 = [vertices for path in cs.collections[0].get_paths() for vertices in path.vertices]
-        p2 = xy2[distance.cdist([ankerpoint], xy2).argmin()]
-        textloc = p2 + dxy
-        
-        # ax.scatter(ankerpoint[0],ankerpoint[1], color='red', marker='o', s=3)
-        self.ax.scatter(p2[0],p2[1], 
-                   **branding.contourplot['MER']['annotatemarker'],
-                   zorder=10)
-        
-        text='{} dB(A)'.format(level)
-        self.ax.annotate(text, xy=p2, xytext=textloc,
-                    **branding.contourplot['MER']['annotate'])
-        
-        plt.rcParams['lines.marker']=None
+        # Add contour labels           
+        contourlabels(ax=self.ax, cs=cs)
+
         return 
 
     ###TODO wat is het verschil met add_contours???
@@ -659,7 +584,7 @@ class GridPlot(object):
         cax = self.fig.add_axes([0.9, 0.67, 0.05, 0.3]) if cax_position is None else self.fig.add_axes(cax_position)
 
         # Add the colorbar
-        return colorbar.ColorbarBase(cax, cmap=contour_plot.get_cmap(), norm=colors.Normalize(*contour_plot.get_clim())).ax.tick_params(labelsize=12)
+        return colorbar.ColorbarBase(cax, cmap=contour_plot.get_cmap(), norm=Normalize(*contour_plot.get_clim())).ax.tick_params(labelsize=12)
 
     def select(self):
         plt.figure(self.id)
@@ -1954,7 +1879,7 @@ def plot_noise_bba(griddir,
 
     # Waarom niet zo? 
     plot.add_bandwidth(levels=levels,
-                      labels=labels)
+                       labels=labels)
         
     # save figure
     if fname:
