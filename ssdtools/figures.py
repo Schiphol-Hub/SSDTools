@@ -1847,24 +1847,27 @@ def plot_runway_usage(traffic,
         return fig, (ax1, ax2)
 
 
-def plot_noise_bba(griddir,
+def plot_noise_bba(grids,
                    scale=1.0,
                    levels=[48, 58],
                    noise='Lden',
+                   mean='mean',
+                   refine_factor=10,
                    labels=['gemiddeld', 'weersinvloeden'],
                    figsize=(21/2.54, 21/2.54),
                    fname=None,
                    dpi=600,
-                   ###TODO extra parameters voor bandwithplot
                    **kwargs):
     """
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
     
-    :param str|Grid griddir: either a folder location containing envira-files, or a MultiGrid object
+    :param str|Grid grids: Either a folder location containing envira-files, or a MultiGrid object
     :param float scale: Scaling factor apllied to the noise grids
     :param int levels: List with integers to clarify which dB-values to plot.
     :param str noise: For Lden or Lnight grids 
-    :param str labels: Text to identify the scenario.
+    :param str mean: Average grid type to use for the average noise levels
+    :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation
+    :param str labels: List labels for average noise level and bandwith in the legend
     :param set figsize: Figsize in inches, default (21/2.54, 21/2.54)
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
@@ -1872,16 +1875,19 @@ def plot_noise_bba(griddir,
     """
    
     # Get the noise grids
-    grids = Grid.read_enviras(griddir, noise=noise).scale(scale)
+    if isinstance(grids, str):
+        grids = Grid.read_enviras(grids, noise=noise).scale(scale)
     
-    # initialize plot
+    # Initialize plot
     plot = GridPlot(grids, figsize=figsize, **kwargs)
 
-    # Waarom niet zo? 
+    # Make the plot   
     plot.add_bandwidth(levels=levels,
-                       labels=labels)
+                       labels=labels,
+                       mean=mean,
+                       refine_factor=refine_factor)
         
-    # save figure
+    # Save figure
     if fname:
         plot.save(fname, dpi=dpi)
         plt.close(plot.fig)
