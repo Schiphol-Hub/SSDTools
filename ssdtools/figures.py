@@ -371,62 +371,53 @@ class GridPlot(object):
 
 
 
-    def add_contours(self, level, primary_color=None, secondary_color=None,label='create label',other_label='create other label',refine_factor=20):
+    def add_contours(self,
+                     levels,
+                     colors=None,
+                     labels=True,
+                     refine_factor=10):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
         will be shown.
 
-        :param float level: the noise level of the contour to plot.
-        :param primary_color: color for the main contour.
-        :param secondary_color: color for the secondary contours (only used for multigrids).
+        :param float levels: the noise levels for the contours to plot.
+        :param colors: Contourline color.
+        :param boolean labels: Add a label with the noise level to the contour 
+        :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation    
         :return:
         """
 
-        # Default colors
-        if primary_color is None: primary_color=get_cycler_color(0)
-        if secondary_color is None: secondary_color=get_cycler_color(1)
-        
+        # Convert to list
+        if not isinstance(levels, list): levels = [levels]
+
+        # Default color (same for all levels)
+        if colors is None:
+            colors = get_cycler_color(0)
+            
         # Select this plot as active figure
         self.select()
 
         # Refine the grid
         shape = self.grid.shape.copy().refine(refine_factor)
+        grid = self.grid.copy().resize(shape)
         
         # Extract the x and y coordinates
         x = shape.get_x_coordinates()
         y = shape.get_y_coordinates()
 
-        grid = self.grid.copy().resize(shape)
         cs = self.ax.contour(x, 
                              y, 
                              grid.data, 
-                             levels=[level], 
-                             colors=primary_color, 
+                             levels=levels, 
+                             colors=colors, 
                              linewidths=1)
-        # cs = cs1
-            
-        # if self.other is not None:
-        #     shape_other = self.other.shape.copy().refine(refine_factor)
-                    
-        #     # Extract the x and y coordinates
-        #     x = shape_other.get_x_coordinates()
-        #     y = shape_other.get_y_coordinates()
-        #     grid = self.other.copy().resize(shape_other)
-        #     cs2 = self.ax.contour(x, 
-        #                          y, 
-        #                          grid.data, 
-        #                          levels=[level], 
-        #                          colors=secondary_color, 
-        #                          linewidths=[1, 1])
-    
-        #     h1,_ = cs1.legend_elements()
-        #     h2,_ = cs2.legend_elements()
-        #     self.ax.legend([h1[0], h2[0]], [label,other_label],loc='upper left',bbox_to_anchor=(0.05, 0.97), fontsize=12, frameon=True, framealpha=0.5, facecolor='white',edgecolor='black')
-        
+          
         # Add contour labels           
-        contourlabels(ax=self.ax, cs=cs)
+        if labels:
+            contourlabels(ax=self.ax, cs=cs)
 
         return 
+
 
     ###TODO wat is het verschil met add_contours???
     def add_individual_contours(self, level, primary_color=None, secondary_color=None, refine_factor=20):
@@ -484,7 +475,14 @@ class GridPlot(object):
 
         return cs
 
-    def add_heatmap(self, colormap=matplotlib.cm.get_cmap('jet'), soften_colormap=True, alpha=0.4, refine=1, refine_factor=20, **kwargs):
+
+    def add_heatmap(self,
+                    colormap=matplotlib.cm.get_cmap('jet'),
+                    soften_colormap=True,
+                    alpha=0.4,
+                    # refine=1,
+                    refine_factor=10,
+                    **kwargs):
         """
         Show a grid by creating a heatmap.
 
@@ -517,8 +515,17 @@ class GridPlot(object):
 
         return self.contour_plot
 
-    def add_comparison_heatmap(self, other_grid, colormap=matplotlib.cm.get_cmap('RdYlGn'), soften_colormap=True,
-                               alpha=1.0, method='energetic',positive_scale=False, refine_factor=20, **kwargs):
+
+    def add_comparison_heatmap(self, 
+                               other_grid,
+                               # colormap=matplotlib.cm.get_cmap('RdYlGn'),
+                               colormap=matplotlib.cm.get_cmap('BrBG_r'),
+                               soften_colormap=True,
+                               alpha=1.0,
+                               method='energetic',
+                               positive_scale=False,
+                               refine_factor=10,
+                               **kwargs):
         """
         Compare two grids by creating a heatmap.
 
@@ -535,6 +542,7 @@ class GridPlot(object):
 
         # Align the shape of the other grid to the original grid
         diff_grid = other_grid.copy().resize(self.grid.shape)
+        # other_grid = other_grid.resize(self.grid.shape)
 
         #compute scaling (energetically scale)
         if self.grid.unit == 'Lden':
@@ -574,6 +582,7 @@ class GridPlot(object):
                                              **kwargs)
 
         return self.contour_plot
+    
     
     def add_colorbar(self, contour_plot=None,cax_position=None):
 
@@ -1900,8 +1909,11 @@ def plot_noise_bba(grids,
     
 def plot_noise_diff(grid,
                     other_grid,
-                    scale_ga=1.025,
-                    decibel=[48,58],
+                    scale=1.0,
+                    levels=[48,58],
+                    noise='Lden',
+                    mean='mean',
+                    refine_factor=10,
                     labels=['Scenario 1','Scenario 2'],
                     fname=None,
                     dpi=600,
@@ -1912,34 +1924,25 @@ def plot_noise_diff(grid,
     
     :param str|Grid grid: either a folder location containing envira-files, or a MultiGrid object
     :param str|Grid other_grid: either a folder location containing envira-files, or a MultiGrid object
-    :param float scale_ga: the scaling factor to accomodate for general aviation. Standard set to 2.5%
-    :param int decibel: List with integers to clarify which dB-values to plot.
+    :param float scale: the scaling factor. Standard set to 1.0
+    :param int levels: List with integers to clarify which dB-values to plot.
+    :param str noise: For Lden or Lnight grids 
+    :param str mean: Average grid type to use for the average noise levels
+    :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation
     :param str labels: List with strings to identify the scenarios. 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
     
-    grids = read_grid(grid)
-    other_grid = read_grid(other_grid)
+    # Get the noise grids
+    grids = read_grid(grid, noise=noise, mean=mean)
+    other_grid = read_grid(other_grid, noise=noise, mean=mean)
+                
+    # Refine the grid
+    # grids = grids.refine(refine_factor)
+    # other_grid = other_grid.refine(refine_factor)
     
-    # pattern to check folder
-    # envira_pattern          = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-    
-    # #  read both grids
-    # for gr in [grid, other_grid]:
-        
-    #     # read single grid
-    #     if isinstance(gr, str) & gr.endswith(('.dat', '.txt')):
-    #         gr = Grid.read_envira(gr).scale(scale_ga)
-        
-    #     # return mean noise grid if folder location is given
-    #     elif isinstance(gr, str):                
-    #         grs = Grid.read_enviras(gr, pattern=envira_pattern)
-    #         gr = grs.statistics()['mean']
-            
-    #     grid 
-            
     # initialize plot
     plot = GridPlot(grids, other_grid=other_grid, **kwargs)
 
@@ -1947,16 +1950,21 @@ def plot_noise_diff(grid,
     plot.add_comparison_heatmap(other_grid,
                                 vmin=-1.5,
                                 vmax=1.5,
+                                # refine_factor=1,
                                 # colormap=matplotlib.cm.get_cmap('RdYlGn_r'),
                                 # positive_scale=True
                                 )
     
     # add required contours
-    for db in decibel:
-        # plot.add_contours(db, default['kleuren']['schemergroen'], default['kleuren']['wolkengrijs_1'],
-        plot.add_contours(db, get_cycler_color(0), get_cycler_color(1),                          
-                          label = labels[0],
-                          other_label = labels[1])
+    plot.add_contours(levels=levels,
+                      #colors=get_cycler_color(0),
+                      #refine_factor=1
+                      )
+    plot.add_contours(levels=levels,
+                      #colors=get_cycler_color(0),
+                      #refine_factor=1
+                      )
+
     
     # add colorbar
     plot.add_colorbar()
@@ -1970,6 +1978,8 @@ def plot_noise_diff(grid,
         gc.collect()
     else:
         return plot.fig, plot.ax 
+
+
 
 def plot_iaf_sec(traffic,
                  ###TODO Vincent

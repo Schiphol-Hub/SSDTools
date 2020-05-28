@@ -19,31 +19,31 @@ gwc = {'doc29_2005': [13600, 166500, 14600, 45000],
        'doc29_2015': [14000, 180000, 14800, 48500],
        'doc29_2018': [12000, 186000, 12800, 50000]}
 
-def read_grid(grid, noise='Lden'):
+def read_grid(grid,
+              mean='mean',
+              noise='Lden',
+              pattern=None):
     """
     Import and read dat-, txt- or folders with envira-bestanden into a grid
     
     :param str|Grid grid: string with folder location with multiple envira-files, or text/dat-file
-    :param str noise: 
+    :param str mean: Average grid type to use for the average noise levels
+    :param str noise: The noise level unit, which is either 'Lden' or 'Lnight'.
+    :param str pattern: The pattern used to match the envira files.    
     :return: Grid object.
     """
-        
-    envira_pattern = r'[\w\d\s]+{}[\w\d\s]+\.dat'.format('Lden')
-    
-    # read single grid
-    if isinstance(grid, str) & grid.endswith(('.dat', '.txt')):
-        read_grid = Grid.read_envira(grid)#.scale(scale_ga)
-        
-    # return mean noise grid if folder location is given
-    elif isinstance(grid, str):                
-        grids = Grid.read_enviras(grid, pattern=envira_pattern)
-        read_grid = grids.statistics()['mean']
-        
-    elif isinstance(grid,Grid):
-        read_grid = grid
-        
-    # return grid
-    return read_grid    
+            
+    # read noise grid
+    if isinstance(grid, str):
+        if grid.endswith(('.dat', '.txt')):
+            grid = Grid.read_envira(grid)
+        else: # folder location is given
+            grid = Grid.read_enviras(grid, noise=noise, pattern=pattern)
+            if mean == 'mm':
+                grid = grid.meteotoeslag_grid_from_method('hybride')
+            else:
+                grid = grid.statistics()[mean]       
+    return grid    
 
 def extract_year_from_file_name(file_name):
     """
@@ -154,6 +154,7 @@ class Grid(object):
         Create a Grid object from multiple envira files.
 
         :param str path: The path to the envira files.
+        
         :param str pattern: The pattern used to match the envira files.
         :param function year_extractor: The method used to extract the year from the file name.
         :rtype Grid
