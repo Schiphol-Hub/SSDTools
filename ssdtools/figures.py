@@ -29,35 +29,6 @@ def Formatter_1000sep0d(x, pos):
     'The two args are the value and tick position'
     return '{:,.0f}'.format(x).replace(',', '.')
 
-def contourlabels (ax,
-                   cs,
-                   ankerpoint=(110000, 495500),
-                   dxy=(7000, 3000)):
-###TODO beschrijving van de functie
-    
-    for i, level in enumerate(cs.levels):    
-
-        # Shift ankerpoint for level
-        d = (58 - level) * 200
-        ap = [ankerpoint[0]+d, ankerpoint[1]-d]
-        # ax.scatter(ap[0], ap[1], color='red', marker='o', s=3)
-        
-        # Nearest datapunt
-        xy2 = [vertices for path in cs.collections[i].get_paths() for vertices in path.vertices]
-        p2 = xy2[distance.cdist([ap],xy2).argmin()]
-        textloc = p2 + dxy
-        
-        ax.scatter(p2[0],p2[1], 
-                   **branding.xParams['contourlabelmarker'],
-                   zorder=10)
-        
-        ax.annotate(f'{level:.0f} dB(A)',
-                    xy=p2,
-                    xytext=textloc,
-                    **branding.xParams['contourlabel'])
-    return
-
-    
 def soften_colormap_edge(colormap, transition_width=.25, alpha=1.):
     """
     Soften the colormap by applying a linear transition to zero at the front of the colormap.
@@ -147,7 +118,7 @@ class GridPlot(object):
 
         # Set the grids
         self.grid = grid
-        self.other = other_grid
+        self.other_grid = other_grid
 
         # Set the plotting options
         self.title = title
@@ -255,6 +226,35 @@ class GridPlot(object):
             im.set_clip_path(patch)
 
         return self
+
+    def add_contourlabels (self,
+                           cs,
+                           ankerpoint=(110000, 495500),
+                           dxy=(7000, 3000)):
+    ###TODO beschrijving van de functie
+        
+        for i, level in enumerate(cs.levels):    
+    
+            # Shift ankerpoint for level
+            d = (58 - level) * 200
+            ap = [ankerpoint[0]+d, ankerpoint[1]-d]
+            # self.ax.scatter(ap[0], ap[1], color='red', marker='o', s=3)
+            
+            # Nearest datapunt
+            xy2 = [vertices for path in cs.collections[i].get_paths() for vertices in path.vertices]
+            p2 = xy2[distance.cdist([ap],xy2).argmin()]
+            textloc = p2 + dxy
+            
+            self.ax.scatter(p2[0],p2[1], 
+                            **branding.xParams['contourlabelmarker'],
+                            zorder=10)
+            
+            self.ax.annotate(f'{level:.0f} dB(A)',
+                             xy=p2,
+                             xytext=textloc,
+                             **branding.xParams['contourlabel'])
+        return self
+
     
     def add_scalebar(self, ticks=None):
         """
@@ -358,23 +358,24 @@ class GridPlot(object):
         self.ax.contour(x, y, dlo.data, levels=levels, colors=colors[1], linewidths=0.5)
     
         # Add contour labels           
-        contourlabels(ax=self.ax, cs=cs)
+        self.add_contourlabels(cs=cs)
         
         # Add legend
         cs1 = Line2D([], [], color=colors[0], marker='None')
         cs2 = Patch(fc=to_rgba(colors[0], alpha=0.4), ec=colors[1], lw=0.5)
         self.ax.legend(handles=[cs1, cs2],
-                        labels=labels,
-                        title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
-                        **branding.xParams['contourlegend'])                        
+                       labels=labels,
+                       title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
+                       **branding.xParams['contourlegend'])                        
         return 
 
 
 
     def add_contours(self,
                      levels,
+                     other_grid=False,
                      colors=None,
-                     labels=True,
+                     contourlabels=True,
                      refine_factor=10):
         """
         Add a contour of the grid at the specified noise level. When a multigrid is provided, the bandwidth of the contour
@@ -392,18 +393,20 @@ class GridPlot(object):
 
         # Default color (same for all levels)
         if colors is None:
-            colors = get_cycler_color(0)
+            colors = get_cycler_color(int(other_grid))
             
         # Select this plot as active figure
         self.select()
 
         # Refine the grid
-        shape = self.grid.shape.copy().refine(refine_factor)
-        grid = self.grid.copy().resize(shape)
-        
+        if not other_grid:
+            grid = self.grid.refine(refine_factor)
+        else:
+            grid = self.other_grid.refine(refine_factor)        
+
         # Extract the x and y coordinates
-        x = shape.get_x_coordinates()
-        y = shape.get_y_coordinates()
+        x = grid.shape.get_x_coordinates()
+        y = grid.shape.get_y_coordinates()
 
         cs = self.ax.contour(x, 
                              y, 
@@ -413,8 +416,8 @@ class GridPlot(object):
                              linewidths=1)
           
         # Add contour labels           
-        if labels:
-            contourlabels(ax=self.ax, cs=cs)
+        if contourlabels:
+            self.add_contourlabels(cs=cs)
 
         return 
 
@@ -518,6 +521,7 @@ class GridPlot(object):
 
     def add_comparison_heatmap(self, 
                                other_grid,
+                               deltas=[-3,3],
                                # colormap=matplotlib.cm.get_cmap('RdYlGn'),
                                colormap=matplotlib.cm.get_cmap('BrBG_r'),
                                soften_colormap=True,
@@ -572,13 +576,21 @@ class GridPlot(object):
 
         # Add the transparency to the colormap
         if soften_colormap:
-            colormap = soften_colormap_center(colormap, alpha=alpha)
+            colormap = soften_colormap_center(colormap,
+                                              alpha=alpha)
             
         if soften_colormap and positive_scale:
-            colormap = soften_colormap_edge(colormap, transition_width=1,alpha=alpha)
+            colormap = soften_colormap_edge(colormap,
+                                            transition_width=1,
+                                            alpha=alpha)
 
         # Plot the contour area
-        self.contour_plot = self.ax.contourf(*np.meshgrid(x, y), diff_grid.data, levels=colormap.N, cmap=colormap,
+        self.contour_plot = self.ax.contourf(*np.meshgrid(x, y),
+                                             diff_grid.data,
+                                             levels=colormap.N,
+                                             cmap=colormap,
+                                             vmin=deltas[0],
+                                             vmax=deltas[1],
                                              **kwargs)
 
         return self.contour_plot
@@ -1911,6 +1923,8 @@ def plot_noise_diff(grid,
                     other_grid,
                     scale=1.0,
                     levels=[48,58],
+                    colors=None,
+                    deltas=[-1.5,1.5],
                     noise='Lden',
                     mean='mean',
                     refine_factor=10,
@@ -1934,41 +1948,37 @@ def plot_noise_diff(grid,
     :param int dpi: dpi for saving figure to file, default is 600
     :return: if fname='' saved image, else return a Matplotlib figure and axes.
     """
-    
+
+    # Default colors
+    if colors is None:
+        colors = [get_cycler_color(i) for i in range(2)]
+        
     # Get the noise grids
-    grids = read_grid(grid, noise=noise, mean=mean)
+    grid = read_grid(grid, noise=noise, mean=mean)
     other_grid = read_grid(other_grid, noise=noise, mean=mean)
-                
-    # Refine the grid
-    # grids = grids.refine(refine_factor)
-    # other_grid = other_grid.refine(refine_factor)
-    
+                   
     # initialize plot
-    plot = GridPlot(grids, other_grid=other_grid, **kwargs)
+    plot = GridPlot(grid, other_grid=other_grid, **kwargs)
 
-    # Add the heatmap
+    # add heatmap
     plot.add_comparison_heatmap(other_grid,
-                                vmin=-1.5,
-                                vmax=1.5,
-                                # refine_factor=1,
-                                # colormap=matplotlib.cm.get_cmap('RdYlGn_r'),
-                                # positive_scale=True
-                                )
-    
-    # add required contours
-    plot.add_contours(levels=levels,
-                      #colors=get_cycler_color(0),
-                      #refine_factor=1
-                      )
-    plot.add_contours(levels=levels,
-                      #colors=get_cycler_color(0),
-                      #refine_factor=1
-                      )
-
-    
+                                deltas=deltas)
     # add colorbar
     plot.add_colorbar()
     
+    # add contour lines
+    plot.add_contours(levels=levels)    
+    plot.add_contours(levels=levels, other_grid=True, contourlabels=False)
+        
+    # Add legend
+    if labels is not None:
+        cs1 = Line2D([], [], color=colors[0], marker='None')
+        cs2 = Line2D([], [], color=colors[1], marker='None')
+        plot.ax.legend(handles=[cs1, cs2],
+                       labels=labels,
+                       title=r'Geluidbelasting $L_{' + grid.unit[1:] + r'}$',
+                       **branding.xParams['contourlegend'])                        
+
     # Show plot
     if fname:
         plot.save(fname, dpi=dpi)
