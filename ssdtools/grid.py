@@ -433,10 +433,11 @@ class Grid(object):
         """
 
         # Refine the current shape
+        ###TODO is die copy nodig?
         shape = self.shape.copy().refine(factor)
 
         # Return a reference to this object
-        return self.resize(shape)
+        return self.copy().resize(shape)
 
     def resize(self, shape):
         """
