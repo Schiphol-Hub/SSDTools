@@ -2019,10 +2019,8 @@ def plot_iaf_sec(traffic,
     sector = traffic.get_sector_distribution()
         
     # Normalise the results
-    ###TODO Nu sids en stars hard-coded: kan dat niet worden opgenomen in de routesector.txt
-    #       bijvoorbeeld met een extra colom: LT
-    sids = ['1','2','3','4','5']
-    stars = ['ARTIP','RIVER','SUGOL']
+    sids = rs[rs['lt']=='T']['sector'].unique().tolist()
+    stars = rs[rs['lt']=='L']['sector'].unique().tolist()
     sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
     sector[stars] = 100 * sector[stars] / sector[stars].sum(axis=0)
     sector = round(sector,0)
@@ -2032,21 +2030,18 @@ def plot_iaf_sec(traffic,
     data = data.rename(columns={'total':'Value'})
     data['Length']= data['Value']*7
     
-    ### TODO: option to write to png
     # write xml-files
     input_file = open(dir + '/data/FigSectorisatie_template.svg')
     xmlcontents = input_file.read()
     input_file.close()
     
-    ###TODO Leluk! 
-    #       Dat moet ook in één of twee regels kunnen,
-    #       eventueel de svg aanpassen als dat handiger is.
-    
+    # fill in values and lengths
     for iaf_sec in sids + stars:
         xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'])).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen
     ###TODO Vincent, zoals besproken gebruik xParams
+    ### -> worden via deze manier niet de juiste style kleuren gebruikt?
     xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))
     
     # colors starts
