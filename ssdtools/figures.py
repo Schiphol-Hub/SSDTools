@@ -108,9 +108,9 @@ class GridPlot(object):
                  figsize=(21 / 2.54, 21 / 2.54),
                  xlim=(80000, 140000),
                  ylim=(455000, 515000),
-                 background='lib/Schiphol_RD900dpi.png',
-                 schiphol_border='lib/2013-spl-luchtvaartterrein.shp',
-                 place_names='lib/plaatsnamen.csv',
+                 background=dir + '/data/Schiphol_RD900dpi.png',
+                 schiphol_border=dir + '/data/2013-spl-luchtvaartterrein.shp',
+                 place_names=dir + '/data/plaatsnamen.csv',
                  scalebar=True,
                  extent=[80000, 158750, 430000, 541375]):
 
