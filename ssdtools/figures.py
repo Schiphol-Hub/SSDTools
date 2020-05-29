@@ -2041,22 +2041,9 @@ def plot_iaf_sec(traffic,
     ###TODO Leluk! 
     #       Dat moet ook in één of twee regels kunnen,
     #       eventueel de svg aanpassen als dat handiger is.
-    xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(2)", str(data.at['2','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(3)", str(data.at['3','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(4)", str(data.at['4','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(5)", str(data.at['5','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.R(1)", str(data.at['1','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(2)", str(data.at['2','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(3)", str(data.at['3','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(4)", str(data.at['4','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(5)", str(data.at['5','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.p(1)", str(data.at['ARTIP','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.p(2)", str(data.at['RIVER','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.p(3)", str(data.at['SUGOL','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.R(1)", str(data.at['ARTIP','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.R(2)", str(data.at['RIVER','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.R(3)", str(data.at['SUGOL','Length']))
+    
+    for iaf_sec in sids + stars:
+        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'])).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen
     ###TODO Vincent, zoals besproken gebruik xParams
