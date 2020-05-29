@@ -2068,3 +2068,7 @@ def plot_iaf_sec(traffic,
     output_file = open(fname,"w")
     output_file.write(xmlcontents)
     output_file.close()
+    
+    # conversie naar png
+    png = fname.replace("svg","png")
+    os.system(f'inkscape -C --export-width=2480 "{fname}" --export-png="{png}"')
