@@ -300,6 +300,22 @@ class GridPlot(object):
         ax2.tick_params(axis='x', labelsize=10, colors=get_cycler_color(0), length=4, direction='in', width=0.5)
 
         return self
+
+
+    def add_colorbar(self, contour_plot=None,cax_position=None):
+
+        # Use the contour plot of this object if no contour plot is provided
+        contour_plot = self.contour_plot if contour_plot is None else contour_plot
+
+        # Create new axis for the colorbar in the top-right corner. The sequence is left, bottom, width and height.
+        cax = self.fig.add_axes([0.9, 0.67, 0.05, 0.3]) if cax_position is None else self.fig.add_axes(cax_position)
+
+        # Add the colorbar
+        return (colorbar.ColorbarBase(cax,
+                                      cmap=contour_plot.get_cmap(),
+                                      norm=Normalize(*contour_plot.get_clim()))
+                        .ax.tick_params(labelsize=8,
+                                        colors=get_cycler_color(0)))
     
 
     def add_bandwidth(self,
@@ -457,13 +473,12 @@ class GridPlot(object):
 
             # Plot all individual contours
             for year_data in grid.data:
-                ###Ed-test
                 self.ax.contour(x,
                                 y,
                                 year_data,
                                 levels=[level],
                                 colors=secondary_color,
-                                linewidths=3, #[3, 3],
+                                linewidths=3,
                                 alpha=0.1)
 
             # Plot the contours of the statistics
@@ -480,16 +495,15 @@ class GridPlot(object):
 
 
     def add_heatmap(self,
-                    colormap=matplotlib.cm.get_cmap('jet'),
+                    colormap=None,
                     soften_colormap=True,
                     alpha=0.4,
-                    # refine=1,
                     refine_factor=10,
                     **kwargs):
         """
         Show a grid by creating a heatmap.
 
-        :param ColorMap colormap: the colormap to apply.
+        :param ColorMap colormap: the colormap to apply. Default is 'viridis'
         :param bool soften_colormap: soften the colormap by making the edge transparent.
         :param float alpha: the maximum alpha. Should have a value between 0 and 1.
         :param int refine: a multiplication factor for the number of additional layers to plot, most colormaps consist
@@ -498,6 +512,11 @@ class GridPlot(object):
         :return:
         """
 
+        # Default colors
+        ###TODO werkt dit?
+        if colormap is None:
+            colormap = plt.rcParams['image.cmap']
+            
         # Select this plot as active figure
         self.select()
 
@@ -522,8 +541,7 @@ class GridPlot(object):
     def add_comparison_heatmap(self, 
                                other_grid,
                                deltas=[-3,3],
-                               # colormap=matplotlib.cm.get_cmap('RdYlGn'),
-                               colormap=matplotlib.cm.get_cmap('BrBG_r'),
+                               colormap=None,
                                soften_colormap=True,
                                alpha=1.0,
                                method='energetic',
@@ -534,7 +552,7 @@ class GridPlot(object):
         Compare two grids by creating a heatmap.
 
         :param Grid other_grid: the noise grid to compare.
-        :param ColorMap colormap: the colormap to apply.
+        :param ColorMap colormap: the colormap to apply. If None the default from branding is used
         :param bool soften_colormap: soften the colormap by making the center transparent.
         :param float alpha: the maximum alpha. Should have a value between 0 and 1.
         :param kwargs: optional arguments for the underlying contourf function.
@@ -544,9 +562,12 @@ class GridPlot(object):
         # Select this plot as active figure
         self.select()
 
+        # Default colors
+        if colormap is None:
+            colormap = branding.xParams['cmap_diff']
+            
         # Align the shape of the other grid to the original grid
         diff_grid = other_grid.copy().resize(self.grid.shape)
-        # other_grid = other_grid.resize(self.grid.shape)
 
         #compute scaling (energetically scale)
         if self.grid.unit == 'Lden':
@@ -595,18 +616,6 @@ class GridPlot(object):
 
         return self.contour_plot
     
-    
-    def add_colorbar(self, contour_plot=None,cax_position=None):
-
-        # Use the contour plot of this object if no contour plot is provided
-        contour_plot = self.contour_plot if contour_plot is None else contour_plot
-
-        # Create new axis for the colorbar in the top-right corner. The sequence is left, bottom, width and height.
-        cax = self.fig.add_axes([0.9, 0.67, 0.05, 0.3]) if cax_position is None else self.fig.add_axes(cax_position)
-
-        # Add the colorbar
-        return colorbar.ColorbarBase(cax, cmap=contour_plot.get_cmap(), norm=Normalize(*contour_plot.get_clim())).ax.tick_params(labelsize=12)
-
     def select(self):
         plt.figure(self.id)
         plt.sca(self.ax)
