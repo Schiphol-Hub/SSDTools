@@ -9,25 +9,25 @@ xParams = dict()
 ##############################################################################
 ###TODO contourplot en verschilplot kunnen weg
 
-contourplot = {'MER': {'colors': ['#8c564b', '#9467bd', '#ff7f0e', '#1f77b4', '#17becf'],
-                        'contour': {'linewidths': [0.35, 0.5]},
-                        'annotate': {'bbox': {'boxstyle': 'round4,pad=0.3',
-                                              'facecolor': (1.0, 1.0, 1.0, 0.4),
-                                              'edgecolor': (0, 0.45, 0.45, 1.0),
-                                              'linewidth': 0.5},
-                                    'arrowprops': {'arrowstyle': '-',
-                                                    'color': (0, 0.45, 0.45, 1.0),
-                                                    'linewidth': 0.5},
-                                    'color': 'black',
-                                    'size': 12},
-                        'annotatemarker': {'color': (0, 0.45, 0.45, 1.0),
-                                          'marker': 'o',
-                                          's': 3},
-                        'legend': {'fontsize': 6,
-                                  'fancybox': True},
-                        'legendframe': {'facecolor': (1.0, 1.0, 1.0, 0.4),
-                                        'edgecolor': (0, 0.45, 0.45, 1.0)},
-                        'legendtitle': {'fontsize': 8}}}
+# contourplot = {'MER': {'colors': ['#8c564b', '#9467bd', '#ff7f0e', '#1f77b4', '#17becf'],
+#                         'contour': {'linewidths': [0.35, 0.5]},
+#                         'annotate': {'bbox': {'boxstyle': 'round4,pad=0.3',
+#                                               'facecolor': (1.0, 1.0, 1.0, 0.4),
+#                                               'edgecolor': (0, 0.45, 0.45, 1.0),
+#                                               'linewidth': 0.5},
+#                                     'arrowprops': {'arrowstyle': '-',
+#                                                     'color': (0, 0.45, 0.45, 1.0),
+#                                                     'linewidth': 0.5},
+#                                     'color': 'black',
+#                                     'size': 12},
+#                         'annotatemarker': {'color': (0, 0.45, 0.45, 1.0),
+#                                           'marker': 'o',
+#                                           's': 3},
+#                         'legend': {'fontsize': 6,
+#                                   'fancybox': True},
+#                         'legendframe': {'facecolor': (1.0, 1.0, 1.0, 0.4),
+#                                         'edgecolor': (0, 0.45, 0.45, 1.0)},
+#                         'legendtitle': {'fontsize': 8}}}
 
 # verschilplot = {'MER': {'cmap': plt.cm.BrBG_r,
 #                         'colorbar': {'format': '%.1f'},
@@ -257,9 +257,13 @@ def plot_style(style='MER2020'):
                         edgecolor = 'white')
         
         # heatmap
+        # plt.rcParams['image.cmap'] = 'jet'
+        
+        # one color gradient
         ###TODO: Afhankelijk maken van reeks, zie hieronder
-#        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#14125133', '#141251', 'black'])
-        xParams['cmap'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
+        xParams['cmap_mono'] = colors.LinearSegmentedColormap.from_list('', ['#94B0EA33', '#94B0EA', '#141251'])
+        # positive-negative 
+        xParams['cmap_diff'] = plt.cm.BrBG_r
 
     else:
         print('Warning: style not defined:', style)
