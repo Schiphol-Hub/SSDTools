@@ -77,7 +77,7 @@ def plot_baansimulaties(inpFile,
                interpolation='nearest',
                origin='low',
                extent=[xmin, xmax, ymin, ymax],
-               cmap= branding.xParams['cmap'],
+               cmap= branding.xParams['cmap_mono'],
                norm=colors.LogNorm(vmin=1, vmax=p.max()), # 0,2 om witte datapunten te voorkomen
                aspect='auto',
                zorder=4)
