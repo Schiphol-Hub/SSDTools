@@ -24,6 +24,7 @@ from ssdtools.traffic import TrafficAggregate
 from ssdtools.traffic import read_file
 from ssdtools.grid import Grid, read_grid
 
+dir = os.path.dirname(__file__)
 
 def Formatter_1000sep0d(x, pos):
     'The two args are the value and tick position'
@@ -107,9 +108,9 @@ class GridPlot(object):
                  figsize=(21 / 2.54, 21 / 2.54),
                  xlim=(80000, 140000),
                  ylim=(455000, 515000),
-                 background='lib/Schiphol_RD900dpi.png',
-                 schiphol_border='lib/2013-spl-luchtvaartterrein.shp',
-                 place_names='lib/plaatsnamen.csv',
+                 background=dir + '/data/Schiphol_RD900dpi.png',
+                 schiphol_border=dir + '/data/2013-spl-luchtvaartterrein.shp',
+                 place_names=dir + '/data/plaatsnamen.csv',
                  scalebar=True,
                  extent=[80000, 158750, 430000, 541375]):
 
@@ -2004,6 +2005,7 @@ def plot_iaf_sec(traffic,
                  ###TODO Vincent
                  # routesector als variabele opnemen, lijkt mij ok als
                  #             deze default naar de SSDtools verwijst
+                 routesector=dir + '/data/RouteSector.txt',
                  fname='fig/figure_24.svg'):
     
     """
@@ -2018,22 +2020,16 @@ def plot_iaf_sec(traffic,
     if isinstance(traffic, str):
         traffic = Traffic.read_daisy_mean_file(traffic)
     
-    # add sector to traffic
-    ###TODO Vincent
-    #       1) Zie opmerking hierboven
-    #       2) ik vind de map /branding niet logisch, wat dacht je van /data
-    dir = os.path.dirname(__file__)
-    routesector = pd.read_csv(dir + '/branding/RouteSector.txt',sep='\t')
-    traffic.add_sector(routesector)
+    # add sector to traffic  
+    rs = pd.read_csv(routesector,sep='\t')
+    traffic.add_sector(rs)
     
     # get distribution
     sector = traffic.get_sector_distribution()
         
     # Normalise the results
-    ###TODO Nu sids en stars hard-coded: kan dat niet worden opgenomen in de routesector.txt
-    #       bijvoorbeeld met een extra colom: LT
-    sids = ['1','2','3','4','5']
-    stars = ['ARTIP','RIVER','SUGOL']
+    sids = rs[rs['lt']=='T']['sector'].unique().tolist()
+    stars = rs[rs['lt']=='L']['sector'].unique().tolist()
     sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
     sector[stars] = 100 * sector[stars] / sector[stars].sum(axis=0)
     sector = round(sector,0)
@@ -2043,51 +2039,27 @@ def plot_iaf_sec(traffic,
     data = data.rename(columns={'total':'Value'})
     data['Length']= data['Value']*7
     
-    ### TODO: option to write to png
     # write xml-files
-    input_file = open(dir + '/branding/FigSectorisatie_template.svg')
+    input_file = open(dir + '/data/FigSectorisatie_template.svg')
     xmlcontents = input_file.read()
     input_file.close()
     
-    ###TODO Leluk! 
-    #       Dat moet ook in één of twee regels kunnen,
-    #       eventueel de svg aanpassen als dat handiger is.
-    xmlcontents = xmlcontents.replace("sectorT.p(1)", str(data.at['1','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(2)", str(data.at['2','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(3)", str(data.at['3','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(4)", str(data.at['4','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.p(5)", str(data.at['5','Value']))
-    xmlcontents = xmlcontents.replace("sectorT.R(1)", str(data.at['1','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(2)", str(data.at['2','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(3)", str(data.at['3','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(4)", str(data.at['4','Length']))
-    xmlcontents = xmlcontents.replace("sectorT.R(5)", str(data.at['5','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.p(1)", str(data.at['ARTIP','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.p(2)", str(data.at['RIVER','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.p(3)", str(data.at['SUGOL','Value']))
-    xmlcontents = xmlcontents.replace("sectorL.R(1)", str(data.at['ARTIP','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.R(2)", str(data.at['RIVER','Length']))
-    xmlcontents = xmlcontents.replace("sectorL.R(3)", str(data.at['SUGOL','Length']))
-    
-    
-    # colors Nederland
-    #TODO Vincent: waarom pas je de svg zelf niet aan?
-    xmlcontents = xmlcontents.replace("#1B60DB", "#BFBDCC")
-    
-    # colors landen
-    #TODO Vincent: waarom pas je de svg zelf niet aan?
-    xmlcontents = xmlcontents.replace("#94B0EA", "#F2F1F4")
+    # fill in values and lengths
+    for iaf_sec in sids + stars:
+        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'])).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen
     ###TODO Vincent, zoals besproken gebruik xParams
-    #       Dan zou ik in de svg daar ook markers voor gebruiken,
-    #       bijvoorbeeld $color_1$ en $color_2$
-    xmlcontents = xmlcontents.replace("#6552A8", get_cycler_color(3))
+    ### -> worden via deze manier niet de juiste style kleuren gebruikt?
+    xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))
     
     # colors starts
-    ###TODO Vincent idem
-    xmlcontents = xmlcontents.replace("#141251", get_cycler_color(1))
+    xmlcontents = xmlcontents.replace("color_2", get_cycler_color(1))
     
     output_file = open(fname,"w")
     output_file.write(xmlcontents)
     output_file.close()
+    
+    # conversie naar png
+    png = fname.replace("svg","png")
+    os.system(f'inkscape -C --export-width=2480 "{fname}" --export-png="{png}"')
