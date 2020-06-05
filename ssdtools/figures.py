@@ -379,7 +379,7 @@ class GridPlot(object):
         
         # Add legend
         cs1 = Line2D([], [], color=colors[0], marker='None')
-        cs2 = Patch(fc=to_rgba(colors[0], alpha=0.4), ec=colors[1], lw=0.5)
+        cs2 = Patch(fc=to_rgba(colors[1], alpha=0.4), ec=colors[1], lw=0.5)
         self.ax.legend(handles=[cs1, cs2],
                        labels=labels,
                        title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
