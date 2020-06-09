@@ -1452,7 +1452,7 @@ def plot_prediction(history,
                     means,
                     yerr=[means-lo, hi-means],  # asymmetrisch interval
                     label=labels[1],
-                    # clip_on=clip_on, #Bug in Matplotlib? Lijkt niet te werken
+                    clip_on=clip_on, #Bug in Matplotlib? Lijkt niet te werken
                     **branding.xParams['errorbar'])
     # clip_on?
     if not clip_on:
@@ -2061,5 +2061,6 @@ def plot_iaf_sec(traffic,
     output_file.close()
     
     # conversie naar png
+    ### TODO Vincent, werkt alleen als er in de filenaam als extentie svg heeft
     png = fname.replace("svg","png")
     os.system(f'inkscape -C --export-width=2480 "{fname}" --export-png="{png}"')
