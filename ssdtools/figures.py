@@ -1,5 +1,6 @@
 import gc
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -2056,11 +2057,12 @@ def plot_iaf_sec(traffic,
     # colors starts
     xmlcontents = xmlcontents.replace("color_2", get_cycler_color(1))
     
-    output_file = open(fname,"w")
+    # Open svg-file
+    svg_file = Path(fname).with_suffix('.svg')
+    output_file = open(svg_file, "w")
     output_file.write(xmlcontents)
     output_file.close()
     
-    # conversie naar png
-    ### TODO Vincent, werkt alleen als er in de filenaam als extentie svg heeft
-    png = fname.replace("svg","png")
-    os.system(f'inkscape -C --export-width=2480 "{fname}" --export-png="{png}"')
+    # convert svg
+    if Path(fname).suffix != '.svg':
+        os.system(f'inkscape -C --export-width=2480 "{svg_file}" --export-png="{fname}"')
