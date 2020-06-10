@@ -2003,16 +2003,16 @@ def plot_noise_diff(grid,
 
 
 def plot_iaf_sec(traffic,
-                 ###TODO Vincent
-                 # routesector als variabele opnemen, lijkt mij ok als
-                 #             deze default naar de SSDtools verwijst
-                 routesector=dir + '/data/RouteSector.txt',
+                 routesector=dir+'/data/RouteSector.txt',
+                 svg_template=dir+'/data/FigSectorisatie_template.svg',
                  fname='fig/figure_24.svg'):
     
     """
     Create a plot for the sector and routes
     
     :param str|TrafficAggregate traffic: traffic data containing information about route and movements in total 
+    :param str routesector: File with route names and corresponding sector or iaf 
+    :param str svg_template: File with svg definition for the figure 
     :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
     :return: return a svg-file.
     """
@@ -2040,28 +2040,22 @@ def plot_iaf_sec(traffic,
     data = data.rename(columns={'total':'Value'})
     data['Length']= data['Value']*7
     
-    # write xml-files
-    input_file = open(dir + '/data/FigSectorisatie_template.svg')
-    xmlcontents = input_file.read()
-    input_file.close()
+    # read template
+    with open(svg_template, 'r') as svgt:
+        xmlcontents = svgt.read()
     
     # fill in values and lengths
     for iaf_sec in sids + stars:
         xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'])).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
-    # colors landingen
-    ###TODO Vincent, zoals besproken gebruik xParams
-    ### -> worden via deze manier niet de juiste style kleuren gebruikt?
+    # colors landingen and starts
     xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))
-    
-    # colors starts
     xmlcontents = xmlcontents.replace("color_2", get_cycler_color(1))
     
-    # Open svg-file
+    # Write svg-file
     svg_file = Path(fname).with_suffix('.svg')
-    output_file = open(svg_file, "w")
-    output_file.write(xmlcontents)
-    output_file.close()
+    with open(svg_file, 'w') as svg:
+        svg.write(xmlcontents)
     
     # convert svg
     if Path(fname).suffix != '.svg':
