@@ -37,17 +37,10 @@ dir = os.path.dirname(__file__)
 
 def fig_to_word(fig,
                 table,
-                figsize,
+                width=Inches(16.48/2.54),
                 dpi=600):
     
-    # Make tight layout to prevent overlap 
-    # fig.tight_layout()
-    ###TODO
-    #      UserWarning: Tight layout not applied.
-    #      The bottom and top margins cannot be
-    #      made large enough to accommodate all
-    #      axes decorations. 
-    
+   
     if isinstance(fig, str):
         z = fig
     else:
@@ -55,17 +48,17 @@ def fig_to_word(fig,
         z = io.BytesIO()
         
         # Save the figure to the in-memory stream
-        fig.savefig(z, dpi=dpi)
+        fig.savefig(z, 
+                    dpi=dpi,
+                    bbox_inches='tight',
+                    pad_inches=0)
         
     # Select the correct paragraph of the document
     p = table.rows[0].cells[0].paragraphs[0]
     
-    #TODO Vincent: automatisch schalen naar breedte pagina / fixed figure ratio
-
     # Add the picture to the paragraph and align the image
     p.add_run().add_picture(z,
-                            width=Inches(figsize[0]),
-                            height=Inches(figsize[1]))
+                            width=width)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     if not isinstance(fig, str):
@@ -908,7 +901,6 @@ def plot_bar(table=None,
     if wordtable:
         fig_to_word(fig=fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
         
     if not (fname or wordtable):
@@ -998,7 +990,6 @@ def plot_barh(table=None,
     if wordtable:
         fig_to_word(fig=fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
 
     if not (fname or wordtable):
@@ -1432,7 +1423,6 @@ def plot_line(table,
     if wordtable:
         fig_to_word(fig=fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
 
     if not (fname or wordtable):
@@ -1621,7 +1611,6 @@ def plot_prediction(history,
     if wordtable:     
         fig_to_word(fig=fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
 
     if not (fname or wordtable):
@@ -2031,7 +2020,6 @@ def plot_runway_usage(traffic,
     if wordtable:
         fig_to_word(fig=fig,
                     table=wordtable,
-                    figsize=(21/2.54, 10/2.54), ###TODO figsize
                     dpi=dpi)
         
     if not (fname or wordtable):
@@ -2094,7 +2082,6 @@ def plot_noise_bba(grids,
     if wordtable:
         fig_to_word(fig=plot.fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
 
     if not (fname or wordtable):
@@ -2180,7 +2167,6 @@ def plot_noise_diff(grid,
     if wordtable:
         fig_to_word(fig=plot.fig,
                     table=wordtable,
-                    figsize=figsize,
                     dpi=dpi)
         
     if not (fname or wordtable):
@@ -2254,6 +2240,4 @@ def plot_iaf_sec(traffic,
     # Export figure to Word
     if wordtable:
         fig_to_word(fig=fname,
-                    table=wordtable,
-                    figsize=(21/2.54, 15.75/2.54),
-                    dpi=600)
+                    table=wordtable)
