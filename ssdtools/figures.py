@@ -38,8 +38,6 @@ dir = os.path.dirname(__file__)
 def fig_to_word(fig,
                 table,
                 figsize,
-                # width=Inches(6.5),
-                # height=Inches(2.3),
                 dpi=600):
     
     # Make tight layout to prevent overlap 
@@ -50,13 +48,15 @@ def fig_to_word(fig,
     #      made large enough to accommodate all
     #      axes decorations. 
     
-    # Create an in-memory stream for text I/O to capture the image
-    z = io.BytesIO()
-
-    # Save the figure to the in-memory stream
-    plt.savefig(z, dpi=dpi)
+    if isinstance(fig, str):
+        z = fig
+    else:
+        # Create an in-memory stream for text I/O to capture the image
+        z = io.BytesIO()
         
-
+        # Save the figure to the in-memory stream
+        fig.savefig(z, dpi=dpi)
+        
     # Select the correct paragraph of the document
     p = table.rows[0].cells[0].paragraphs[0]
     
@@ -68,7 +68,9 @@ def fig_to_word(fig,
                             height=Inches(figsize[1]))
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    z.close()
+    if not isinstance(fig, str):
+        z.close()
+
 
 def fill_table(docx_table, dataframe, column_header=True, row_header=True, column_header_style=None,
                row_header_style=None, body_style=None):
@@ -2249,4 +2251,9 @@ def plot_iaf_sec(traffic,
     if Path(fname).suffix != '.svg':
         os.system(f'inkscape -C --export-width=2480 "{svg_file}" --export-png="{fname}"')
 
-    ###TODO fig_to_word
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=fname,
+                    table=wordtable,
+                    figsize=(21/2.54, 15.75/2.54),
+                    dpi=600)
