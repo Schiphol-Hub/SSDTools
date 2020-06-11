@@ -790,7 +790,6 @@ def plot_season_traffic(table=None,
                         dpi=600,
                         fname='',
                         figsize=(8.27, 2.76),
-                        return_fig=True,
                         wordtable=None,
                         **kwargs):
     """
@@ -827,7 +826,6 @@ def plot_season_traffic(table=None,
                      dpi=dpi,
                      fname=fname,
                      wordtable=wordtable,
-                     return_fig=return_fig,
                      **kwargs)
             
 
@@ -839,7 +837,6 @@ def plot_bar(table=None,
              fname='',
              figsize=(8.27, 2.76),
              dpi=600,
-             return_fig=True,
              wordtable=None,
              **kwargs):
     """
@@ -912,7 +909,7 @@ def plot_bar(table=None,
                     figsize=figsize,
                     dpi=dpi)
         
-    if return_fig:
+    if not (fname or wordtable):
         return fig, ax 
     else:
         plt.close(fig)
@@ -927,7 +924,6 @@ def plot_barh(table=None,
               fname='',
               figsize=(8.27, 2.76),
               dpi=600,
-              return_fig=True,
               wordtable=None,
               **kwargs):
     """
@@ -1003,7 +999,7 @@ def plot_barh(table=None,
                     figsize=figsize,
                     dpi=dpi)
 
-    if return_fig:
+    if not (fname or wordtable):
         return fig, ax 
     else:
         plt.close(fig)
@@ -1101,7 +1097,6 @@ def plot_aircraft_types(table=None,
                         fname='',
                         figsize=(8.27, 2.76),
                         dpi=600,
-                        return_fig=True,
                         wordtable=None,
                         **kwargs):
     """
@@ -1136,7 +1131,6 @@ def plot_aircraft_types(table=None,
                     figsize=figsize,
                     dpi=dpi,
                     fname=fname,
-                    return_fig=return_fig,
                     wordtable=wordtable,
                     **kwargs)
 
@@ -1360,7 +1354,6 @@ def plot_line(table,
               fname='',                 
               figsize=(8.27, 2.76),
               dpi=600,
-              return_fig=True,
               wordtable=None,
               **kwargs):
     """
@@ -1440,7 +1433,7 @@ def plot_line(table,
                     figsize=figsize,
                     dpi=dpi)
 
-    if return_fig:
+    if not (fname or wordtable):
         return fig, ax 
     else:
         plt.close(fig)
@@ -1464,7 +1457,6 @@ def plot_history(history,
                  fname='',
                  wordtable=None,                 
                  figsize=(8.27, 2.76),
-                 return_fig=True,
                  **kwargs):
 
     """
@@ -1505,7 +1497,6 @@ def plot_history(history,
                      clip_on=clip_on,
                      fname=fname,                 
                      figsize=figsize,
-                     return_fig=return_fig,
                      wordtable=wordtable,
                      **kwargs)
 
@@ -1528,7 +1519,6 @@ def plot_prediction(history,
                     dpi=600,
                     fname='',                 
                     figsize=(8.27, 2.76),
-                    return_fig=True,
                     wordtable=None,
                     **kwargs):
 
@@ -1632,7 +1622,7 @@ def plot_prediction(history,
                     figsize=figsize,
                     dpi=dpi)
 
-    if return_fig:
+    if not (fname or wordtable):
         return fig, ax 
     else:
         plt.close(fig)
@@ -1794,7 +1784,6 @@ def plot_runway_usage(traffic,
                       reftraffic=1,
                       numbers=False,
                       fname=None,
-                      return_fig=True,
                       wordtable=None,
                       dpi=600):
     """
@@ -2043,7 +2032,7 @@ def plot_runway_usage(traffic,
                     figsize=(21/2.54, 10/2.54), ###TODO figsize
                     dpi=dpi)
         
-    if return_fig:
+    if not (fname or wordtable):
         return fig, (ax1, ax2) 
     else:
         plt.close(fig)
@@ -2061,7 +2050,6 @@ def plot_noise_bba(grids,
                    figsize=(21/2.54, 21/2.54),
                    fname=None,
                    dpi=600,
-                   return_fig=True,
                    wordtable=None,
                    **kwargs):
     """
@@ -2107,7 +2095,7 @@ def plot_noise_bba(grids,
                     figsize=figsize,
                     dpi=dpi)
 
-    if return_fig:
+    if not (fname or wordtable):
         return plot.fig, plot.ax 
     else:
         plt.close(plot.fig)
@@ -2127,7 +2115,6 @@ def plot_noise_diff(grid,
                     figsize=(21/2.54, 21/2.54),
                     fname=None,
                     dpi=600,
-                    return_fig=True,
                     wordtable=None,
                     **kwargs):
     
@@ -2194,7 +2181,7 @@ def plot_noise_diff(grid,
                     figsize=figsize,
                     dpi=dpi)
         
-    if return_fig:
+    if not (fname or wordtable):
         return plot.fig, plot.ax 
     else:
         plt.close(plot.fig)
