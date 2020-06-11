@@ -1,5 +1,7 @@
 import gc
 import os
+import io
+
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +27,104 @@ from ssdtools.traffic import TrafficAggregate
 from ssdtools.traffic import read_file
 from ssdtools.grid import Grid, read_grid
 
+# For Docx figures and tables
+from docx import Document
+from docx.shared import Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.style import WD_STYLE_TYPE
+
 dir = os.path.dirname(__file__)
+
+def fig_to_word(fig,
+                table,
+                figsize,
+                # width=Inches(6.5),
+                # height=Inches(2.3),
+                dpi=600):
+    
+    # Make tight layout to prevent overlap 
+    # fig.tight_layout()
+    ###TODO
+    #      UserWarning: Tight layout not applied.
+    #      The bottom and top margins cannot be
+    #      made large enough to accommodate all
+    #      axes decorations. 
+    
+    # Create an in-memory stream for text I/O to capture the image
+    z = io.BytesIO()
+
+    # Save the figure to the in-memory stream
+    plt.savefig(z, dpi=dpi)
+        
+
+    # Select the correct paragraph of the document
+    p = table.rows[0].cells[0].paragraphs[0]
+    
+    #TODO Vincent: automatisch schalen naar breedte pagina / fixed figure ratio
+
+    # Add the picture to the paragraph and align the image
+    p.add_run().add_picture(z,
+                            width=Inches(figsize[0]),
+                            height=Inches(figsize[1]))
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    z.close()
+
+def fill_table(docx_table, dataframe, column_header=True, row_header=True, column_header_style=None,
+               row_header_style=None, body_style=None):
+    column_start = 0
+    row_start = 0
+
+    if column_header and row_header:
+
+        # Set the row and column start
+        row_start = 1
+        column_start = 1
+
+        # Set the first cell
+        cell = docx_table.cell(0, 0)
+        cell.paragraphs[0].add_run('{}'.format(dataframe.index.name))
+
+        if column_header_style is not None:
+            cell.paragraphs[0].style = column_header_style
+
+    if column_header:
+
+        # Set the row start
+        row_start = 1
+
+        # Set the column names
+        for cell, header in zip(docx_table.rows[0].cells[column_start:], dataframe.columns.values):
+            cell.paragraphs[0].add_run(str(header))
+
+            if column_header_style is not None:
+                cell.paragraphs[0].style = column_header_style
+
+    if row_header:
+
+        # Set the column start
+        column_start = 1
+
+        # Set the row names
+        for cell, header in zip(docx_table.columns[0].cells[row_start:], dataframe.index.values):
+            cell.paragraphs[0].add_run(str(header))
+
+            if row_header_style is not None:
+                cell.paragraphs[0].style = row_header_style
+
+    # Set the tables content
+    for j in range(dataframe.shape[0]):
+        for i in range(dataframe.shape[1]):
+            cell = docx_table.cell(j + row_start, i + column_start)
+            value = dataframe.iloc[j, i]
+            if isinstance(value, str):
+                cell.paragraphs[0].add_run(value)
+            elif isinstance(value, float) and not np.isnan(value):
+                cell.paragraphs[0].add_run('{0:.0f}'.format(value))
+
+            if body_style is not None:
+                cell.paragraphs[0].style = body_style
+
 
 def Formatter_1000sep0d(x, pos):
     'The two args are the value and tick position'
@@ -691,6 +790,8 @@ def plot_season_traffic(table=None,
                         dpi=600,
                         fname='',
                         figsize=(8.27, 2.76),
+                        return_fig=True,
+                        wordtable=None,
                         **kwargs):
     """
     A function to create a traffic per season plot. Can also be used to plot other grouped horizontal stacked bar
@@ -725,6 +826,8 @@ def plot_season_traffic(table=None,
                      figsize=figsize,
                      dpi=dpi,
                      fname=fname,
+                     wordtable=wordtable,
+                     return_fig=return_fig,
                      **kwargs)
             
 
@@ -736,6 +839,8 @@ def plot_bar(table=None,
              fname='',
              figsize=(8.27, 2.76),
              dpi=600,
+             return_fig=True,
+             wordtable=None,
              **kwargs):
     """
     A function to create a barplot. 
@@ -799,9 +904,19 @@ def plot_bar(table=None,
     fig = plt.gcf()
     if fname:
         fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
+    
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
+        
+    if return_fig:
+        return fig, ax 
     else:
-        return fig, ax
+        plt.close(fig)
+        return
 
 
 def plot_barh(table=None,
@@ -812,6 +927,8 @@ def plot_barh(table=None,
               fname='',
               figsize=(8.27, 2.76),
               dpi=600,
+              return_fig=True,
+              wordtable=None,
               **kwargs):
     """
     A function to create a barh-plot. 
@@ -878,9 +995,19 @@ def plot_barh(table=None,
     fig = plt.gcf()
     if fname:
         fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
+
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
+
+    if return_fig:
+        return fig, ax 
     else:
-        return fig, ax
+        plt.close(fig)
+        return
 
 
 def table_aircraft_types(traffic,
@@ -974,6 +1101,8 @@ def plot_aircraft_types(table=None,
                         fname='',
                         figsize=(8.27, 2.76),
                         dpi=600,
+                        return_fig=True,
+                        wordtable=None,
                         **kwargs):
     """
     A function to create a fleetmix plot. 
@@ -1007,6 +1136,8 @@ def plot_aircraft_types(table=None,
                     figsize=figsize,
                     dpi=dpi,
                     fname=fname,
+                    return_fig=return_fig,
+                    wordtable=wordtable,
                     **kwargs)
 
 
@@ -1229,6 +1360,8 @@ def plot_line(table,
               fname='',                 
               figsize=(8.27, 2.76),
               dpi=600,
+              return_fig=True,
+              wordtable=None,
               **kwargs):
     """
     :param pd.DataFrame table: Dataframe to plot, see table_aircraft_types   
@@ -1299,9 +1432,19 @@ def plot_line(table,
     fig = plt.gcf()
     if fname:
         fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
+    
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
+
+    if return_fig:
+        return fig, ax 
     else:
-        return fig, ax
+        plt.close(fig)
+        return
 
 
 def plot_history(history, 
@@ -1318,8 +1461,10 @@ def plot_history(history,
                  ncol=None, ###Todo: via xParams
                  clip_on=False,                   
                  dpi=600,
-                 fname='',                 
+                 fname='',
+                 wordtable=None,                 
                  figsize=(8.27, 2.76),
+                 return_fig=True,
                  **kwargs):
 
     """
@@ -1360,6 +1505,8 @@ def plot_history(history,
                      clip_on=clip_on,
                      fname=fname,                 
                      figsize=figsize,
+                     return_fig=return_fig,
+                     wordtable=wordtable,
                      **kwargs)
 
 
@@ -1381,8 +1528,9 @@ def plot_prediction(history,
                     dpi=600,
                     fname='',                 
                     figsize=(8.27, 2.76),
-                    **kwargs
-                    ):
+                    return_fig=True,
+                    wordtable=None,
+                    **kwargs):
 
     """
     :param pd.DataFrame|str history: the historic dataset to visualise, should contain the specified x and y as columns.
@@ -1426,6 +1574,7 @@ def plot_prediction(history,
                            fname='',                 
                            figsize=figsize,
                            zorder=3, # plot on top
+                           wordtable=None,
                            **kwargs)
 
     # Describe the prediction for each year
@@ -1475,9 +1624,19 @@ def plot_prediction(history,
     fig = plt.gcf()
     if fname:
         fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
+
+    # Export figure to Word
+    if wordtable:     
+        fig_to_word(fig=fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
+
+    if return_fig:
+        return fig, ax 
     else:
-        return fig, ax
+        plt.close(fig)
+        return
 
 
 def plot_prediction2(history, prediction, column_name='data', prediction_errorbar_kwargs=None,
@@ -1635,6 +1794,8 @@ def plot_runway_usage(traffic,
                       reftraffic=1,
                       numbers=False,
                       fname=None,
+                      return_fig=True,
+                      wordtable=None,
                       dpi=600):
     """
     Plot runway usage per relevant runway
@@ -1871,12 +2032,23 @@ def plot_runway_usage(traffic,
     # Check uitlijning van de legend
     update_legend_position(ax0, target=0.9-0.01)
 
-    # save figure
+    # Save figure
     if fname:
         fig.savefig(fname, dpi=dpi)
-        plt.close(fig)
+
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=fig,
+                    table=wordtable,
+                    figsize=(21/2.54, 10/2.54), ###TODO figsize
+                    dpi=dpi)
+        
+    if return_fig:
+        return fig, (ax1, ax2) 
     else:
-        return fig, (ax1, ax2)
+        plt.close(fig)
+        return
+    
 
 
 def plot_noise_bba(grids,
@@ -1889,6 +2061,8 @@ def plot_noise_bba(grids,
                    figsize=(21/2.54, 21/2.54),
                    fname=None,
                    dpi=600,
+                   return_fig=True,
+                   wordtable=None,
                    **kwargs):
     """
     Create a bandwidth plot showing the noise contours of various scenarios or meteo years.
@@ -1919,15 +2093,25 @@ def plot_noise_bba(grids,
                        mean=mean,
                        refine_factor=refine_factor)
         
+    # Free memory
+    gc.collect()
+    
     # Save figure
     if fname:
         plot.save(fname, dpi=dpi)
-        plt.close(plot.fig)
+        
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=plot.fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
 
-        # Free memory
-        gc.collect()
-    else:
+    if return_fig:
         return plot.fig, plot.ax 
+    else:
+        plt.close(plot.fig)
+        return
     
     
 def plot_noise_diff(grid,
@@ -1940,8 +2124,11 @@ def plot_noise_diff(grid,
                     mean='mean',
                     refine_factor=10,
                     labels=['Scenario 1','Scenario 2'],
+                    figsize=(21/2.54, 21/2.54),
                     fname=None,
                     dpi=600,
+                    return_fig=True,
+                    wordtable=None,
                     **kwargs):
     
     """
@@ -1969,7 +2156,10 @@ def plot_noise_diff(grid,
     other_grid = read_grid(other_grid, noise=noise, mean=mean)
                    
     # initialize plot
-    plot = GridPlot(grid, other_grid=other_grid, **kwargs)
+    plot = GridPlot(grid, 
+                    other_grid=other_grid,
+                    figsize=figsize,
+                    **kwargs)
 
     # add heatmap
     plot.add_comparison_heatmap(other_grid,
@@ -1990,22 +2180,33 @@ def plot_noise_diff(grid,
                        title=r'Geluidbelasting $L_{' + grid.unit[1:] + r'}$',
                        **branding.xParams['contourlegend'])                        
 
-    # Show plot
+    # Free memory
+    gc.collect()
+    
+    # Save figure
     if fname:
         plot.save(fname, dpi=dpi)
-        plt.close(plot.fig)
-
-        # Free memory
-        gc.collect()
-    else:
+        
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=plot.fig,
+                    table=wordtable,
+                    figsize=figsize,
+                    dpi=dpi)
+        
+    if return_fig:
         return plot.fig, plot.ax 
-
+    else:
+        plt.close(plot.fig)
+        return
+ 
 
 
 def plot_iaf_sec(traffic,
                  routesector=dir+'/data/RouteSector.txt',
                  svg_template=dir+'/data/FigSectorisatie_template.svg',
-                 fname='fig/figure_24.svg'):
+                 fname='fig/figure_24.svg',
+                 wordtable=None):
     
     """
     Create a plot for the sector and routes
@@ -2060,3 +2261,5 @@ def plot_iaf_sec(traffic,
     # convert svg
     if Path(fname).suffix != '.svg':
         os.system(f'inkscape -C --export-width=2480 "{svg_file}" --export-png="{fname}"')
+
+    ###TODO fig_to_word
