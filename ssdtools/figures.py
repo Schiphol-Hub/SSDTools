@@ -723,6 +723,51 @@ class GridPlot(object):
         return self.fig.show()
 
 
+def table_denem_traffic(traffic,
+                        traffic_kwargs={'sep':None, 'engine':'python'},
+                        index={'D':'dag',
+                               'E':'avond',
+                               'N':'nacht',
+                               'EM':'vroege ochtend'},
+                        columns={'L':'landingen',
+                                 'T':'starts'},
+                        wordtable=None,
+                        style={}):
+    """
+    Create a table with traffic per denem-period.
+    
+    :param str|pd.DataFrame|TrafficAggregate traffic: traffic data containing VVC-code in d_ac_cat or c_ac_cat and movements in total 
+    :param dict taffic_kwargs: kwargs for reading traffic data
+    :param dict index: dict for renaming the index used for the ticklabels
+    :param dict columns: dict for renaming the columns used for legend labels
+    :return: return a pd.DataFrame.
+    """
+ 
+    # Read traffic
+    if isinstance(traffic, str):
+        traffic = Traffic.read_daisy_phase_file(traffic, **traffic_kwargs)
+    
+    # Get the day (D), evening (E), night (N) distribution
+    df = traffic.get_denem_distribution(separate_by='d_lt').round(-2)
+    df.index.name = 'periode'
+       
+    # Add totals
+    df['totaal'] = df.sum(axis=1) 
+    df = df.append(pd.Series(df['totaal'].sum(), index=['totaal'], name='totaal'))
+       
+    # Rename the columns and index
+    df = df.rename(index=index, columns=columns)
+
+    # Print table
+    with pd.option_context('display.float_format', '{:.0f}'.format):    
+        print(df.fillna(''))
+        
+    if wordtable:
+        fill_table(wordtable, df, **style)
+
+    return df
+
+
 def table_season_traffic(traffic,
                          traffic_kwargs={'sep':None, 'engine':'python'},
                          labels=['winter', 'zomer'],
@@ -763,7 +808,8 @@ def table_season_traffic(traffic,
             
     # Store results
     df = pd.concat(results, keys=labels)
-    
+
+        
     # Rename the columns and index
     df = df.rename(index=index, columns=columns)
 
