@@ -112,10 +112,10 @@ def fill_table(docx_table, dataframe, column_header=True, row_header=True, colum
         for i in range(dataframe.shape[1]):
             cell = docx_table.cell(j + row_start, i + column_start)
             value = dataframe.iloc[j, i]
-            if isinstance(value, str):
+            if isinstance(value, str) and value != 'nan':
                 cell.paragraphs[0].add_run(value)
             elif isinstance(value, float) and not np.isnan(value):
-                cell.paragraphs[0].add_run('{0:.0f}'.format(value))
+                cell.paragraphs[0].add_run('{0:,.0f}'.format(value).replace(',', '.'))
 
             if body_style is not None:
                 cell.paragraphs[0].style = body_style
@@ -731,6 +731,8 @@ def table_denem_traffic(traffic,
                                'EM':'vroege ochtend'},
                         columns={'L':'landingen',
                                  'T':'starts'},
+                        total='totaal',
+                        period='periode',
                         wordtable=None,
                         style={}):
     """
@@ -742,21 +744,24 @@ def table_denem_traffic(traffic,
     :param dict columns: dict for renaming the columns used for legend labels
     :return: return a pd.DataFrame.
     """
- 
+    
     # Read traffic
     if isinstance(traffic, str):
         traffic = Traffic.read_daisy_phase_file(traffic, **traffic_kwargs)
     
     # Get the day (D), evening (E), night (N) distribution
-    df = traffic.get_denem_distribution(separate_by='d_lt').round(-2)
-    df.index.name = 'periode'
+    df = traffic.get_denem_distribution(separate_by='d_lt')
        
     # Add totals
-    df['totaal'] = df.sum(axis=1) 
-    df = df.append(pd.Series(df['totaal'].sum(), index=['totaal'], name='totaal'))
+    df[total] = df.sum(axis=1) 
+    df = df.append(pd.DataFrame({total: df[total].sum()}, index=[total]))
        
+    # Round to hundreds
+    df = df.round(-2)
+    
     # Rename the columns and index
     df = df.rename(index=index, columns=columns)
+    df.index.name = period
 
     # Print table
     with pd.option_context('display.float_format', '{:.0f}'.format):    
