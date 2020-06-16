@@ -5,6 +5,10 @@ import pandas as pd
 from warnings import warn
 from ssdtools.grid import Grid
 
+import os
+
+dir = os.path.dirname(__file__)
+
 
 class WBS(object):
     """
@@ -22,7 +26,8 @@ class WBS(object):
             self.data = data
 
     @classmethod
-    def read_file(cls, path):
+    def read_file(cls, 
+                  path=dir+'/data/wbs2005.h5'):
         """
         Create a new WBS object based on a HDF5 formatted file.
 
