@@ -96,11 +96,14 @@ def emission_model(trf,
 
     #%% traffic vanuit TAF verrijken met motornamen uit TIS
     ###TODO: Alleen als iata_codes worden gebruikt?
-    if reference_traffic and aircraft_type == 'iata_aircraft':             
+    if reference_traffic is not None and aircraft_type == 'iata_aircraft':             
+
         # drop duplicates, but keep rows with most occurences
         reference_traffic = reference_traffic.sort_values(by='total',ascending=False).drop_duplicates(subset=['ac_type'])
+        reference_traffic = reference_traffic.drop(columns='total')
         
-        # add motornamen to traffic
+        # Replace engines with reference traffic
+        trf = trf.drop(columns='engine_type')
         trf = trf.merge(reference_traffic, 
                         left_on='icao_aircraft',
                         right_on='ac_type',
@@ -729,6 +732,11 @@ class Traffic(object):
         trf=trf.groupby(trf.columns.tolist()).size().reset_index().rename(columns={0:'total'})
         trf=trf.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
 
+        # reference traffic
+        if reference_traffic is not None:
+            reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
+            reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
+
         return emission_model(trf,
                               ET, 
                               TIM, 
@@ -1150,6 +1158,11 @@ class TrafficAggregate(object):
             trf = trf.groupby(columns)['total'].sum().reset_index()
 
             trf=trf.rename(columns={"d_type": "ac_type", "d_motor": "engine_type", 'MTT_engine_type': "engine_type"})
+
+        # refference traffic
+        if reference_traffic is not None:
+            reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
+            reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
 
         return emission_model(trf,
                               ET, 
