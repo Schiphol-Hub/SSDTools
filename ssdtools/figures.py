@@ -115,6 +115,7 @@ def fill_table(docx_table, dataframe, column_header=True, row_header=True, colum
             if isinstance(value, str) and value != 'nan':
                 cell.paragraphs[0].add_run(value)
             elif isinstance(value, float) and not np.isnan(value):
+                ###TODO is dit centraal handig
                 cell.paragraphs[0].add_run('{0:,.0f}'.format(value).replace(',', '.'))
 
             if body_style is not None:
@@ -768,6 +769,7 @@ def table_denem_traffic(traffic,
         print(df.fillna(''))
         
     if wordtable:
+        ###TODO Opmaak
         fill_table(wordtable, df, **style)
 
     return df

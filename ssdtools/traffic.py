@@ -85,6 +85,7 @@ def emission_model(trf,
     # Add engine if missing in trf
     trf['engine_type'] = trf['engine_type'].fillna(trf['motor'])
     trf = trf.drop(columns='motor')
+    trf['engine_type'] = trf['engine_type'].astype(str)
 
     # Add mtow if missing in trf
     trf['mtow'] = trf['mtow_x'].fillna(trf['mtow_y'])
