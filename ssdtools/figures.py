@@ -629,7 +629,7 @@ class GridPlot(object):
             colormap = soften_colormap_edge(colormap, transition_width=.25, alpha=alpha)
 
         # Plot the contour area
-        self.contour_plot = self.ax.contourf(*np.meshgrid(x, y), grid.data, levels=refine * colormap.N, cmap=colormap,
+        self.contour_plot = self.ax.contourf(*np.meshgrid(x, y), grid.data, levels=refine_factor * colormap.N, cmap=colormap,
                                              **kwargs)
 
         return self.contour_plot
@@ -2294,3 +2294,48 @@ def plot_iaf_sec(traffic,
     if wordtable:
         fig_to_word(fig=fname,
                     table=wordtable)
+        
+def plot_noise_heatmap(grid,
+                   scale=1.0,
+                   levels=[48, 58],
+                   refine_factor=10,
+                   figsize=(21/2.54, 21/2.54),
+                   fname=None,
+                   dpi=600,
+                   wordtable=None,
+                   **kwargs):
+    
+    # Create a figure
+    plot = GridPlot(grid, 
+                    figsize=figsize,
+                    **kwargs,
+                    # background=background[i],
+                    # extent=size[i]['extent'], 
+                    # xlim = size[i]['xlim'], 
+                    # ylim = size[i]['ylim'],
+                       )
+    
+    # Add the heatmap
+    plot.add_heatmap(vmin=levels[0], vmax=levels[1],colormap=plt.cm.get_cmap('RdYlGn_r'),alpha=0.3,refine_factor=3) #Spectral_r
+    
+    # Add a colorbar
+    plot.add_colorbar(cax_position=[0.85, 0.8, 0.05, 0.17])
+    
+    # Free memory
+    gc.collect()
+    
+    # Save figure
+    if fname:
+        plot.save(fname, dpi=dpi)
+        
+    # Export figure to Word
+    if wordtable:
+        fig_to_word(fig=plot.fig,
+                    table=wordtable,
+                    dpi=dpi)
+
+    if not (fname or wordtable):
+        return plot.fig, plot.ax 
+    else:
+        plt.close(plot.fig)
+        return
