@@ -2262,7 +2262,6 @@ def plot_iaf_sec(traffic,
     stars = rs[rs['lt']=='L']['sector'].unique().tolist()
     sector[sids] = 100 * sector[sids] / sector[sids].sum(axis=0)
     sector[stars] = 100 * sector[stars] / sector[stars].sum(axis=0)
-    sector = round(sector,0)
     
     data=pd.DataFrame(sector)
         
@@ -2275,7 +2274,7 @@ def plot_iaf_sec(traffic,
     
     # fill in values and lengths
     for iaf_sec in sids + stars:
-        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'])).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
+        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value']).replace('.',',')).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen and starts
     xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))
@@ -2304,6 +2303,19 @@ def plot_noise_heatmap(grid,
                    dpi=600,
                    wordtable=None,
                    **kwargs):
+    
+    """
+    Create a heatmap plot showing noise contours of a single grid.
+    
+    :param str|Grid grid: either a folder location containing envira-files, or a MultiGrid object
+    :param float scale: the scaling factor. Standard set to 1.0
+    :param int levels: List with integers to clarify between which dB-values to plot
+    :param integer refine_factor: Factor to refine the grid with bi-cubic spline interpolation
+    :param set figsize: Figsize in inches, default (21/2.54, 7/2.54)
+    :param str fname: (Optional) Name for the file to save. Default is None and no fig will be saved but fig, ax is returned
+    :param int dpi: dpi for saving figure to file, default is 600
+    :return: if fname='' saved image, else return a Matplotlib figure and axes.
+    """
     
     # Create a figure
     plot = GridPlot(grid, 

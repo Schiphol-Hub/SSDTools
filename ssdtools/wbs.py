@@ -9,6 +9,8 @@ import os
 
 dir = os.path.dirname(__file__)
 
+### TODO Vincent/Ed: gwc definiëren
+### TODO Vincent/Ed: automatisch herkennen welk WBS en doc29/NRM te gebruiken
 
 class WBS(object):
     """
