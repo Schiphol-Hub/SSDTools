@@ -956,6 +956,12 @@ class Shape(object):
 
     @classmethod
     def read_echo_api(cls, grid_id: int, api_client=None):
+        """
+        Method to retrieve a Shape object from the Echo API.
+
+        :param api_client:
+        :return:
+        """
         import echo_api_sdk
 
         # Create an instance of the GridsAPI class
@@ -980,6 +986,12 @@ class Shape(object):
         return cls(data=shape_data)
 
     def to_echo_api(self, api_client=None):
+        """
+        Method to send the Shape object to the Echo API.
+
+        :param api_client:
+        :return:
+        """
         import echo_api_sdk
 
         # Create an instance of the GridsAPI class
