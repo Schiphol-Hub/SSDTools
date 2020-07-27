@@ -979,6 +979,25 @@ class Shape(object):
         # Return the ssdtools.Shape object
         return cls(data=shape_data)
 
+    def to_echo_api(self, api_client=None):
+        import echo_api_sdk
+
+        # Create an instance of the GridsAPI class
+        api = echo_api_sdk.GridsApi(api_client)
+
+        # Create an echo_api_sdk.Grid
+        grid = echo_api_sdk.Grid(
+            x0=(self.x_start + self.x_stop) / 2,
+            width=abs(self.x_stop - self.x_start),
+            x_count=self.x_number,
+            y0=(self.y_start - self.y_stop) / 2,
+            height=abs(self.y_stop - self.y_start),
+            y_count=self.y_number
+        )
+
+        # Get the echo_api.sdk.Grid
+        return api.post_grid(grid=grid)
+
 
 def hdr_val(string, type):
     """
