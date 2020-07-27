@@ -954,6 +954,31 @@ class Shape(object):
     def copy(self):
         return copy.deepcopy(self)
 
+    @classmethod
+    def read_echo_api(cls, grid_id: int, api_client=None):
+        import echo_api_sdk
+
+        # Create an instance of the GridsAPI class
+        api = echo_api_sdk.GridsApi(api_client)
+
+        # Get the echo_api.sdk.Grid
+        shape = api.get_grid(grid_id)
+
+        # Convert to ssdtools.Shape format
+        shape_data = {
+            'x_start': shape.x0 - shape.width / 2,
+            'x_stop': shape.x0 + shape.width / 2,
+            'x_step': shape.width / (shape.x_count - 1),
+            'x_number': shape.x_count,
+            'y_start': shape.y0 - shape.height / 2,
+            'y_stop': shape.y0 + shape.height / 2,
+            'y_step': shape.height / (shape.y_count - 1),
+            'y_number': shape.y_count
+        }
+
+        # Return the ssdtools.Shape object
+        return cls(data=shape_data)
+
 
 def hdr_val(string, type):
     """
