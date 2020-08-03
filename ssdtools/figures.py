@@ -2092,6 +2092,7 @@ def plot_noise_bba(grids,
                    labels=['gemiddeld', 'weersinvloeden'],
                    figsize=(21/2.54, 21/2.54),
                    fname=None,
+                   pattern=None,
                    dpi=600,
                    wordtable=None,
                    **kwargs):
@@ -2113,7 +2114,7 @@ def plot_noise_bba(grids,
    
     # Get the noise grids
     if isinstance(grids, str):
-        grids = Grid.read_enviras(grids, noise=noise).scale(scale)
+        grids = Grid.read_enviras(grids, noise=noise, pattern=pattern).scale(scale)
     
     # Initialize plot
     plot = GridPlot(grids, figsize=figsize, **kwargs)
@@ -2274,7 +2275,7 @@ def plot_iaf_sec(traffic,
     
     # fill in values and lengths
     for iaf_sec in sids + stars:
-        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value']).replace('.',',')).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
+        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'].round(-1)).replace('.',',')).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen and starts
     xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))
@@ -2342,7 +2343,8 @@ def plot_noise_heatmap(grid,
         
     # Export figure to Word
     if wordtable:
-        fig_to_word(fig=plot.fig,
+        fig_to_word(fig = fname + '.png',
+            # fig=plot.fig,
                     table=wordtable,
                     dpi=dpi)
 
