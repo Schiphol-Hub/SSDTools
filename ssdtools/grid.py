@@ -757,6 +757,42 @@ class Grid(object):
         
         return self
 
+    @classmethod
+    def read_echo_api(cls, grid_id: int, api_client, traffic_id: int = None, event_id: int = None, metric: str = None):
+        import echo_api_sdk
+
+        # Get the shape
+        shape = Shape.read_echo_api(grid_id=grid_id, api_client=api_client)
+
+        if traffic_id is None and event_id is not None:
+            # Create an instance of the EventsAPI class
+            api = echo_api_sdk.EventsApi(api_client)
+
+            # Get the echo_api.sdk.EventNoise
+            noise = api.get_noise_by_grid(event_id=event_id, grid_id=grid_id)
+        elif traffic_id is not None and event_id is None:
+            # Create an instance of the TrafficsAPI class
+            api = echo_api_sdk.TrafficsApi(api_client)
+
+            # Get the echo_api.sdk.TrafficNoise
+            noise = api.get_noise_by_grid(traffic_id=traffic_id, grid_id=grid_id)
+        else:
+            raise ValueError('Make sure that either traffic_id or event_id is provided.')
+
+        if metric is None and traffic_id is not None:
+            metric = 'laeq'
+        elif metric is None and event_id is not None:
+            metric = 'sel'
+
+        # Get the noise levels
+        levels = getattr(noise.levels, metric)
+
+        # Reshape the noise levels
+        levels_2d = shape.reshape_echo_api_levels(np.array(levels))
+
+        return cls(data=levels_2d, shape=shape, unit=metric)
+
+
 def relative_den_norm_performance(scale, norm, wbs, den_grid, night_grid=None, scale_de=None, scale_n=None,
                                   apply_lnight_time_correction=True):
     """
@@ -953,6 +989,71 @@ class Shape(object):
 
     def copy(self):
         return copy.deepcopy(self)
+
+    def reshape_echo_api_levels(self, levels: np.ndarray) -> np.ndarray:
+        """
+        Method to reshape noise levels from the Echo API to valid input for the SSDTools Grid.
+
+        :param levels:
+        :return:
+        """
+        return levels.reshape((self.y_number, self.x_number))
+
+    @classmethod
+    def read_echo_api(cls, grid_id: int, api_client=None):
+        """
+        Method to retrieve a Shape object from the Echo API.
+
+        :param api_client:
+        :return:
+        """
+        import echo_api_sdk
+
+        # Create an instance of the GridsAPI class
+        api = echo_api_sdk.GridsApi(api_client)
+
+        # Get the echo_api.sdk.Grid
+        shape = api.get_grid(grid_id)
+
+        # Convert to ssdtools.Shape format
+        shape_data = {
+            'x_start': shape.x0 - shape.width / 2,
+            'x_stop': shape.x0 + shape.width / 2,
+            'x_step': shape.width / (shape.x_count - 1),
+            'x_number': shape.x_count,
+            'y_start': shape.y0 - shape.height / 2,
+            'y_stop': shape.y0 + shape.height / 2,
+            'y_step': shape.height / (shape.y_count - 1),
+            'y_number': shape.y_count
+        }
+
+        # Return the ssdtools.Shape object
+        return cls(data=shape_data)
+
+    def to_echo_api(self, api_client=None):
+        """
+        Method to send the Shape object to the Echo API.
+
+        :param api_client:
+        :return:
+        """
+        import echo_api_sdk
+
+        # Create an instance of the GridsAPI class
+        api = echo_api_sdk.GridsApi(api_client)
+
+        # Create an echo_api_sdk.Grid
+        grid = echo_api_sdk.Grid(
+            x0=(self.x_stop + self.x_start) / 2,
+            width=abs(self.x_stop - self.x_start),
+            x_count=self.x_number,
+            y0=(self.y_stop + self.y_start) / 2,
+            height=abs(self.y_stop - self.y_start),
+            y_count=self.y_number
+        )
+
+        # Get the echo_api.sdk.Grid
+        return api.post_grid(grid=grid)
 
 
 def hdr_val(string, type):
