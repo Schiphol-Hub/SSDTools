@@ -162,7 +162,8 @@ class Grid(object):
 
         # Pattern
         if pattern is None:
-            pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
+            # pattern = r'\w[\s-]*' + noise + r'\s?y\d{4}\.dat$'
+            pattern = r'.*' + noise + r'.*y\d{4}\.dat$'
             
         # Get the envira files
         files = [os.path.join(path, f) for f in os.listdir(path) if re.search(pattern, f)]
