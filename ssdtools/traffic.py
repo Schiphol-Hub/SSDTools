@@ -18,6 +18,19 @@ def read_file (filename, sep='\t', **kwargs):
     else:
          return filename
 
+def traffic_compare(trf1,
+                    trf2,
+                    columns=['d_lt', 'd_runway', 'd_route', 'd_den', 'total']):
+
+    # group data for required columns
+    trf1 = trf1.data[columns].groupby(['d_lt', 'd_runway', 'd_route', 'd_den']).sum()
+    trf2 = trf2.data[columns].groupby(['d_lt', 'd_runway', 'd_route', 'd_den']).sum()
+
+    # determine difference
+    diff = round(trf1 - trf2)
+    
+    return diffs
+
 def emission_model(trf,
                    ET,
                    TIM,
