@@ -162,8 +162,10 @@ class WBS(object):
                 df.at[year, 'w48n'] = self.count_homes_above(48, 'Lnight')
 
                 # Calculate the number of annoyed and sleep disturbed people
-                df.at[year, 'eh48den'] = self.count_annoyed_people(48, **kwargs)
-                df.at[year, 'sv40n'] = self.count_sleep_disturbed_people(40, **kwargs)
+#                df.at[year, 'eh48den'] = self.count_annoyed_people(48, **kwargs)
+#                df.at[year, 'sv40n'] = self.count_sleep_disturbed_people(40, **kwargs)
+                df.at[year, 'eh48den'] = self.count_annoyed_people(40, **kwargs)
+                df.at[year, 'sv40n'] = self.count_sleep_disturbed_people(35, **kwargs)
 
             return df
         else:
@@ -177,8 +179,10 @@ class WBS(object):
             w48n = self.count_homes_above(48, 'Lnight')
 
             # Calculate the number of annoyed and sleep disturbed people
-            eh48den = self.count_annoyed_people(48, **kwargs)
-            sv40n = self.count_sleep_disturbed_people(40, **kwargs)
+#            eh48den = self.count_annoyed_people(48, **kwargs)
+#            sv40n = self.count_sleep_disturbed_people(40, **kwargs)
+            eh48den = self.count_annoyed_people(40, **kwargs)
+            sv40n = self.count_sleep_disturbed_people(35, **kwargs)
 
             return pd.Series({
                 'w58den': w58den,

@@ -294,7 +294,8 @@ class GridPlot(object):
         for index, row in place_names.iterrows():
             self.ax.annotate(row['name'],
                              xy=(row['x'], row['y']),
-                             **branding.xParams['placenames'])
+                             # **branding.xParams['placenames'],
+                             )
         return self
         
     def add_schiphol_border(self, schiphol_border=None, background=None):
@@ -419,6 +420,7 @@ class GridPlot(object):
                       levels=[48,58],
                       mean='mean',
                       labels=['gemiddeld', 'weersinvloeden'],  ###TODO None=geen label
+                      method=None,
                       colors=None,
                       alpha=0.4,
                       refine_factor=10):
@@ -478,7 +480,8 @@ class GridPlot(object):
         cs2 = Patch(fc=to_rgba(colors[1], alpha=0.4), ec=colors[1], lw=0.5)
         self.ax.legend(handles=[cs1, cs2],
                        labels=labels,
-                       title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
+                       # title=r'Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
+                       title=method + r' Geluidbelasting $L_{' + self.grid.unit[1:] + r'}$',
                        **branding.xParams['contourlegend'])                        
         return 
 
@@ -707,8 +710,8 @@ class GridPlot(object):
                                              diff_grid.data,
                                              levels=colormap.N,
                                              cmap=colormap,
-                                             vmin=deltas[0],
-                                             vmax=deltas[1],
+                                              vmin=deltas[0],
+                                              vmax=deltas[1],
                                              **kwargs)
 
         return self.contour_plot
@@ -823,7 +826,13 @@ def table_season_traffic(traffic,
     # Print table
     with pd.option_context('display.float_format', '{:.0f}'.format):    
         print(df)
+    
+    ### TODO: optioneel als percentage opnemen
+    # table_1 = pd.DataFrame()
+    # for column in df.columns:
+    #     table_1[column] = (df[column] / df.sum().sum()) * 100
 
+    # return table_1
     return df
     
     
@@ -1645,11 +1654,11 @@ def plot_prediction(history,
             b.set_clip_on(False)
     
     # Plot de lijnen voor het gemiddelde
-    ax.plot(p_mean.index,
-            p_mean,
-            color=get_cycler_color(1),
-            marker='None',
-            clip_on=clip_on)
+    # ax.plot(p_mean.index,
+    #         p_mean,
+    #         color=get_cycler_color(1),
+    #         marker='None',
+    #         clip_on=clip_on)
     
     # legend
     if ncol is None: ncol = len(y)
@@ -2088,6 +2097,7 @@ def plot_noise_bba(grids,
                    levels=[48, 58],
                    noise='Lden',
                    mean='mean',
+                   method='Doc.29',
                    refine_factor=10,
                    labels=['gemiddeld', 'weersinvloeden'],
                    figsize=(21/2.54, 21/2.54),
@@ -2123,6 +2133,7 @@ def plot_noise_bba(grids,
     plot.add_bandwidth(levels=levels,
                        labels=labels,
                        mean=mean,
+                       method='Doc.29',
                        refine_factor=refine_factor)
         
     # Free memory
@@ -2152,6 +2163,7 @@ def plot_noise_diff(grid,
                     colors=None,
                     deltas=[-1.5,1.5],
                     noise='Lden',
+                    method='Doc.29',
                     mean='mean',
                     refine_factor=10,
                     labels=['Scenario 1','Scenario 2'],
@@ -2189,11 +2201,13 @@ def plot_noise_diff(grid,
     plot = GridPlot(grid, 
                     other_grid=other_grid,
                     figsize=figsize,
-                    **kwargs)
+                    # **kwargs,
+                    )
 
     # add heatmap
     plot.add_comparison_heatmap(other_grid,
-                                deltas=deltas)
+                                deltas=deltas,
+                                **kwargs)
     # add colorbar
     plot.add_colorbar()
     
@@ -2207,7 +2221,8 @@ def plot_noise_diff(grid,
         cs2 = Line2D([], [], color=colors[1], marker='None')
         plot.ax.legend(handles=[cs1, cs2],
                        labels=labels,
-                       title=r'Geluidbelasting $L_{' + grid.unit[1:] + r'}$',
+                       # title=r'Geluidbelasting $L_{' + grid.unit[1:] + r'}$',
+                       # title=method + r' Geluidbelasting $L_{' + grid.unit[1:] + r'}$',
                        **branding.xParams['contourlegend'])                        
 
     # Free memory
@@ -2275,7 +2290,7 @@ def plot_iaf_sec(traffic,
     
     # fill in values and lengths
     for iaf_sec in sids + stars:
-        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'].round(-1)).replace('.',',')).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
+        xmlcontents = xmlcontents.replace("p"+iaf_sec, str(data.at[iaf_sec,'Value'].round(0)).replace('.0',' ')).replace("R"+iaf_sec, str(data.at[iaf_sec,'Length']))
 
     # colors landingen and starts
     xmlcontents = xmlcontents.replace("color_1", get_cycler_color(3))

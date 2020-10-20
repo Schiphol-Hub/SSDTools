@@ -196,6 +196,7 @@ def emission_model(trf,
     
     # check for nans
     for engine in trf.loc[trf['_type'].isnull(),'engine_type']:
+        trf[trf['_type'].isnull()].to_excel('I:/Documents/Git/backup/missing_engines_2.xlsx')
         print('WARNING: missing engine type table: '+ engine)
     
     #%% Add info from aircraft types
@@ -734,8 +735,13 @@ class Traffic(object):
 
         # reference traffic
         if reference_traffic is not None:
-            reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
-            reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
+            if isinstance(reference_traffic,pd.DataFrame):
+                reference_traffic = reference_traffic
+            elif isinstance(reference_traffic,str):
+                reference_traffic = pd.read_csv(reference_traffic)
+            else:
+                reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
+                reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
 
         return emission_model(trf,
                               ET, 
@@ -1159,10 +1165,15 @@ class TrafficAggregate(object):
 
             trf=trf.rename(columns={"d_type": "ac_type", "d_motor": "engine_type", 'MTT_engine_type': "engine_type"})
 
-        # refference traffic
+        # refference traffic        
         if reference_traffic is not None:
-            reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
-            reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
+            if isinstance(reference_traffic,pd.DataFrame):
+                reference_traffic = reference_traffic
+            elif isinstance(reference_traffic,str):
+                reference_traffic = pd.read_csv(reference_traffic)
+            else:
+                reference_traffic=reference_traffic.data.groupby(["C_ac_type","C_engine_type"]).size().reset_index().rename(columns={0:'total'})    
+                reference_traffic=reference_traffic.rename(columns={"C_ac_type": "ac_type", "C_engine_type": "engine_type"})
 
         return emission_model(trf,
                               ET, 
